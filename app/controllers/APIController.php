@@ -1,489 +1,705 @@
 <?php
 /**
- * APIController - handles REST API endpoints
- * Implements web services architecture with JSON responses
+ * APIController - servicii Web REST complete si corecte
+ * Implementeaza arhitectura bazata pe servicii Web conform specificatiilor
  */
-require_once 'app/models/LocationModel.php';
-require_once 'app/models/OrderModel.php';
+require_once 'app/models/SediuModel.php';
+require_once 'app/models/ComandaModel.php';
+require_once 'app/models/ClientModel.php';
 require_once 'app/models/ResourceModel.php';
 
 class APIController extends Controller {
-    private $locationModel;
-    private $orderModel;
+    private $sediuModel;
+    private $comandaModel;
+    private $clientModel;
     private $resourceModel;
     
     public function __construct() {
         parent::__construct();
         
-        // Set JSON header for all API responses
-        header('Content-Type: application/json');
+        // Seteaza headerele pentru API REST
+        header('Content-Type: application/json; charset=utf-8');
         header('Access-Control-Allow-Origin: *');
         header('Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS');
-        header('Access-Control-Allow-Headers: Content-Type, Authorization, X-Requested-With');
+        header('Access-Control-Allow-Headers: Content-Type, Authorization, X-Requested-With, Accept');
         
-        // Handle preflight OPTIONS request
+        // Gestioneaza cererea OPTIONS pentru CORS preflight
         if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
             http_response_code(200);
             exit();
         }
         
-        $this->locationModel = new LocationModel();
-        $this->orderModel = new OrderModel();
+        $this->sediuModel = new SediuModel();
+        $this->comandaModel = new ComandaModel();
+        $this->clientModel = new ClientModel();
         $this->resourceModel = new ResourceModel();
     }
     
     /**
-     * API endpoint: GET /api/locations
+     * API endpoint: GET /api/sedii
+     * Returneaza lista sediilor cu filtrare optionala
      */
-    public function getLocations() {
+    public function getSedii() {
         try {
-            $status = sanitize_input($_GET['status'] ?? null);
-            $service = sanitize_input($_GET['service'] ?? null);
+            $stare = sanitize_input($_GET['stare'] ?? null);
+            $tip_serviciu = sanitize_input($_GET['tip_serviciu'] ?? null);
             
-            if ($status) {
-                $locations = $this->locationModel->getLocationsByStatus($status);
-            } elseif ($service) {
-                $locations = $this->locationModel->getLocationsByService($service);
+            if ($stare) {
+                $sedii = $this->sediuModel->getSediiByStare($stare);
             } else {
-                $locations = $this->locationModel->getAllLocations();
+                $sedii = $this->sediuModel->getAllSedii();
             }
             
-            $this->json([
+            // Adauga statistici pentru fiecare sediu
+            foreach ($sedii as &$sediu) {
+                $sediu['stats'] = $this->sediuModel->getSediuStats($sediu['id']);
+            }
+            
+            $this->respondJSON([
                 'success' => true,
-                'data' => $locations,
-                'count' => count($locations),
+                'data' => $sedii,
+                'count' => count($sedii),
                 'timestamp' => date('c')
             ]);
             
         } catch (Exception $e) {
-            error_log("API Error - getLocations: " . $e->getMessage());
-            $this->json([
+            error_log("API Error - getSedii: " . $e->getMessage());
+            $this->respondJSON([
                 'success' => false,
-                'error' => 'Eroare la obținerea locațiilor'
+                'error' => 'Eroare la obtinerea sediilor',
+                'code' => 'SEDII_ERROR'
             ], 500);
         }
     }
     
     /**
-     * API endpoint: GET /api/locations/{id}
+     * API endpoint: GET /api/sedii/{id}
+     * Returneaza detalii despre un sediu specific
      */
-    public function getLocation() {
+    public function getSediu() {
         try {
             $id = sanitize_numeric($_GET['id'] ?? null);
             
             if (!$id) {
-                $this->json([
+                $this->respondJSON([
                     'success' => false,
-                    'error' => 'ID locație necesar'
+                    'error' => 'ID sediu necesar',
+                    'code' => 'MISSING_ID'
                 ], 400);
                 return;
             }
             
-            $location = $this->locationModel->getLocationById($id);
+            $sediu = $this->sediuModel->getSediuById($id);
             
-            if (!$location) {
-                $this->json([
+            if (!$sediu) {
+                $this->respondJSON([
                     'success' => false,
-                    'error' => 'Locația nu a fost găsită'
+                    'error' => 'Sediul nu a fost gasit',
+                    'code' => 'SEDIU_NOT_FOUND'
                 ], 404);
                 return;
             }
             
-            $stats = $this->locationModel->getLocationStats($id);
-            $resources = $this->locationModel->getLocationResources($id);
-            $orders = $this->locationModel->getLocationOrders($id, 5);
-            $operational = $this->locationModel->isLocationOperational($id);
+            // Obtine date suplimentare
+            $stats = $this->sediuModel->getSediuStats($id);
+            $comenzi_recente = $this->comandaModel->getComenziForSediu($id, 5);
             
-            $this->json([
+            $this->respondJSON([
                 'success' => true,
                 'data' => [
-                    'location' => $location,
-                    'statistics' => $stats,
-                    'resources' => $resources,
-                    'recent_orders' => $orders,
-                    'operational_status' => $operational
+                    'sediu' => $sediu,
+                    'statistici' => $stats,
+                    'comenzi_recente' => $comenzi_recente,
+                    'status_operational' => $sediu['Stare'] === 'activ'
                 ],
                 'timestamp' => date('c')
             ]);
             
         } catch (Exception $e) {
-            error_log("API Error - getLocation: " . $e->getMessage());
-            $this->json([
+            error_log("API Error - getSediu: " . $e->getMessage());
+            $this->respondJSON([
                 'success' => false,
-                'error' => 'Eroare la obținerea detaliilor locației'
+                'error' => 'Eroare la obtinerea detaliilor sediului',
+                'code' => 'SEDIU_DETAILS_ERROR'
             ], 500);
         }
     }
     
     /**
-     * API endpoint: GET /api/orders
+     * API endpoint: GET /api/comenzi
+     * Returneaza lista comenzilor cu filtrare
      */
-    public function getOrders() {
+    public function getComenzi() {
         try {
             $status = sanitize_input($_GET['status'] ?? null);
-            $location_id = sanitize_numeric($_GET['location_id'] ?? null);
-            $service_type = sanitize_input($_GET['service_type'] ?? null);
+            $sediu_id = sanitize_numeric($_GET['sediu_id'] ?? null);
+            $tip_serviciu = sanitize_input($_GET['tip_serviciu'] ?? null);
             $limit = sanitize_numeric($_GET['limit'] ?? 50, 1, 1000);
+            $offset = sanitize_numeric($_GET['offset'] ?? 0, 0);
             
-            $filters = [
-                'status' => $status,
-                'location_id' => $location_id,
-                'service_type' => $service_type,
-                'limit' => $limit
-            ];
+            $comenzi = $this->comandaModel->getAllComenzi();
             
-            $orders = $this->orderModel->getOrdersWithFilters($filters);
+            // Aplicare filtre
+            if ($status) {
+                $comenzi = array_filter($comenzi, function($c) use ($status) {
+                    return $c['Status'] === $status;
+                });
+            }
             
-            $this->json([
+            if ($sediu_id) {
+                $comenzi = array_filter($comenzi, function($c) use ($sediu_id) {
+                    return $c['idSediu'] == $sediu_id;
+                });
+            }
+            
+            if ($tip_serviciu) {
+                $comenzi = array_filter($comenzi, function($c) use ($tip_serviciu) {
+                    return $c['TipServiciu'] === $tip_serviciu;
+                });
+            }
+            
+            // Paginare
+            $total = count($comenzi);
+            $comenzi = array_slice($comenzi, $offset, $limit);
+            
+            $this->respondJSON([
                 'success' => true,
-                'data' => $orders,
-                'count' => count($orders),
+                'data' => array_values($comenzi),
+                'pagination' => [
+                    'total' => $total,
+                    'count' => count($comenzi),
+                    'limit' => $limit,
+                    'offset' => $offset
+                ],
                 'timestamp' => date('c')
             ]);
             
         } catch (Exception $e) {
-            error_log("API Error - getOrders: " . $e->getMessage());
-            $this->json([
+            error_log("API Error - getComenzi: " . $e->getMessage());
+            $this->respondJSON([
                 'success' => false,
-                'error' => 'Eroare la obținerea comenzilor'
+                'error' => 'Eroare la obtinerea comenzilor',
+                'code' => 'COMENZI_ERROR'
             ], 500);
         }
     }
     
     /**
-     * API endpoint: POST /api/orders
+     * API endpoint: POST /api/comenzi
+     * Creeaza o comanda noua
      */
-    public function createOrder() {
+    public function createComanda() {
         try {
-            $input = json_decode(file_get_contents('php://input'), true);
+            $input = $this->getJSONInput();
             
             if (!$input) {
-                $this->json([
+                $this->respondJSON([
                     'success' => false,
-                    'error' => 'Date JSON invalide'
+                    'error' => 'Date JSON invalide sau lipsa',
+                    'code' => 'INVALID_JSON'
                 ], 400);
                 return;
             }
             
-            // Validate required fields
-            $required_fields = ['client_id', 'location_id', 'service_type', 'scheduled_date'];
+            // Validare campuri obligatorii
+            $required_fields = ['client_id', 'sediu_id', 'tip_serviciu', 'data_programare'];
             foreach ($required_fields as $field) {
                 if (!isset($input[$field]) || empty($input[$field])) {
-                    $this->json([
+                    $this->respondJSON([
                         'success' => false,
-                        'error' => "Câmpul '$field' este obligatoriu"
+                        'error' => "Campul '$field' este obligatoriu",
+                        'code' => 'MISSING_REQUIRED_FIELD'
                     ], 400);
                     return;
                 }
             }
             
-            // Sanitize input data
-            $order_data = [
-                'client_id' => sanitize_numeric($input['client_id']),
-                'location_id' => sanitize_numeric($input['location_id']),
-                'service_type' => sanitize_input($input['service_type']),
-                'scheduled_date' => sanitize_input($input['scheduled_date']),
-                'recurring' => isset($input['recurring']) ? (bool)$input['recurring'] : false,
-                'transport' => isset($input['transport']) ? (bool)$input['transport'] : false
-            ];
+            // Sanitizare date
+            $client_id = sanitize_numeric($input['client_id']);
+            $sediu_id = sanitize_numeric($input['sediu_id']);
+            $tip_serviciu = sanitize_input($input['tip_serviciu']);
+            $data_programare = sanitize_input($input['data_programare']);
+            $recurenta = isset($input['recurenta']) ? (bool)$input['recurenta'] : false;
+            $transport = isset($input['transport']) ? (bool)$input['transport'] : false;
             
-            // Validate service type
-            $valid_services = ['covor', 'auto', 'textil'];
-            if (!in_array($order_data['service_type'], $valid_services)) {
-                $this->json([
+            // Validare tip serviciu
+            $servicii_valide = ['covor', 'auto', 'textil'];
+            if (!in_array($tip_serviciu, $servicii_valide)) {
+                $this->respondJSON([
                     'success' => false,
-                    'error' => 'Tip serviciu invalid'
+                    'error' => 'Tip serviciu invalid. Valori permise: ' . implode(', ', $servicii_valide),
+                    'code' => 'INVALID_SERVICE_TYPE'
                 ], 400);
                 return;
             }
             
-            // Check if location is available
-            $location = $this->locationModel->getLocationById($order_data['location_id']);
-            if (!$location || $location['Stare'] !== 'activ') {
-                $this->json([
+            // Validare data
+            $data_obj = DateTime::createFromFormat('Y-m-d', $data_programare);
+            if (!$data_obj || $data_obj->format('Y-m-d') !== $data_programare) {
+                $this->respondJSON([
                     'success' => false,
-                    'error' => 'Locația nu este disponibilă'
+                    'error' => 'Data programare invalida. Format asteptat: YYYY-MM-DD',
+                    'code' => 'INVALID_DATE_FORMAT'
                 ], 400);
                 return;
             }
             
-            $order_id = $this->orderModel->createOrder($order_data);
-            
-            $this->json([
-                'success' => true,
-                'data' => [
-                    'order_id' => $order_id,
-                    'message' => 'Comanda a fost creată cu succes'
-                ],
-                'timestamp' => date('c')
-            ], 201);
-            
-        } catch (Exception $e) {
-            error_log("API Error - createOrder: " . $e->getMessage());
-            $this->json([
-                'success' => false,
-                'error' => 'Eroare la crearea comenzii'
-            ], 500);
-        }
-    }
-    
-    /**
-     * API endpoint: PUT /api/orders/{id}
-     */
-    public function updateOrder() {
-        try {
-            $id = sanitize_numeric($_GET['id'] ?? null);
-            $input = json_decode(file_get_contents('php://input'), true);
-            
-            if (!$id || !$input) {
-                $this->json([
+            if ($data_obj <= new DateTime()) {
+                $this->respondJSON([
                     'success' => false,
-                    'error' => 'ID comandă și date JSON necesare'
+                    'error' => 'Data programarii trebuie sa fie in viitor',
+                    'code' => 'INVALID_DATE_PAST'
                 ], 400);
                 return;
             }
             
-            // Check if order exists
-            $order = $this->orderModel->getOrderById($id);
-            if (!$order) {
-                $this->json([
+            // Verifica daca clientul exista
+            $client = $this->clientModel->getClientById($client_id);
+            if (!$client) {
+                $this->respondJSON([
                     'success' => false,
-                    'error' => 'Comanda nu a fost găsită'
-                ], 404);
+                    'error' => 'Clientul specificat nu exista',
+                    'code' => 'CLIENT_NOT_FOUND'
+                ], 400);
                 return;
             }
             
-            $update_data = [];
+            // Verifica daca sediul exista si este activ
+            $sediu = $this->sediuModel->getSediuById($sediu_id);
+            if (!$sediu) {
+                $this->respondJSON([
+                    'success' => false,
+                    'error' => 'Sediul specificat nu exista',
+                    'code' => 'SEDIU_NOT_FOUND'
+                ], 400);
+                return;
+            }
             
-            // Status update
-            if (isset($input['status'])) {
-                $valid_statuses = ['noua', 'in curs', 'finalizata', 'anulata'];
-                $status = sanitize_input($input['status']);
+            if ($sediu['Stare'] !== 'activ') {
+                $this->respondJSON([
+                    'success' => false,
+                    'error' => 'Sediul nu este disponibil pentru programari',
+                    'code' => 'SEDIU_NOT_AVAILABLE'
+                ], 400);
+                return;
+            }
+            
+            // Creeaza comanda
+            $comanda_id = $this->comandaModel->createComanda(
+                $client_id, $sediu_id, $tip_serviciu, $data_programare, $recurenta, $transport
+            );
+            
+            if ($comanda_id) {
+                $comanda_creata = $this->comandaModel->getComandaById($comanda_id);
                 
-                if (!in_array($status, $valid_statuses)) {
-                    $this->json([
-                        'success' => false,
-                        'error' => 'Status invalid'
-                    ], 400);
-                    return;
-                }
-                
-                $update_data['status'] = $status;
-            }
-            
-            $success = $this->orderModel->updateOrder($id, $update_data);
-            
-            if ($success) {
-                $this->json([
+                $this->respondJSON([
                     'success' => true,
                     'data' => [
-                        'order_id' => $id,
-                        'message' => 'Comanda a fost actualizată cu succes'
+                        'comanda_id' => $comanda_id,
+                        'comanda' => $comanda_creata,
+                        'message' => 'Comanda a fost creata cu succes'
                     ],
                     'timestamp' => date('c')
-                ]);
+                ], 201);
             } else {
-                $this->json([
+                $this->respondJSON([
                     'success' => false,
-                    'error' => 'Eroare la actualizarea comenzii'
+                    'error' => 'Eroare la crearea comenzii',
+                    'code' => 'CREATE_FAILED'
                 ], 500);
             }
             
         } catch (Exception $e) {
-            error_log("API Error - updateOrder: " . $e->getMessage());
-            $this->json([
+            error_log("API Error - createComanda: " . $e->getMessage());
+            $this->respondJSON([
                 'success' => false,
-                'error' => 'Eroare la actualizarea comenzii'
+                'error' => 'Eroare interna la crearea comenzii',
+                'code' => 'INTERNAL_ERROR'
             ], 500);
         }
     }
     
     /**
-     * API endpoint: DELETE /api/orders/{id}
+     * API endpoint: PUT /api/comenzi/{id}
+     * Actualizeaza o comanda existenta
      */
-    public function deleteOrder() {
+    public function updateComanda() {
+        try {
+            $id = sanitize_numeric($_GET['id'] ?? null);
+            $input = $this->getJSONInput();
+            
+            if (!$id) {
+                $this->respondJSON([
+                    'success' => false,
+                    'error' => 'ID comanda necesar',
+                    'code' => 'MISSING_ID'
+                ], 400);
+                return;
+            }
+            
+            if (!$input) {
+                $this->respondJSON([
+                    'success' => false,
+                    'error' => 'Date JSON necesare pentru actualizare',
+                    'code' => 'MISSING_JSON'
+                ], 400);
+                return;
+            }
+            
+            // Verifica daca comanda exista
+            $comanda = $this->comandaModel->getComandaById($id);
+            if (!$comanda) {
+                $this->respondJSON([
+                    'success' => false,
+                    'error' => 'Comanda nu a fost gasita',
+                    'code' => 'COMANDA_NOT_FOUND'
+                ], 404);
+                return;
+            }
+            
+            // Actualizeaza statusul daca este furnizat
+            if (isset($input['status'])) {
+                $status_valid = ['noua', 'in curs', 'finalizata', 'anulata'];
+                $new_status = sanitize_input($input['status']);
+                
+                if (!in_array($new_status, $status_valid)) {
+                    $this->respondJSON([
+                        'success' => false,
+                        'error' => 'Status invalid. Valori permise: ' . implode(', ', $status_valid),
+                        'code' => 'INVALID_STATUS'
+                    ], 400);
+                    return;
+                }
+                
+                $success = $this->comandaModel->updateComandaStatus($id, $new_status);
+                
+                if ($success) {
+                    $comanda_actualizata = $this->comandaModel->getComandaById($id);
+                    
+                    $this->respondJSON([
+                        'success' => true,
+                        'data' => [
+                            'comanda_id' => $id,
+                            'comanda' => $comanda_actualizata,
+                            'message' => 'Status comanda actualizat cu succes'
+                        ],
+                        'timestamp' => date('c')
+                    ]);
+                } else {
+                    $this->respondJSON([
+                        'success' => false,
+                        'error' => 'Eroare la actualizarea statusului',
+                        'code' => 'UPDATE_FAILED'
+                    ], 500);
+                }
+            } else {
+                $this->respondJSON([
+                    'success' => false,
+                    'error' => 'Nu au fost furnizate campuri pentru actualizare',
+                    'code' => 'NO_UPDATE_FIELDS'
+                ], 400);
+            }
+            
+        } catch (Exception $e) {
+            error_log("API Error - updateComanda: " . $e->getMessage());
+            $this->respondJSON([
+                'success' => false,
+                'error' => 'Eroare interna la actualizarea comenzii',
+                'code' => 'INTERNAL_ERROR'
+            ], 500);
+        }
+    }
+    
+    /**
+     * API endpoint: DELETE /api/comenzi/{id}
+     * Sterge o comanda
+     */
+    public function deleteComanda() {
         try {
             $id = sanitize_numeric($_GET['id'] ?? null);
             
             if (!$id) {
-                $this->json([
+                $this->respondJSON([
                     'success' => false,
-                    'error' => 'ID comandă necesar'
+                    'error' => 'ID comanda necesar',
+                    'code' => 'MISSING_ID'
                 ], 400);
                 return;
             }
             
-            $order = $this->orderModel->getOrderById($id);
-            if (!$order) {
-                $this->json([
+            $comanda = $this->comandaModel->getComandaById($id);
+            if (!$comanda) {
+                $this->respondJSON([
                     'success' => false,
-                    'error' => 'Comanda nu a fost găsită'
+                    'error' => 'Comanda nu a fost gasita',
+                    'code' => 'COMANDA_NOT_FOUND'
                 ], 404);
                 return;
             }
             
-            $success = $this->orderModel->deleteOrder($id);
+            $success = $this->comandaModel->deleteComanda($id);
             
             if ($success) {
-                $this->json([
+                $this->respondJSON([
                     'success' => true,
-                    'message' => 'Comanda a fost ștearsă cu succes'
+                    'message' => 'Comanda a fost stearsa cu succes',
+                    'timestamp' => date('c')
                 ]);
             } else {
-                $this->json([
+                $this->respondJSON([
                     'success' => false,
-                    'error' => 'Eroare la ștergerea comenzii'
+                    'error' => 'Eroare la stergerea comenzii',
+                    'code' => 'DELETE_FAILED'
                 ], 500);
             }
             
         } catch (Exception $e) {
-            error_log("API Error - deleteOrder: " . $e->getMessage());
-            $this->json([
+            error_log("API Error - deleteComanda: " . $e->getMessage());
+            $this->respondJSON([
                 'success' => false,
-                'error' => 'Eroare la ștergerea comenzii'
+                'error' => 'Eroare interna la stergerea comenzii',
+                'code' => 'INTERNAL_ERROR'
             ], 500);
         }
     }
     
     /**
-     * API endpoint: GET /api/resources
+     * API endpoint: GET /api/resurse
+     * Returneaza lista resurselor
      */
-    public function getResources() {
+    public function getResurse() {
         try {
-            $type = sanitize_input($_GET['type'] ?? null);
+            $tip = sanitize_input($_GET['tip'] ?? null);
+            $stoc_redus = isset($_GET['stoc_redus']) ? (bool)$_GET['stoc_redus'] : false;
             
-            if ($type) {
-                $resources = $this->resourceModel->getResourcesByType($type);
+            if ($stoc_redus) {
+                $resurse = $this->resourceModel->getLowStockResources();
+            } elseif ($tip) {
+                $resurse = $this->resourceModel->getResourcesByType($tip);
             } else {
-                $resources = $this->resourceModel->getAllResources();
+                $resurse = $this->resourceModel->getAllResources();
             }
             
-            $this->json([
+            $this->respondJSON([
                 'success' => true,
-                'data' => $resources,
-                'count' => count($resources),
+                'data' => $resurse,
+                'count' => count($resurse),
                 'timestamp' => date('c')
             ]);
             
         } catch (Exception $e) {
-            error_log("API Error - getResources: " . $e->getMessage());
-            $this->json([
+            error_log("API Error - getResurse: " . $e->getMessage());
+            $this->respondJSON([
                 'success' => false,
-                'error' => 'Eroare la obținerea resurselor'
+                'error' => 'Eroare la obtinerea resurselor',
+                'code' => 'RESURSE_ERROR'
             ], 500);
         }
     }
     
     /**
-     * API endpoint: PUT /api/resources/{id}
+     * API endpoint: PUT /api/resurse/{id}
+     * Actualizeaza cantitatea unei resurse
      */
-    public function updateResource() {
+    public function updateResursa() {
         try {
             $id = sanitize_numeric($_GET['id'] ?? null);
-            $input = json_decode(file_get_contents('php://input'), true);
+            $input = $this->getJSONInput();
             
-            if (!$id || !$input || !isset($input['quantity'])) {
-                $this->json([
+            if (!$id) {
+                $this->respondJSON([
                     'success' => false,
-                    'error' => 'ID resursă și cantitate necesare'
+                    'error' => 'ID resursa necesar',
+                    'code' => 'MISSING_ID'
                 ], 400);
                 return;
             }
             
-            $quantity = sanitize_numeric($input['quantity'], 0);
-            if ($quantity === false) {
-                $this->json([
+            if (!$input || !isset($input['cantitate'])) {
+                $this->respondJSON([
                     'success' => false,
-                    'error' => 'Cantitate invalidă'
+                    'error' => 'Cantitate necesara',
+                    'code' => 'MISSING_QUANTITY'
                 ], 400);
                 return;
             }
             
-            $success = $this->resourceModel->updateResourceQuantity($id, $quantity);
+            $cantitate = sanitize_numeric($input['cantitate'], 0);
+            if ($cantitate === false) {
+                $this->respondJSON([
+                    'success' => false,
+                    'error' => 'Cantitate invalida',
+                    'code' => 'INVALID_QUANTITY'
+                ], 400);
+                return;
+            }
+            
+            $success = $this->resourceModel->updateResourceQuantity($id, $cantitate);
             
             if ($success) {
-                $this->json([
+                $resursa = $this->resourceModel->getResourceById($id);
+                
+                $this->respondJSON([
                     'success' => true,
                     'data' => [
-                        'resource_id' => $id,
-                        'new_quantity' => $quantity,
-                        'message' => 'Resursa a fost actualizată cu succes'
+                        'resursa_id' => $id,
+                        'resursa' => $resursa,
+                        'message' => 'Resursa actualizata cu succes'
                     ],
                     'timestamp' => date('c')
                 ]);
             } else {
-                $this->json([
+                $this->respondJSON([
                     'success' => false,
-                    'error' => 'Eroare la actualizarea resursei'
+                    'error' => 'Eroare la actualizarea resursei',
+                    'code' => 'UPDATE_FAILED'
                 ], 500);
             }
             
         } catch (Exception $e) {
-            error_log("API Error - updateResource: " . $e->getMessage());
-            $this->json([
+            error_log("API Error - updateResursa: " . $e->getMessage());
+            $this->respondJSON([
                 'success' => false,
-                'error' => 'Eroare la actualizarea resursei'
+                'error' => 'Eroare interna la actualizarea resursei',
+                'code' => 'INTERNAL_ERROR'
             ], 500);
         }
     }
     
     /**
-     * API endpoint: GET /api/statistics
+     * API endpoint: GET /api/statistici
+     * Returneaza statistici generale
      */
-    public function getStatistics() {
+    public function getStatistici() {
         try {
-            $type = sanitize_input($_GET['type'] ?? 'overview');
+            $tip = sanitize_input($_GET['tip'] ?? 'general');
             
             $stats = [];
             
-            switch ($type) {
-                case 'locations':
+            switch ($tip) {
+                case 'sedii':
                     $stats = [
-                        'total_locations' => $this->locationModel->getTotalLocations(),
-                        'active_locations' => $this->locationModel->getActiveLocationsCount()
+                        'total_sedii' => count($this->sediuModel->getAllSedii()),
+                        'sedii_active' => count($this->sediuModel->getSediiActive()),
+                        'sedii_reparatii' => count($this->sediuModel->searchSedii('reparatii'))
                     ];
                     break;
                     
-                case 'orders':
+                case 'comenzi':
+                    $statistici_generale = $this->comandaModel->getStatsGeneral();
                     $stats = [
-                        'total_orders' => $this->orderModel->getTotalOrdersCount(),
-                        'orders_by_status' => $this->orderModel->getOrdersByStatusCount()
+                        'total_comenzi' => $statistici_generale['total_comenzi'] ?? 0,
+                        'comenzi_noi' => $statistici_generale['comenzi_noi'] ?? 0,
+                        'comenzi_in_curs' => $statistici_generale['comenzi_in_curs'] ?? 0,
+                        'comenzi_finalizate' => $statistici_generale['comenzi_finalizate'] ?? 0,
+                        'comenzi_astazi' => $statistici_generale['comenzi_astazi'] ?? 0
                     ];
                     break;
                     
-                case 'resources':
+                case 'resurse':
                     $stats = [
-                        'total_resources' => $this->resourceModel->getTotalResourcesCount(),
-                        'resources_by_type' => $this->resourceModel->getResourcesByTypeCount()
+                        'total_resurse' => count($this->resourceModel->getAllResources()),
+                        'resurse_stoc_redus' => count($this->resourceModel->getLowStockResources()),
+                        'tipuri_resurse' => $this->resourceModel->getResourceTypes()
                     ];
                     break;
                     
                 default:
+                    $statistici_generale = $this->comandaModel->getStatsGeneral();
                     $stats = [
-                        'total_locations' => $this->locationModel->getTotalLocations(),
-                        'active_orders' => $this->orderModel->getActiveOrdersCount(),
-                        'today_orders' => $this->orderModel->getTodayOrdersCount()
+                        'total_sedii' => count($this->sediuModel->getAllSedii()),
+                        'sedii_active' => count($this->sediuModel->getSediiActive()),
+                        'total_comenzi' => $statistici_generale['total_comenzi'] ?? 0,
+                        'comenzi_active' => ($statistici_generale['comenzi_noi'] ?? 0) + ($statistici_generale['comenzi_in_curs'] ?? 0),
+                        'comenzi_astazi' => $statistici_generale['comenzi_astazi'] ?? 0,
+                        'total_resurse' => count($this->resourceModel->getAllResources())
                     ];
             }
             
-            $this->json([
+            $this->respondJSON([
                 'success' => true,
                 'data' => $stats,
-                'type' => $type,
+                'tip' => $tip,
                 'timestamp' => date('c')
             ]);
             
         } catch (Exception $e) {
-            error_log("API Error - getStatistics: " . $e->getMessage());
-            $this->json([
+            error_log("API Error - getStatistici: " . $e->getMessage());
+            $this->respondJSON([
                 'success' => false,
-                'error' => 'Eroare la obținerea statisticilor'
+                'error' => 'Eroare la obtinerea statisticilor',
+                'code' => 'STATS_ERROR'
+            ], 500);
+        }
+    }
+    
+    /**
+     * API endpoint: GET /api/cautare
+     * Cautare in toate entitatile
+     */
+    public function cautare() {
+        try {
+            $query = sanitize_input($_GET['q'] ?? '');
+            $tip = sanitize_input($_GET['tip'] ?? 'toate');
+            $limit = sanitize_numeric($_GET['limit'] ?? 20, 1, 100);
+            
+            if (empty($query) || strlen($query) < 2) {
+                $this->respondJSON([
+                    'success' => false,
+                    'error' => 'Interogarea trebuie sa aiba cel putin 2 caractere',
+                    'code' => 'QUERY_TOO_SHORT'
+                ], 400);
+                return;
+            }
+            
+            $rezultate = [];
+            
+            if ($tip === 'toate' || $tip === 'sedii') {
+                $rezultate['sedii'] = $this->sediuModel->searchSedii($query);
+                $rezultate['sedii'] = array_slice($rezultate['sedii'], 0, $limit);
+            }
+            
+            if ($tip === 'toate' || $tip === 'comenzi') {
+                $comenzi = $this->comandaModel->getAllComenzi();
+                $rezultate['comenzi'] = array_filter($comenzi, function($c) use ($query) {
+                    return stripos($c['nume_client'], $query) !== false ||
+                           stripos($c['nume_sediu'], $query) !== false ||
+                           stripos($c['TipServiciu'], $query) !== false;
+                });
+                $rezultate['comenzi'] = array_slice(array_values($rezultate['comenzi']), 0, $limit);
+            }
+            
+            if ($tip === 'toate' || $tip === 'resurse') {
+                $rezultate['resurse'] = $this->resourceModel->searchResources($query, $limit);
+            }
+            
+            $total_rezultate = array_sum(array_map('count', $rezultate));
+            
+            $this->respondJSON([
+                'success' => true,
+                'data' => $rezultate,
+                'meta' => [
+                    'query' => $query,
+                    'tip' => $tip,
+                    'total_rezultate' => $total_rezultate,
+                    'limit' => $limit
+                ],
+                'timestamp' => date('c')
+            ]);
+            
+        } catch (Exception $e) {
+            error_log("API Error - cautare: " . $e->getMessage());
+            $this->respondJSON([
+                'success' => false,
+                'error' => 'Eroare la cautare',
+                'code' => 'SEARCH_ERROR'
             ], 500);
         }
     }
     
     /**
      * API endpoint: GET /api/health
+     * Verifica starea sistemului
      */
     public function healthCheck() {
         try {
@@ -491,189 +707,95 @@ class APIController extends Controller {
                 'status' => 'healthy',
                 'timestamp' => date('c'),
                 'version' => '1.0.0',
-                'database' => $this->checkDatabaseHealth(),
-                'services' => [
-                    'locations' => $this->checkLocationService(),
-                    'orders' => $this->checkOrderService(),
-                    'resources' => $this->checkResourceService()
+                'sistem' => 'CaS - Cleaning Web Simulator',
+                'baza_date' => $this->checkDatabaseHealth(),
+                'servicii' => [
+                    'sedii' => $this->checkSediuService(),
+                    'comenzi' => $this->checkComandaService(),
+                    'resurse' => $this->checkResourceService()
                 ]
             ];
             
-            // Determine overall health status
-            $all_healthy = $health_data['database']['status'] === 'ok';
-            foreach ($health_data['services'] as $service) {
-                if ($service['status'] !== 'ok') {
-                    $all_healthy = false;
+            // Determina statusul general
+            $toate_ok = $health_data['baza_date']['status'] === 'ok';
+            foreach ($health_data['servicii'] as $serviciu) {
+                if ($serviciu['status'] !== 'ok') {
+                    $toate_ok = false;
                     break;
                 }
             }
             
-            if (!$all_healthy) {
+            if (!$toate_ok) {
                 $health_data['status'] = 'degraded';
             }
             
-            $status_code = $all_healthy ? 200 : 503;
+            $status_code = $toate_ok ? 200 : 503;
             
-            $this->json($health_data, $status_code);
+            $this->respondJSON($health_data, $status_code);
             
         } catch (Exception $e) {
             error_log("API Error - healthCheck: " . $e->getMessage());
-            $this->json([
+            $this->respondJSON([
                 'status' => 'unhealthy',
-                'error' => 'Eroare la verificarea stării sistemului',
+                'error' => 'Eroare critica la verificarea starii sistemului',
                 'timestamp' => date('c')
             ], 503);
         }
     }
     
     /**
-     * API endpoint: GET /api/search
-     */
-    public function search() {
-        try {
-            $query = sanitize_input($_GET['q'] ?? '');
-            $type = sanitize_input($_GET['type'] ?? 'all');
-            $limit = sanitize_numeric($_GET['limit'] ?? 20, 1, 100);
-            
-            if (empty($query) || strlen($query) < 2) {
-                $this->json([
-                    'success' => false,
-                    'error' => 'Interogarea trebuie să aibă cel puțin 2 caractere'
-                ], 400);
-                return;
-            }
-            
-            $results = [];
-            
-            if ($type === 'all' || $type === 'locations') {
-                $results['locations'] = $this->locationModel->searchLocations($query, $limit);
-            }
-            
-            if ($type === 'all' || $type === 'orders') {
-                $results['orders'] = $this->orderModel->searchOrders($query, $limit);
-            }
-            
-            if ($type === 'all' || $type === 'resources') {
-                $results['resources'] = $this->resourceModel->searchResources($query, $limit);
-            }
-            
-            $total_results = array_sum(array_map('count', $results));
-            
-            $this->json([
-                'success' => true,
-                'data' => $results,
-                'meta' => [
-                    'query' => $query,
-                    'type' => $type,
-                    'total_results' => $total_results,
-                    'limit' => $limit
-                ],
-                'timestamp' => date('c')
-            ]);
-            
-        } catch (Exception $e) {
-            error_log("API Error - search: " . $e->getMessage());
-            $this->json([
-                'success' => false,
-                'error' => 'Eroare la căutare'
-            ], 500);
-        }
-    }
-    
-    /**
-     * Check database connectivity
-     */
-    private function checkDatabaseHealth() {
-        try {
-            $db = Database::getInstance();
-            $stmt = $db->query("SELECT 1");
-            
-            return [
-                'status' => 'ok',
-                'response_time' => microtime(true) - $_SERVER['REQUEST_TIME_FLOAT']
-            ];
-        } catch (Exception $e) {
-            return [
-                'status' => 'error',
-                'error' => 'Database connection failed'
-            ];
-        }
-    }
-    
-    /**
-     * Check location service
-     */
-    private function checkLocationService() {
-        try {
-            $count = $this->locationModel->getTotalLocations();
-            return [
-                'status' => 'ok',
-                'total_locations' => $count
-            ];
-        } catch (Exception $e) {
-            return [
-                'status' => 'error',
-                'error' => 'Location service failed'
-            ];
-        }
-    }
-    
-    /**
-     * Check order service
-     */
-    private function checkOrderService() {
-        try {
-            $count = $this->orderModel->getActiveOrdersCount();
-            return [
-                'status' => 'ok',
-                'active_orders' => $count
-            ];
-        } catch (Exception $e) {
-            return [
-                'status' => 'error',
-                'error' => 'Order service failed'
-            ];
-        }
-    }
-    
-    /**
-     * Check resource service
-     */
-    private function checkResourceService() {
-        try {
-            $count = $this->resourceModel->getTotalResourcesCount();
-            return [
-                'status' => 'ok',
-                'total_resources' => $count
-            ];
-        } catch (Exception $e) {
-            return [
-                'status' => 'error',
-                'error' => 'Resource service failed'
-            ];
-        }
-    }
-    
-    /**
-     * Handle undefined API endpoints
+     * Endpoint pentru cereri nerecunoscute
      */
     public function notFound() {
-        $this->json([
+        $this->respondJSON([
             'success' => false,
-            'error' => 'Endpoint API nu a fost găsit',
-            'available_endpoints' => [
-                'GET /api/locations',
-                'GET /api/locations/{id}',
-                'GET /api/orders',
-                'POST /api/orders',
-                'PUT /api/orders/{id}',
-                'DELETE /api/orders/{id}',
-                'GET /api/resources',
-                'PUT /api/resources/{id}',
-                'GET /api/statistics',
-                'GET /api/search',
-                'GET /api/health'
+            'error' => 'Endpoint API nu a fost gasit',
+            'code' => 'ENDPOINT_NOT_FOUND',
+            'endpointuri_disponibile' => [
+                'GET /api/sedii - Lista sedii',
+                'GET /api/sedii/{id} - Detalii sediu',
+                'GET /api/comenzi - Lista comenzi',
+                'POST /api/comenzi - Creeaza comanda',
+                'PUT /api/comenzi/{id} - Actualizeaza comanda',
+                'DELETE /api/comenzi/{id} - Sterge comanda',
+                'GET /api/resurse - Lista resurse',
+                'PUT /api/resurse/{id} - Actualizeaza resursa',
+                'GET /api/statistici - Statistici generale',
+                'GET /api/cautare - Cautare globala',
+                'GET /api/health - Status sistem'
             ]
         ], 404);
     }
-}
+    
+    /**
+     * Functii helper
+     */
+    
+    /**
+     * Trimite raspuns JSON
+     */
+    private function respondJSON($data, $status_code = 200) {
+        http_response_code($status_code);
+        echo json_encode($data, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
+        exit();
+    }
+    
+    /**
+     * Obtine input JSON din request
+     */
+    private function getJSONInput() {
+        $input = file_get_contents('php://input');
+        if (empty($input)) {
+            return null;
+        }
+        
+        $decoded = json_decode($input, true);
+        if (json_last_error() !== JSON_ERROR_NONE) {
+            return null;
+        }
+        
+        return $decoded;
+    }
+    
+    /**
+     * Verifica starea bazei de
