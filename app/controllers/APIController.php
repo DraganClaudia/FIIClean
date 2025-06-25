@@ -1,6 +1,6 @@
 <?php
 /**
- * APIController - servicii Web REST complete si corecte
+ * APIController - servicii Web REST pentru sistemul de spalatorii
  * Implementeaza arhitectura bazata pe servicii Web conform specificatiilor
  */
 require_once 'app/models/SediuModel.php';
@@ -37,12 +37,13 @@ class APIController extends Controller {
     
     /**
      * API endpoint: GET /api/sedii
-     * Returneaza lista sediilor cu filtrare optionala
+     * Returneaza lista sediilor cu filtrare pentru localizare geografica
      */
     public function getSedii() {
         try {
             $stare = sanitize_input($_GET['stare'] ?? null);
-            $tip_serviciu = sanitize_input($_GET['tip_serviciu'] ?? null);
+            $lat = sanitize_numeric($_GET['lat'] ?? null);
+            $lng = sanitize_numeric($_GET['lng'] ?? null);
             
             if ($stare) {
                 $sedii = $this->sediuModel->getSediiByStare($stare);
@@ -50,9 +51,10 @@ class APIController extends Controller {
                 $sedii = $this->sediuModel->getAllSedii();
             }
             
-            // Adauga statistici pentru fiecare sediu
+            // Adauga statistici pentru monitorizare in timp real
             foreach ($sedii as &$sediu) {
                 $sediu['stats'] = $this->sediuModel->getSediuStats($sediu['id']);
+                $sediu['servicii_disponibile'] = ['covor', 'auto', 'textil'];
             }
             
             $this->respondJSON([
@@ -74,7 +76,7 @@ class APIController extends Controller {
     
     /**
      * API endpoint: GET /api/sedii/{id}
-     * Returneaza detalii despre un sediu specific
+     * Returneaza detalii despre un sediu specific pentru monitorizare
      */
     public function getSediu() {
         try {
@@ -100,7 +102,7 @@ class APIController extends Controller {
                 return;
             }
             
-            // Obtine date suplimentare
+            // Obtine date pentru monitorizare timp real
             $stats = $this->sediuModel->getSediuStats($id);
             $comenzi_recente = $this->comandaModel->getComenziForSediu($id, 5);
             
@@ -110,7 +112,7 @@ class APIController extends Controller {
                     'sediu' => $sediu,
                     'statistici' => $stats,
                     'comenzi_recente' => $comenzi_recente,
-                    'status_operational' => $sediu['Stare'] === 'activ'
+                    'operational_status' => $sediu['Stare'] === 'activ'
                 ],
                 'timestamp' => date('c')
             ]);
@@ -127,7 +129,7 @@ class APIController extends Controller {
     
     /**
      * API endpoint: GET /api/comenzi
-     * Returneaza lista comenzilor cu filtrare
+     * Returneaza lista comenzilor cu filtrare pentru statistici
      */
     public function getComenzi() {
         try {
@@ -186,7 +188,7 @@ class APIController extends Controller {
     
     /**
      * API endpoint: POST /api/comenzi
-     * Creeaza o comanda noua
+     * Creeaza o comanda noua cu planificare si transport
      */
     public function createComanda() {
         try {
@@ -222,7 +224,7 @@ class APIController extends Controller {
             $recurenta = isset($input['recurenta']) ? (bool)$input['recurenta'] : false;
             $transport = isset($input['transport']) ? (bool)$input['transport'] : false;
             
-            // Validare tip serviciu
+            // Validare tip serviciu (covoare, autoturisme, imbracaminte)
             $servicii_valide = ['covor', 'auto', 'textil'];
             if (!in_array($tip_serviciu, $servicii_valide)) {
                 $this->respondJSON([
@@ -233,7 +235,7 @@ class APIController extends Controller {
                 return;
             }
             
-            // Validare data
+            // Validare data programare
             $data_obj = DateTime::createFromFormat('Y-m-d', $data_programare);
             if (!$data_obj || $data_obj->format('Y-m-d') !== $data_programare) {
                 $this->respondJSON([
@@ -264,7 +266,7 @@ class APIController extends Controller {
                 return;
             }
             
-            // Verifica daca sediul exista si este activ
+            // Verifica daca sediul exista si este operational
             $sediu = $this->sediuModel->getSediuById($sediu_id);
             if (!$sediu) {
                 $this->respondJSON([
@@ -321,7 +323,7 @@ class APIController extends Controller {
     
     /**
      * API endpoint: PUT /api/comenzi/{id}
-     * Actualizeaza o comanda existenta
+     * Actualizeaza status comanda
      */
     public function updateComanda() {
         try {
@@ -337,11 +339,11 @@ class APIController extends Controller {
                 return;
             }
             
-            if (!$input) {
+            if (!$input || !isset($input['status'])) {
                 $this->respondJSON([
                     'success' => false,
-                    'error' => 'Date JSON necesare pentru actualizare',
-                    'code' => 'MISSING_JSON'
+                    'error' => 'Status nou necesar pentru actualizare',
+                    'code' => 'MISSING_STATUS'
                 ], 400);
                 return;
             }
@@ -357,47 +359,38 @@ class APIController extends Controller {
                 return;
             }
             
-            // Actualizeaza statusul daca este furnizat
-            if (isset($input['status'])) {
-                $status_valid = ['noua', 'in curs', 'finalizata', 'anulata'];
-                $new_status = sanitize_input($input['status']);
+            $status_valid = ['noua', 'in curs', 'finalizata', 'anulata'];
+            $new_status = sanitize_input($input['status']);
+            
+            if (!in_array($new_status, $status_valid)) {
+                $this->respondJSON([
+                    'success' => false,
+                    'error' => 'Status invalid. Valori permise: ' . implode(', ', $status_valid),
+                    'code' => 'INVALID_STATUS'
+                ], 400);
+                return;
+            }
+            
+            $success = $this->comandaModel->updateComandaStatus($id, $new_status);
+            
+            if ($success) {
+                $comanda_actualizata = $this->comandaModel->getComandaById($id);
                 
-                if (!in_array($new_status, $status_valid)) {
-                    $this->respondJSON([
-                        'success' => false,
-                        'error' => 'Status invalid. Valori permise: ' . implode(', ', $status_valid),
-                        'code' => 'INVALID_STATUS'
-                    ], 400);
-                    return;
-                }
-                
-                $success = $this->comandaModel->updateComandaStatus($id, $new_status);
-                
-                if ($success) {
-                    $comanda_actualizata = $this->comandaModel->getComandaById($id);
-                    
-                    $this->respondJSON([
-                        'success' => true,
-                        'data' => [
-                            'comanda_id' => $id,
-                            'comanda' => $comanda_actualizata,
-                            'message' => 'Status comanda actualizat cu succes'
-                        ],
-                        'timestamp' => date('c')
-                    ]);
-                } else {
-                    $this->respondJSON([
-                        'success' => false,
-                        'error' => 'Eroare la actualizarea statusului',
-                        'code' => 'UPDATE_FAILED'
-                    ], 500);
-                }
+                $this->respondJSON([
+                    'success' => true,
+                    'data' => [
+                        'comanda_id' => $id,
+                        'comanda' => $comanda_actualizata,
+                        'message' => 'Status comanda actualizat cu succes'
+                    ],
+                    'timestamp' => date('c')
+                ]);
             } else {
                 $this->respondJSON([
                     'success' => false,
-                    'error' => 'Nu au fost furnizate campuri pentru actualizare',
-                    'code' => 'NO_UPDATE_FIELDS'
-                ], 400);
+                    'error' => 'Eroare la actualizarea statusului',
+                    'code' => 'UPDATE_FAILED'
+                ], 500);
             }
             
         } catch (Exception $e) {
@@ -465,7 +458,7 @@ class APIController extends Controller {
     
     /**
      * API endpoint: GET /api/resurse
-     * Returneaza lista resurselor
+     * Returneaza lista resurselor (detergenti, echipamente, apa)
      */
     public function getResurse() {
         try {
@@ -568,7 +561,7 @@ class APIController extends Controller {
     
     /**
      * API endpoint: GET /api/statistici
-     * Returneaza statistici generale
+     * Returneaza statistici pentru monitorizare (zi, luna, an)
      */
     public function getStatistici() {
         try {
@@ -744,6 +737,64 @@ class APIController extends Controller {
     }
     
     /**
+     * Export data in CSV/JSON format
+     */
+    public function exportData() {
+        try {
+            $type = sanitize_input($_GET['type'] ?? '');
+            $format = sanitize_input($_GET['format'] ?? 'csv');
+            
+            if (!verify_csrf_token($_GET['csrf_token'] ?? '')) {
+                $this->respondJSON(['error' => 'Token CSRF invalid'], 400);
+                return;
+            }
+            
+            $data = [];
+            $filename = '';
+            
+            switch ($type) {
+                case 'comenzi':
+                    $data = $this->comandaModel->getAllComenzi();
+                    $filename = 'comenzi_' . date('Y-m-d');
+                    break;
+                case 'sedii':
+                    $data = $this->sediuModel->getAllSedii();
+                    $filename = 'sedii_' . date('Y-m-d');
+                    break;
+                case 'resurse':
+                    $data = $this->resourceModel->getAllResources();
+                    $filename = 'resurse_' . date('Y-m-d');
+                    break;
+                default:
+                    $this->respondJSON(['error' => 'Tip de export necunoscut'], 400);
+                    return;
+            }
+            
+            if ($format === 'json') {
+                header('Content-Type: application/json');
+                header('Content-Disposition: attachment; filename="' . $filename . '.json"');
+                echo json_encode($data, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
+            } else {
+                header('Content-Type: text/csv');
+                header('Content-Disposition: attachment; filename="' . $filename . '.csv"');
+                
+                $output = fopen('php://output', 'w');
+                if (!empty($data)) {
+                    fputcsv($output, array_keys($data[0]));
+                    foreach ($data as $row) {
+                        fputcsv($output, $row);
+                    }
+                }
+                fclose($output);
+            }
+            
+        } catch (Exception $e) {
+            error_log("Export error: " . $e->getMessage());
+            $this->respondJSON(['error' => 'Eroare la export'], 500);
+        }
+    }
+    
+    /**
      * Endpoint pentru cereri nerecunoscute
      */
     public function notFound() {
@@ -798,4 +849,51 @@ class APIController extends Controller {
     }
     
     /**
-     * Verifica starea bazei de
+     * Verifica starea bazei de date
+     */
+    private function checkDatabaseHealth() {
+        try {
+            $this->db->query("SELECT 1");
+            return ['status' => 'ok', 'message' => 'Conexiune baza de date functionala'];
+        } catch (Exception $e) {
+            return ['status' => 'error', 'message' => 'Eroare conexiune baza de date'];
+        }
+    }
+    
+    /**
+     * Verifica serviciul sedii
+     */
+    private function checkSediuService() {
+        try {
+            $this->sediuModel->getAllSedii();
+            return ['status' => 'ok', 'message' => 'Serviciu sedii functional'];
+        } catch (Exception $e) {
+            return ['status' => 'error', 'message' => 'Eroare serviciu sedii'];
+        }
+    }
+    
+    /**
+     * Verifica serviciul comenzi
+     */
+    private function checkComandaService() {
+        try {
+            $this->comandaModel->getStatsGeneral();
+            return ['status' => 'ok', 'message' => 'Serviciu comenzi functional'];
+        } catch (Exception $e) {
+            return ['status' => 'error', 'message' => 'Eroare serviciu comenzi'];
+        }
+    }
+    
+    /**
+     * Verifica serviciul resurse
+     */
+    private function checkResourceService() {
+        try {
+            $this->resourceModel->getAllResources();
+            return ['status' => 'ok', 'message' => 'Serviciu resurse functional'];
+        } catch (Exception $e) {
+            return ['status' => 'error', 'message' => 'Eroare serviciu resurse'];
+        }
+    }
+}
+?>
