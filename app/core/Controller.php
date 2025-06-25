@@ -1,7 +1,6 @@
 <?php
 /**
- * Base Controller class
- * Provides common functionality for all controllers
+ * Controller de baza - functionalitate comuna pentru toate controller-ele
  */
 abstract class Controller {
     protected $db;
@@ -11,29 +10,25 @@ abstract class Controller {
     }
     
     /**
-     * Load a view with data
+     * Incarca view cu date
      */
     protected function view($viewName, $data = []) {
-        // Extract data array to variables
         extract($data);
         
-        // Include header
         include 'app/views/layouts/header.php';
         
-        // Include the specific view
         $viewPath = 'app/views/' . $viewName . '.php';
         if (file_exists($viewPath)) {
             include $viewPath;
         } else {
-            echo '<div class="error">View not found: ' . htmlspecialchars($viewName) . '</div>';
+            echo '<div class="alert alert-error">View not found: ' . htmlspecialchars($viewName) . '</div>';
         }
         
-        // Include footer
         include 'app/views/layouts/footer.php';
     }
     
     /**
-     * Redirect to a specific URL
+     * Redirect
      */
     protected function redirect($url) {
         header('Location: ' . $url);
@@ -41,7 +36,7 @@ abstract class Controller {
     }
     
     /**
-     * Return JSON response for AJAX calls
+     * JSON response pentru AJAX
      */
     protected function json($data, $statusCode = 200) {
         http_response_code($statusCode);
@@ -51,10 +46,23 @@ abstract class Controller {
     }
     
     /**
-     * Check if request is AJAX
+     * Verifica daca request-ul este AJAX
      */
     protected function isAjax() {
         return isset($_SERVER['HTTP_X_REQUESTED_WITH']) && 
                strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest';
+    }
+    
+    /**
+     * Verifica autentificarea
+     */
+    protected function requireAuth() {
+        if (!isset($_SESSION['user_id'])) {
+            if ($this->isAjax()) {
+                $this->json(['error' => 'Autentificare necesara'], 401);
+            } else {
+                $this->redirect('?controller=auth&action=login');
+            }
+        }
     }
 }
