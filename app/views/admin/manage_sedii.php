@@ -1,8 +1,14 @@
+<?php
+/**
+ * View pentru gestionarea sediilor - simplified version
+ */
+?>
+
 <div class="container">
     <div class="page-header">
-        <h1>Management Locații</h1>
+        <h1>Gestionare Sedii</h1>
         <div class="breadcrumb">
-            <a href="?controller=admin&action=dashboard">Admin</a> > <span class="active">Management Locații</span>
+            <a href="?controller=admin&action=dashboard">Admin</a> > <span class="active">Gestionare Sedii</span>
         </div>
     </div>
 
@@ -10,99 +16,99 @@
         <div class="alert alert-error"><?php echo htmlspecialchars($error); ?></div>
     <?php endif; ?>
 
-    <!-- Add Location Form -->
+    <!-- Adauga Sediu Nou -->
     <div class="section">
         <div class="section-header">
-            <h2>Adaugă Locație Nouă</h2>
-            <button id="toggleForm" class="btn btn-primary">+ Adaugă Locație</button>
+            <h2>Adauga Sediu Nou</h2>
+            <button id="toggleForm" class="btn btn-primary">+ Adauga Sediu</button>
         </div>
         
-        <div id="addLocationForm" class="form-container" style="display: none;">
-            <form id="locationForm" method="POST" action="">
+        <div id="addSediuForm" class="form-container" style="display: none;">
+            <form id="sediuForm" method="POST" action="">
                 <input type="hidden" name="csrf_token" value="<?php echo $csrf_token; ?>">
                 <input type="hidden" name="action" value="add">
                 
                 <div class="form-grid">
                     <div class="form-group">
-                        <label for="name">Nume Locație *</label>
-                        <input type="text" id="name" name="name" required maxlength="100">
+                        <label for="nume">Nume Sediu *</label>
+                        <input type="text" id="nume" name="nume" required maxlength="100">
                     </div>
                     
                     <div class="form-group">
-                        <label for="address">Adresă *</label>
-                        <input type="text" id="address" name="address" required maxlength="255">
+                        <label for="adresa">Adresa *</label>
+                        <input type="text" id="adresa" name="adresa" required maxlength="255">
                     </div>
                     
                     <div class="form-group">
-                        <label for="latitude">Latitudine</label>
-                        <input type="number" id="latitude" name="latitude" step="0.000001" min="-90" max="90">
+                        <label for="latitudine">Latitudine</label>
+                        <input type="number" id="latitudine" name="latitudine" step="0.000001" min="-90" max="90">
                     </div>
                     
                     <div class="form-group">
-                        <label for="longitude">Longitudine</label>
-                        <input type="number" id="longitude" name="longitude" step="0.000001" min="-180" max="180">
+                        <label for="longitudine">Longitudine</label>
+                        <input type="number" id="longitudine" name="longitudine" step="0.000001" min="-180" max="180">
                     </div>
                 </div>
                 
                 <div class="form-actions">
-                    <button type="submit" class="btn btn-primary">Adaugă Locația</button>
-                    <button type="button" id="cancelAdd" class="btn btn-secondary">Anulează</button>
+                    <button type="submit" class="btn btn-primary">Adauga Sediul</button>
+                    <button type="button" id="cancelAdd" class="btn btn-secondary">Anuleaza</button>
                 </div>
             </form>
         </div>
     </div>
 
-    <!-- Locations List -->
+    <!-- Lista Sedii -->
     <div class="section">
         <div class="section-header">
-            <h2>Locațiile Existente</h2>
+            <h2>Sediile Existente</h2>
             <div class="search-container">
-                <input type="text" id="searchInput" placeholder="Caută locații..." class="search-input">
+                <input type="text" id="searchInput" placeholder="Cauta sedii..." class="search-input">
             </div>
         </div>
         
         <div class="table-container">
-            <table class="data-table" id="locationsTable">
+            <table class="data-table" id="sediiTable">
                 <thead>
                     <tr>
                         <th>ID</th>
                         <th>Nume</th>
-                        <th>Adresă</th>
+                        <th>Adresa</th>
                         <th>Coordonate</th>
                         <th>Status</th>
                         <th>Total Comenzi</th>
-                        <th>Acțiuni</th>
+                        <th>Actiuni</th>
                     </tr>
                 </thead>
                 <tbody>
-                    <?php if (isset($locations) && !empty($locations)): ?>
-                        <?php foreach ($locations as $location): ?>
-                            <tr data-location-id="<?php echo $location['id']; ?>">
-                                <td><?php echo $location['id']; ?></td>
-                                <td><?php echo htmlspecialchars($location['Nume']); ?></td>
-                                <td><?php echo htmlspecialchars($location['Adresa'] ?? 'N/A'); ?></td>
+                    <?php if (isset($sedii) && !empty($sedii)): ?>
+                        <?php foreach ($sedii as $sediu): ?>
+                            <tr data-sediu-id="<?php echo $sediu['id']; ?>">
+                                <td><?php echo $sediu['id']; ?></td>
+                                <td><?php echo htmlspecialchars($sediu['Nume']); ?></td>
+                                <td><?php echo htmlspecialchars($sediu['Adresa'] ?? 'N/A'); ?></td>
                                 <td>
-                                    <?php if (!empty($location['Latitudine']) && !empty($location['Longitudine'])): ?>
-                                        <?php echo number_format($location['Latitudine'], 6); ?>, 
-                                        <?php echo number_format($location['Longitudine'], 6); ?>
+                                    <?php if (!empty($sediu['Latitudine']) && !empty($sediu['Longitudine'])): ?>
+                                        <?php echo number_format($sediu['Latitudine'], 6); ?>, 
+                                        <?php echo number_format($sediu['Longitudine'], 6); ?>
                                     <?php else: ?>
                                         N/A
                                     <?php endif; ?>
                                 </td>
                                 <td>
-                                    <span class="status-badge <?php echo $location['Stare']; ?>">
-                                        <?php echo ucfirst($location['Stare']); ?>
+                                    <span class="status-badge <?php echo $sediu['Stare']; ?>">
+                                        <?php echo ucfirst($sediu['Stare']); ?>
                                     </span>
                                 </td>
-                                <td><?php echo $location['total_orders'] ?? 0; ?></td>
+                                <td><?php echo $sediu['total_comenzi'] ?? 0; ?></td>
                                 <td>
                                     <div class="action-buttons">
-                                        <button onclick="editLocation(<?php echo $location['id']; ?>)" 
-                                                class="btn btn-sm btn-edit" title="Editează">
+                                        <button onclick="editSediu(<?php echo $sediu['id']; ?>)" 
+                                                class="btn btn-sm btn-edit" title="Editeaza">
                                             ✏️
                                         </button>
-                                        <button onclick="deleteLocation(<?php echo $location['id']; ?>)" 
-                                                class="btn btn-sm btn-delete" title="Șterge">
+                                        <button onclick="deleteSediu(<?php echo $sediu['id']; ?>)" 
+                                                class="btn btn-sm btn-delete" title="Sterge">
                                             🗑️
                                         </button>
                                     </div>
@@ -111,7 +117,7 @@
                         <?php endforeach; ?>
                     <?php else: ?>
                         <tr>
-                            <td colspan="7" class="no-data">Nu există locații înregistrate</td>
+                            <td colspan="7" class="no-data">Nu exista sedii inregistrate</td>
                         </tr>
                     <?php endif; ?>
                 </tbody>
@@ -120,11 +126,11 @@
     </div>
 </div>
 
-<!-- Edit Location Modal -->
+<!-- Modal Editare Sediu -->
 <div id="editModal" class="modal" style="display: none;">
     <div class="modal-content">
         <div class="modal-header">
-            <h3>Editează Locația</h3>
+            <h3>Editeaza Sediul</h3>
             <button class="modal-close" onclick="closeEditModal()">&times;</button>
         </div>
         <div class="modal-body">
@@ -134,39 +140,39 @@
                 <input type="hidden" id="edit_id" name="id">
                 
                 <div class="form-group">
-                    <label for="edit_name">Nume Locație *</label>
-                    <input type="text" id="edit_name" name="name" required maxlength="100">
+                    <label for="edit_nume">Nume Sediu *</label>
+                    <input type="text" id="edit_nume" name="nume" required maxlength="100">
                 </div>
                 
                 <div class="form-group">
-                    <label for="edit_address">Adresă *</label>
-                    <input type="text" id="edit_address" name="address" required maxlength="255">
+                    <label for="edit_adresa">Adresa *</label>
+                    <input type="text" id="edit_adresa" name="adresa" required maxlength="255">
                 </div>
                 
                 <div class="form-grid">
                     <div class="form-group">
-                        <label for="edit_latitude">Latitudine</label>
-                        <input type="number" id="edit_latitude" name="latitude" step="0.000001" min="-90" max="90">
+                        <label for="edit_latitudine">Latitudine</label>
+                        <input type="number" id="edit_latitudine" name="latitudine" step="0.000001" min="-90" max="90">
                     </div>
                     
                     <div class="form-group">
-                        <label for="edit_longitude">Longitudine</label>
-                        <input type="number" id="edit_longitude" name="longitude" step="0.000001" min="-180" max="180">
+                        <label for="edit_longitudine">Longitudine</label>
+                        <input type="number" id="edit_longitudine" name="longitudine" step="0.000001" min="-180" max="180">
                     </div>
                 </div>
                 
                 <div class="form-group">
-                    <label for="edit_status">Status</label>
-                    <select id="edit_status" name="status">
+                    <label for="edit_stare">Status</label>
+                    <select id="edit_stare" name="stare">
                         <option value="activ">Activ</option>
                         <option value="inactiv">Inactiv</option>
-                        <option value="reparatii">În reparații</option>
+                        <option value="reparatii">In reparatii</option>
                     </select>
                 </div>
                 
                 <div class="form-actions">
-                    <button type="submit" class="btn btn-primary">Salvează Modificările</button>
-                    <button type="button" onclick="closeEditModal()" class="btn btn-secondary">Anulează</button>
+                    <button type="submit" class="btn btn-primary">Salveaza Modificarile</button>
+                    <button type="button" onclick="closeEditModal()" class="btn btn-secondary">Anuleaza</button>
                 </div>
             </form>
         </div>
@@ -461,23 +467,23 @@
 <script>
 // Toggle add form
 document.getElementById('toggleForm').addEventListener('click', function() {
-    const form = document.getElementById('addLocationForm');
+    const form = document.getElementById('addSediuForm');
     const isVisible = form.style.display !== 'none';
     form.style.display = isVisible ? 'none' : 'block';
-    this.textContent = isVisible ? '+ Adaugă Locație' : 'Ascunde Formularul';
+    this.textContent = isVisible ? '+ Adauga Sediu' : 'Ascunde Formularul';
 });
 
 // Cancel add form
 document.getElementById('cancelAdd').addEventListener('click', function() {
-    document.getElementById('addLocationForm').style.display = 'none';
-    document.getElementById('toggleForm').textContent = '+ Adaugă Locație';
-    document.getElementById('locationForm').reset();
+    document.getElementById('addSediuForm').style.display = 'none';
+    document.getElementById('toggleForm').textContent = '+ Adauga Sediu';
+    document.getElementById('sediuForm').reset();
 });
 
 // Search functionality
 document.getElementById('searchInput').addEventListener('input', function() {
     const searchTerm = this.value.toLowerCase();
-    const rows = document.querySelectorAll('#locationsTable tbody tr');
+    const rows = document.querySelectorAll('#sediiTable tbody tr');
     
     rows.forEach(row => {
         const text = row.textContent.toLowerCase();
@@ -485,28 +491,28 @@ document.getElementById('searchInput').addEventListener('input', function() {
     });
 });
 
-// Edit location function
-function editLocation(id) {
-    // Get location data from table row
-    const row = document.querySelector(`tr[data-location-id="${id}"]`);
+// Edit sediu function
+function editSediu(id) {
+    // Get sediu data from table row
+    const row = document.querySelector(`tr[data-sediu-id="${id}"]`);
     const cells = row.querySelectorAll('td');
     
     // Populate edit form
     document.getElementById('edit_id').value = id;
-    document.getElementById('edit_name').value = cells[1].textContent;
-    document.getElementById('edit_address').value = cells[2].textContent;
+    document.getElementById('edit_nume').value = cells[1].textContent;
+    document.getElementById('edit_adresa').value = cells[2].textContent;
     
     // Parse coordinates
     const coords = cells[3].textContent.trim();
     if (coords !== 'N/A') {
         const [lat, lng] = coords.split(', ');
-        document.getElementById('edit_latitude').value = lat;
-        document.getElementById('edit_longitude').value = lng;
+        document.getElementById('edit_latitudine').value = lat;
+        document.getElementById('edit_longitudine').value = lng;
     }
     
     // Set status
     const status = cells[4].querySelector('.status-badge').textContent.toLowerCase();
-    document.getElementById('edit_status').value = status;
+    document.getElementById('edit_stare').value = status;
     
     // Show modal
     document.getElementById('editModal').style.display = 'flex';
@@ -518,9 +524,9 @@ function closeEditModal() {
     document.getElementById('editForm').reset();
 }
 
-// Delete location function
-function deleteLocation(id) {
-    if (!confirm('Sigur doriți să ștergeți această locație?')) {
+// Delete sediu function
+function deleteSediu(id) {
+    if (!confirm('Sigur doriti sa stergeti acest sediu?')) {
         return;
     }
     
