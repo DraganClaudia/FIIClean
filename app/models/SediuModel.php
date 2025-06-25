@@ -119,4 +119,19 @@ class SediuModel {
         $stmt = $this->db->query($sql, [$searchTerm, $searchTerm]);
         return $stmt->fetchAll();
     }
+
+    /**
+     * Da sedii dupa stare
+     */
+    public function getSediiByStare($stare) {
+    $sql = "SELECT s.*, COUNT(c.id) as total_comenzi
+            FROM Sediu s
+            LEFT JOIN Comanda c ON s.id = c.idSediu
+            WHERE s.Stare = ?
+            GROUP BY s.id
+            ORDER BY s.Nume";
+    
+    $stmt = $this->db->query($sql, [$stare]);
+    return $stmt->fetchAll();
+    }
 }
