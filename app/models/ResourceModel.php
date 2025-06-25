@@ -1,6 +1,7 @@
 <?php
 /**
- * ResourceModel - handles resource data operations
+ * ResourceModel - simplified pentru operatiuni cu resurse
+ * Adaptat pentru baza de date fiiclean existenta
  */
 class ResourceModel {
     private $db;
@@ -10,7 +11,7 @@ class ResourceModel {
     }
     
     /**
-     * Get all resources
+     * Obtine toate resursele
      */
     public function getAllResources() {
         $sql = "SELECT * FROM Resursa ORDER BY Tip, Nume";
@@ -19,7 +20,7 @@ class ResourceModel {
     }
     
     /**
-     * Get resources by type
+     * Obtine resurse dupa tip
      */
     public function getResourcesByType($type) {
         $sql = "SELECT * FROM Resursa WHERE Tip = ? ORDER BY Nume";
@@ -28,7 +29,7 @@ class ResourceModel {
     }
     
     /**
-     * Get resource by ID
+     * Obtine resursa dupa ID
      */
     public function getResourceById($id) {
         $sql = "SELECT * FROM Resursa WHERE id = ?";
@@ -37,7 +38,7 @@ class ResourceModel {
     }
     
     /**
-     * Create new resource
+     * Creeaza resursa noua
      */
     public function createResource($type, $name, $quantity) {
         $sql = "INSERT INTO Resursa (Tip, Nume, CantitateDisponibila) VALUES (?, ?, ?)";
@@ -46,7 +47,7 @@ class ResourceModel {
     }
     
     /**
-     * Update resource
+     * Actualizeaza resursa
      */
     public function updateResource($id, $type, $name, $quantity) {
         $sql = "UPDATE Resursa SET Tip = ?, Nume = ?, CantitateDisponibila = ? WHERE id = ?";
@@ -55,7 +56,7 @@ class ResourceModel {
     }
     
     /**
-     * Update resource quantity only
+     * Actualizeaza doar cantitatea resursei
      */
     public function updateResourceQuantity($id, $quantity) {
         $sql = "UPDATE Resursa SET CantitateDisponibila = ? WHERE id = ?";
@@ -64,7 +65,7 @@ class ResourceModel {
     }
     
     /**
-     * Delete resource
+     * Sterge resursa
      */
     public function deleteResource($id) {
         $sql = "DELETE FROM Resursa WHERE id = ?";
@@ -73,7 +74,7 @@ class ResourceModel {
     }
     
     /**
-     * Get low stock resources
+     * Obtine resurse cu stoc redus
      */
     public function getLowStockResources($threshold = 10) {
         $sql = "SELECT * FROM Resursa WHERE CantitateDisponibila < ? ORDER BY CantitateDisponibila ASC";
@@ -82,7 +83,7 @@ class ResourceModel {
     }
     
     /**
-     * Get resource consumption for specific order
+     * Obtine consumul de resurse pentru o comanda
      */
     public function getResourceConsumption($order_id) {
         $sql = "SELECT r.*, con.Cantitate as consumed_quantity
@@ -94,7 +95,7 @@ class ResourceModel {
     }
     
     /**
-     * Record resource consumption
+     * Inregistreaza consumul de resurse
      */
     public function recordConsumption($resource_id, $order_id, $quantity) {
         $sql = "INSERT INTO Consum (idResursa, idComanda, Cantitate) VALUES (?, ?, ?)";
@@ -110,7 +111,7 @@ class ResourceModel {
     }
     
     /**
-     * Restock resource - add quantity
+     * Reaprovizionare resursa
      */
     public function restockResource($resource_id, $quantity) {
         $sql = "UPDATE Resursa SET CantitateDisponibila = CantitateDisponibila + ? WHERE id = ?";
@@ -119,7 +120,7 @@ class ResourceModel {
     }
     
     /**
-     * Get resource consumption statistics
+     * Obtine statistici de consum resurse
      */
     public function getResourceConsumptionStats($date_from = null, $date_to = null) {
         $sql = "SELECT 
@@ -146,7 +147,7 @@ class ResourceModel {
     }
     
     /**
-     * Search resources by name or type
+     * Cauta resurse
      */
     public function searchResources($query, $limit = 20) {
         $sql = "SELECT * FROM Resursa 
@@ -160,7 +161,7 @@ class ResourceModel {
     }
     
     /**
-     * Check if resource has enough quantity available
+     * Verifica disponibilitatea resursei
      */
     public function checkAvailability($resource_id, $required_quantity) {
         $sql = "SELECT CantitateDisponibila FROM Resursa WHERE id = ?";
@@ -175,26 +176,7 @@ class ResourceModel {
     }
     
     /**
-     * Get resource utilization rate
-     */
-    public function getResourceUtilizationRate($resource_id, $days = 30) {
-        $sql = "SELECT 
-                    r.CantitateDisponibila as current_stock,
-                    COALESCE(SUM(con.Cantitate), 0) as consumed_quantity,
-                    COUNT(DISTINCT con.idComanda) as orders_count
-                FROM Resursa r
-                LEFT JOIN Consum con ON r.id = con.idResursa
-                LEFT JOIN Comanda c ON con.idComanda = c.id
-                WHERE r.id = ? 
-                AND (c.DataProgramare IS NULL OR c.DataProgramare >= DATE_SUB(CURDATE(), INTERVAL ? DAY))
-                GROUP BY r.id, r.CantitateDisponibila";
-        
-        $stmt = $this->db->query($sql, [$resource_id, $days]);
-        return $stmt->fetch();
-    }
-    
-    /**
-     * Get total number of resources
+     * Obtine numarul total de resurse
      */
     public function getTotalResourcesCount() {
         $sql = "SELECT COUNT(*) as count FROM Resursa";
@@ -204,7 +186,7 @@ class ResourceModel {
     }
     
     /**
-     * Get count of resources grouped by type
+     * Obtine numarul de resurse grupate dupa tip
      */
     public function getResourcesByTypeCount() {
         $sql = "SELECT Tip, COUNT(*) as count FROM Resursa GROUP BY Tip";
@@ -213,14 +195,14 @@ class ResourceModel {
     }
     
     /**
-     * Get available resource types
+     * Obtine tipurile de resurse disponibile
      */
     public function getResourceTypes() {
         return ['detergent', 'apa', 'echipament'];
     }
     
     /**
-     * Get all resources formatted for export
+     * Obtine toate resursele pentru export
      */
     public function getAllResourcesForExport() {
         $sql = "SELECT 
