@@ -17,15 +17,19 @@ class APIController extends Controller {
     public function __construct() {
         parent::__construct();
         
-        // Seteaza headerele pentru API REST
-        header('Content-Type: application/json; charset=utf-8');
-        header('Access-Control-Allow-Origin: *');
-        header('Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS');
-        header('Access-Control-Allow-Headers: Content-Type, Authorization, X-Requested-With, Accept');
+        // Seteaza headerele pentru API REST doar daca nu au fost deja trimise
+        if (!headers_sent()) {
+            header('Content-Type: application/json; charset=utf-8');
+            header('Access-Control-Allow-Origin: *');
+            header('Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS');
+            header('Access-Control-Allow-Headers: Content-Type, Authorization, X-Requested-With, Accept');
+        }
         
         // Gestioneaza cererea OPTIONS pentru CORS preflight
         if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
-            http_response_code(200);
+            if (!headers_sent()) {
+                http_response_code(200);
+            }
             exit();
         }
         
@@ -826,7 +830,11 @@ class APIController extends Controller {
      * Trimite raspuns JSON
      */
     private function respondJSON($data, $status_code = 200) {
-        http_response_code($status_code);
+        // Seteaza header-ele doar daca nu au fost deja trimise
+        if (!headers_sent()) {
+            http_response_code($status_code);
+            header('Content-Type: application/json; charset=utf-8');
+        }
         echo json_encode($data, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
         exit();
     }
