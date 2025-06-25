@@ -1,6 +1,6 @@
 <?php
 /**
- * AuthController - handles authentication and user session management
+ * AuthController - autentificare si inregistrare utilizatori
  */
 require_once 'app/models/UserModel.php';
 
@@ -13,10 +13,10 @@ class AuthController extends Controller {
     }
     
     /**
-     * Login page and authentication
+     * Pagina de login
      */
     public function login() {
-        // Redirect if already logged in
+        // Daca e deja logat, redirect
         if (isset($_SESSION['user_id'])) {
             $this->redirect(BASE_URL);
             return;
@@ -31,38 +31,16 @@ class AuthController extends Controller {
                 $_SESSION['user_id'] = $result['user']['id'];
                 $_SESSION['username'] = $result['user']['username'];
                 $_SESSION['email'] = $result['user']['email'];
-                $_SESSION['login_time'] = time();
                 
-                session_regenerate_id(true);
-                
-                $redirect_url = $_SESSION['intended_url'] ?? BASE_URL;
-                unset($_SESSION['intended_url']);
-                
-                if ($this->isAjax()) {
-                    $this->json([
-                        'success' => true,
-                        'message' => 'Autentificare reușită',
-                        'redirect_url' => $redirect_url
-                    ]);
-                } else {
-                    $this->redirect($redirect_url);
-                }
+                $this->redirect(BASE_URL);
                 return;
             } else {
                 $error = $result['error'];
-                
-                if ($this->isAjax()) {
-                    $this->json([
-                        'success' => false,
-                        'error' => $error
-                    ], 401);
-                    return;
-                }
             }
         }
         
         $data = [
-            'title' => 'Autentificare - CaS',
+            'title' => 'Login - CaS',
             'error' => $error,
             'csrf_token' => generate_csrf_token()
         ];
@@ -71,10 +49,9 @@ class AuthController extends Controller {
     }
     
     /**
-     * Process login form submission
+     * Proceseaza login-ul
      */
     private function processLogin() {
-        // Verify CSRF token
         if (!verify_csrf_token($_POST['csrf_token'] ?? '')) {
             return ['success' => false, 'error' => 'Token de securitate invalid'];
         }
@@ -83,27 +60,17 @@ class AuthController extends Controller {
         $password = $_POST['password'] ?? '';
         
         if (empty($username) || empty($password)) {
-            return ['success' => false, 'error' => 'Username și parola sunt obligatorii'];
-        }
-        
-        if ($this->hasTooManyFailedAttempts($username)) {
-            return ['success' => false, 'error' => 'Prea multe încercări eșuate. Încercați mai târziu.'];
+            return ['success' => false, 'error' => 'Username si parola sunt obligatorii'];
         }
         
         try {
             $user = $this->userModel->authenticateUser($username, $password);
             
             if ($user) {
-                $this->resetFailedAttempts($username);
-                return [
-                    'success' => true,
-                    'user' => $user
-                ];
+                return ['success' => true, 'user' => $user];
             } else {
-                $this->recordFailedAttempt($username);
-                return ['success' => false, 'error' => 'Username sau parolă incorectă'];
+                return ['success' => false, 'error' => 'Credentiale invalide'];
             }
-            
         } catch (Exception $e) {
             error_log("Login error: " . $e->getMessage());
             return ['success' => false, 'error' => 'Eroare la autentificare'];
@@ -111,7 +78,7 @@ class AuthController extends Controller {
     }
     
     /**
-     * Registration page and user creation
+     * Pagina de inregistrare
      */
     public function register() {
         if (isset($_SESSION['user_id'])) {
@@ -122,41 +89,22 @@ class AuthController extends Controller {
         $error = null;
         
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-            $result = $this->processRegistration();
+            $result = $this->processRegister();
             
             if ($result['success']) {
                 $_SESSION['user_id'] = $result['user_id'];
                 $_SESSION['username'] = $result['username'];
                 $_SESSION['email'] = $result['email'];
-                $_SESSION['login_time'] = time();
                 
-                session_regenerate_id(true);
-                
-                if ($this->isAjax()) {
-                    $this->json([
-                        'success' => true,
-                        'message' => 'Cont creat cu succes',
-                        'redirect_url' => BASE_URL
-                    ]);
-                } else {
-                    $this->redirect(BASE_URL);
-                }
+                $this->redirect(BASE_URL);
                 return;
             } else {
                 $error = $result['error'];
-                
-                if ($this->isAjax()) {
-                    $this->json([
-                        'success' => false,
-                        'error' => $error
-                    ], 400);
-                    return;
-                }
             }
         }
         
         $data = [
-            'title' => 'Înregistrare - CaS',
+            'title' => 'Inregistrare - CaS',
             'error' => $error,
             'csrf_token' => generate_csrf_token()
         ];
@@ -165,9 +113,9 @@ class AuthController extends Controller {
     }
     
     /**
-     * Process registration form submission
+     * Proceseaza inregistrarea
      */
-    private function processRegistration() {
+    private function processRegister() {
         if (!verify_csrf_token($_POST['csrf_token'] ?? '')) {
             return ['success' => false, 'error' => 'Token de securitate invalid'];
         }
@@ -175,191 +123,49 @@ class AuthController extends Controller {
         $username = sanitize_input($_POST['username'] ?? '');
         $email = sanitize_input($_POST['email'] ?? '');
         $password = $_POST['password'] ?? '';
-        $confirm_password = $_POST['confirm_password'] ?? '';
+        $confirmPassword = $_POST['confirm_password'] ?? '';
         
-        $validation_result = $this->validateRegistrationData($username, $email, $password, $confirm_password);
-        if (!$validation_result['valid']) {
-            return ['success' => false, 'error' => $validation_result['error']];
+        // Validari
+        if (empty($username) || empty($email) || empty($password)) {
+            return ['success' => false, 'error' => 'Toate campurile sunt obligatorii'];
+        }
+        
+        if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+            return ['success' => false, 'error' => 'Email invalid'];
+        }
+        
+        if (strlen($password) < 6) {
+            return ['success' => false, 'error' => 'Parola trebuie sa aiba minim 6 caractere'];
+        }
+        
+        if ($password !== $confirmPassword) {
+            return ['success' => false, 'error' => 'Parolele nu se potrivesc'];
         }
         
         try {
             if ($this->userModel->userExists($username, $email)) {
-                return ['success' => false, 'error' => 'Username sau email deja înregistrat'];
+                return ['success' => false, 'error' => 'Username sau email deja folosit'];
             }
             
-            $user_id = $this->userModel->createUser($username, $email, $password);
+            $userId = $this->userModel->createUser($username, $email, $password);
             
-            if ($user_id) {
-                return [
-                    'success' => true,
-                    'user_id' => $user_id,
-                    'username' => $username,
-                    'email' => $email
-                ];
-            } else {
-                return ['success' => false, 'error' => 'Eroare la crearea contului'];
-            }
-            
+            return [
+                'success' => true,
+                'user_id' => $userId,
+                'username' => $username,
+                'email' => $email
+            ];
         } catch (Exception $e) {
-            error_log("Registration error: " . $e->getMessage());
-            return ['success' => false, 'error' => 'Eroare la înregistrare'];
+            error_log("Register error: " . $e->getMessage());
+            return ['success' => false, 'error' => 'Eroare la inregistrare'];
         }
     }
     
     /**
-     * Validate registration form data
-     */
-    private function validateRegistrationData($username, $email, $password, $confirm_password) {
-        if (empty($username) || strlen($username) < 3) {
-            return ['valid' => false, 'error' => 'Username-ul trebuie să aibă cel puțin 3 caractere'];
-        }
-        
-        if (!preg_match('/^[a-zA-Z0-9_]+$/', $username)) {
-            return ['valid' => false, 'error' => 'Username-ul poate conține doar litere, cifre și underscore'];
-        }
-        
-        if (empty($email) || !validate_email($email)) {
-            return ['valid' => false, 'error' => 'Adresa de email nu este validă'];
-        }
-        
-        if (empty($password) || strlen($password) < 6) {
-            return ['valid' => false, 'error' => 'Parola trebuie să aibă cel puțin 6 caractere'];
-        }
-        
-        if (!preg_match('/^(?=.*[A-Z])(?=.*\d).{6,}$/', $password)) {
-            return ['valid' => false, 'error' => 'Parola trebuie să conțină cel puțin o literă mare și o cifră'];
-        }
-        
-        if ($password !== $confirm_password) {
-            return ['valid' => false, 'error' => 'Parolele nu se potrivesc'];
-        }
-        
-        return ['valid' => true];
-    }
-    
-    /**
-     * Logout functionality
+     * Logout
      */
     public function logout() {
-        if (isset($_SESSION['user_id'])) {
-            $username = $_SESSION['username'] ?? 'unknown';
-            error_log("User logout: $username");
-        }
-        
         session_destroy();
-        session_start();
-        session_regenerate_id(true);
-        
-        if ($this->isAjax()) {
-            $this->json([
-                'success' => true,
-                'message' => 'Delogare reușită',
-                'redirect_url' => BASE_URL
-            ]);
-        } else {
-            $this->redirect(BASE_URL);
-        }
-    }
-    
-    /**
-     * Check if user is authenticated
-     */
-    public function checkAuth() {
-        $is_authenticated = isset($_SESSION['user_id']);
-        $user_data = null;
-        
-        if ($is_authenticated) {
-            $user_data = [
-                'id' => $_SESSION['user_id'],
-                'username' => $_SESSION['username'] ?? '',
-                'email' => $_SESSION['email'] ?? '',
-                'login_time' => $_SESSION['login_time'] ?? null
-            ];
-        }
-        
-        $this->json([
-            'authenticated' => $is_authenticated,
-            'user' => $user_data,
-            'timestamp' => date('c')
-        ]);
-    }
-    
-    /**
-     * Track failed login attempts
-     */
-    private function recordFailedAttempt($username) {
-        $ip = $_SERVER['REMOTE_ADDR'] ?? 'unknown';
-        $attempts_file = sys_get_temp_dir() . '/failed_attempts_' . md5($username . $ip);
-        
-        $attempts = 1;
-        if (file_exists($attempts_file)) {
-            $data = json_decode(file_get_contents($attempts_file), true);
-            if ($data && time() - $data['timestamp'] < 3600) {
-                $attempts = $data['attempts'] + 1;
-            }
-        }
-        
-        file_put_contents($attempts_file, json_encode([
-            'attempts' => $attempts,
-            'timestamp' => time()
-        ]));
-    }
-    
-    /**
-     * Check if user has too many failed attempts
-     */
-    private function hasTooManyFailedAttempts($username) {
-        $ip = $_SERVER['REMOTE_ADDR'] ?? 'unknown';
-        $attempts_file = sys_get_temp_dir() . '/failed_attempts_' . md5($username . $ip);
-        
-        if (file_exists($attempts_file)) {
-            $data = json_decode(file_get_contents($attempts_file), true);
-            if ($data && time() - $data['timestamp'] < 3600) {
-                return $data['attempts'] >= 5;
-            }
-        }
-        
-        return false;
-    }
-    
-    /**
-     * Reset failed login attempts
-     */
-    private function resetFailedAttempts($username) {
-        $ip = $_SERVER['REMOTE_ADDR'] ?? 'unknown';
-        $attempts_file = sys_get_temp_dir() . '/failed_attempts_' . md5($username . $ip);
-        
-        if (file_exists($attempts_file)) {
-            unlink($attempts_file);
-        }
-    }
-    
-    /**
-     * Require authentication for protected routes
-     */
-    public function requireAuth() {
-        if (!isset($_SESSION['user_id'])) {
-            $_SESSION['intended_url'] = $_SERVER['REQUEST_URI'] ?? BASE_URL;
-            
-            if ($this->isAjax()) {
-                $this->json([
-                    'authenticated' => false,
-                    'error' => 'Autentificare necesară',
-                    'login_url' => BASE_URL . '?controller=auth&action=login'
-                ], 401);
-            } else {
-                $this->redirect(BASE_URL . '?controller=auth&action=login');
-            }
-            exit();
-        }
-        
-        // Check session timeout (24 hours)
-        $session_timeout = 24 * 60 * 60;
-        if (isset($_SESSION['login_time']) && (time() - $_SESSION['login_time']) > $session_timeout) {
-            $this->logout();
-            return;
-        }
-        
-        $_SESSION['last_activity'] = time();
+        $this->redirect(BASE_URL);
     }
 }
