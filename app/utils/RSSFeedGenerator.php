@@ -1,406 +1,229 @@
 <?php
 /**
- * RSSFeedGenerator - generates RSS feeds for location status and statistics
+ * RSSGenerator - generare feed-uri RSS pentru starea sediilor
  */
-require_once 'app/models/LocationModel.php';
-require_once 'app/models/OrderModel.php';
+require_once 'app/models/SediuModel.php';
+require_once 'app/models/ComandaModel.php';
 
-class RSSFeedGenerator {
-    private $locationModel;
-    private $orderModel;
-    
-    public function __construct() {
-        $this->locationModel = new LocationModel();
-        $this->orderModel = new OrderModel();
-    }
+class RSSGenerator {
     
     /**
-     * Generate RSS feed for location status
+     * Genereaza RSS feed
      */
-    public function generateLocationsFeed() {
+    public static function generate($type) {
         header('Content-Type: application/rss+xml; charset=utf-8');
         
         try {
-            $locations = $this->locationModel->getAllLocations();
+            $sediuModel = new SediuModel();
+            $comandaModel = new ComandaModel();
             
             $rss = new DOMDocument('1.0', 'UTF-8');
             $rss->formatOutput = true;
             
-            // Create RSS root element
-            $rss_element = $rss->createElement('rss');
-            $rss_element->setAttribute('version', '2.0');
-            $rss->appendChild($rss_element);
+            // Element RSS root
+            $rssElement = $rss->createElement('rss');
+            $rssElement->setAttribute('version', '2.0');
+            $rss->appendChild($rssElement);
             
-            // Create channel element
+            // Element channel
             $channel = $rss->createElement('channel');
-            $rss_element->appendChild($channel);
+            $rssElement->appendChild($channel);
             
-            // Add channel metadata
-            $this->addChannelInfo($rss, $channel, 'Stare Locații CaS', 'Status în timp real al locațiilor de spălătorie');
-            
-            // Add location items
-            foreach ($locations as $location) {
-                $this->addLocationItem($rss, $channel, $location);
+            switch ($type) {
+                case 'sedii':
+                    self::generateSediiRSS($rss, $channel, $sediuModel);
+                    break;
+                case 'statistici':
+                    self::generateStatisticiRSS($rss, $channel, $comandaModel);
+                    break;
+                default:
+                    self::generateGeneralRSS($rss, $channel, $sediuModel, $comandaModel);
             }
             
             echo $rss->saveXML();
             
         } catch (Exception $e) {
-            error_log("RSS Feed Error: " . $e->getMessage());
-            $this->generateErrorFeed('Eroare la generarea feed-ului locațiilor');
+            error_log("RSS Generation Error: " . $e->getMessage());
+            self::generateErrorRSS();
         }
     }
     
     /**
-     * Generate RSS feed for statistics
+     * RSS pentru sedii
      */
-    public function generateStatisticsFeed() {
-        header('Content-Type: application/rss+xml; charset=utf-8');
+    private static function generateSediiRSS($rss, $channel, $sediuModel) {
+        // Metadata channel
+        self::addChannelInfo($rss, $channel, 'Stare Sedii CaS', 'Status sediilor de spalatorie');
         
-        try {
-            $stats = $this->getSystemStats();
-            $recent_orders = $this->orderModel->getRecentOrders(5);
+        $sedii = $sediuModel->getAllSedii();
+        
+        foreach ($sedii as $sediu) {
+            $item = $rss->createElement('item');
             
-            $rss = new DOMDocument('1.0', 'UTF-8');
-            $rss->formatOutput = true;
+            $title = $rss->createElement('title', 'Sediul: ' . htmlspecialchars($sediu['Nume']));
+            $item->appendChild($title);
             
-            $rss_element = $rss->createElement('rss');
-            $rss_element->setAttribute('version', '2.0');
-            $rss->appendChild($rss_element);
+            $description = "Status: " . ucfirst($sediu['Stare']) . "\n";
+            $description .= "Adresa: " . ($sediu['Adresa'] ?? 'N/A') . "\n";
+            $description .= "Total comenzi: " . ($sediu['total_comenzi'] ?? 0) . "\n";
+            $description .= "Ultima actualizare: " . date('d.m.Y H:i:s');
             
-            $channel = $rss->createElement('channel');
-            $rss_element->appendChild($channel);
+            $descElement = $rss->createElement('description', htmlspecialchars($description));
+            $item->appendChild($descElement);
             
-            $this->addChannelInfo($rss, $channel, 'Statistici CaS', 'Statistici și activitate în timp real');
+            $guid = $rss->createElement('guid', 'sediu-' . $sediu['id'] . '-' . time());
+            $guid->setAttribute('isPermaLink', 'false');
+            $item->appendChild($guid);
             
-            // Add statistics item
-            $this->addStatsItem($rss, $channel, $stats);
+            $pubDate = $rss->createElement('pubDate', date('r'));
+            $item->appendChild($pubDate);
             
-            // Add recent orders
-            foreach ($recent_orders as $order) {
-                $this->addOrderItem($rss, $channel, $order);
-            }
-            
-            echo $rss->saveXML();
-            
-        } catch (Exception $e) {
-            error_log("RSS Feed Error: " . $e->getMessage());
-            $this->generateErrorFeed('Eroare la generarea feed-ului statisticilor');
+            $channel->appendChild($item);
         }
     }
     
     /**
-     * Generate combined RSS feed
+     * RSS pentru statistici
      */
-    public function generateCombinedFeed() {
-        header('Content-Type: application/rss+xml; charset=utf-8');
+    private static function generateStatisticiRSS($rss, $channel, $comandaModel) {
+        self::addChannelInfo($rss, $channel, 'Statistici CaS', 'Statistici comenzi si activitate');
         
-        try {
-            $locations = $this->locationModel->getAllLocations();
-            $recent_orders = $this->orderModel->getRecentOrders(3);
-            $stats = $this->getSystemStats();
-            
-            $rss = new DOMDocument('1.0', 'UTF-8');
-            $rss->formatOutput = true;
-            
-            $rss_element = $rss->createElement('rss');
-            $rss_element->setAttribute('version', '2.0');
-            $rss->appendChild($rss_element);
-            
-            $channel = $rss->createElement('channel');
-            $rss_element->appendChild($channel);
-            
-            $this->addChannelInfo($rss, $channel, 'CaS - Feed General', 'Informații complete despre sistem');
-            
-            // Add statistics
-            $this->addStatsItem($rss, $channel, $stats);
-            
-            // Add locations (only active ones)
-            $active_locations = array_filter($locations, function($loc) {
-                return $loc['Stare'] === 'activ';
-            });
-            
-            foreach (array_slice($active_locations, 0, 3) as $location) {
-                $this->addLocationItem($rss, $channel, $location);
-            }
-            
-            // Add recent orders
-            foreach ($recent_orders as $order) {
-                $this->addOrderItem($rss, $channel, $order);
-            }
-            
-            echo $rss->saveXML();
-            
-        } catch (Exception $e) {
-            error_log("RSS Feed Error: " . $e->getMessage());
-            $this->generateErrorFeed('Eroare la generarea feed-ului general');
-        }
-    }
-    
-    /**
-     * Add channel information
-     */
-    private function addChannelInfo($rss, $channel, $title, $description) {
-        // Title
-        $title_el = $rss->createElement('title', htmlspecialchars($title));
-        $channel->appendChild($title_el);
+        $stats = $comandaModel->getStatsGeneral();
         
-        // Description
-        $desc_el = $rss->createElement('description', htmlspecialchars($description));
-        $channel->appendChild($desc_el);
-        
-        // Link
-        $link_el = $rss->createElement('link', 'http://localhost/CaS_FII-Clean/');
-        $channel->appendChild($link_el);
-        
-        // Language
-        $lang_el = $rss->createElement('language', 'ro-RO');
-        $channel->appendChild($lang_el);
-        
-        // Last build date
-        $date_el = $rss->createElement('lastBuildDate', date('r'));
-        $channel->appendChild($date_el);
-        
-        // Generator
-        $generator_el = $rss->createElement('generator', 'CaS - Cleaning Web Simulator');
-        $channel->appendChild($generator_el);
-        
-        // TTL (Time to Live)
-        $ttl_el = $rss->createElement('ttl', '60');
-        $channel->appendChild($ttl_el);
-    }
-    
-    /**
-     * Add location item to RSS feed
-     */
-    private function addLocationItem($rss, $channel, $location) {
         $item = $rss->createElement('item');
         
-        // Title
-        $title = $rss->createElement('title', htmlspecialchars('Locația: ' . $location['Nume']));
-        $item->appendChild($title);
-        
-        // Description
-        $status_text = $this->getStatusText($location['Stare']);
-        $desc_text = "Status: {$status_text}\n";
-        $desc_text .= "Adresa: " . ($location['Adresa'] ?? 'N/A') . "\n";
-        
-        if (!empty($location['Latitudine']) && !empty($location['Longitudine'])) {
-            $desc_text .= "Coordonate: {$location['Latitudine']}, {$location['Longitudine']}\n";
-        }
-        
-        $desc_text .= "Ultima actualizare: " . date('d.m.Y H:i:s');
-        
-        $description = $rss->createElement('description', htmlspecialchars($desc_text));
-        $item->appendChild($description);
-        
-        // GUID
-        $guid = $rss->createElement('guid', 'location-' . $location['id'] . '-' . time());
-        $guid->setAttribute('isPermaLink', 'false');
-        $item->appendChild($guid);
-        
-        // Publication date
-        $pub_date = $rss->createElement('pubDate', date('r'));
-        $item->appendChild($pub_date);
-        
-        // Category
-        $category = $rss->createElement('category', htmlspecialchars($status_text));
-        $item->appendChild($category);
-        
-        $channel->appendChild($item);
-    }
-    
-    /**
-     * Add statistics item to RSS feed
-     */
-    private function addStatsItem($rss, $channel, $stats) {
-        $item = $rss->createElement('item');
-        
-        // Title
         $title = $rss->createElement('title', 'Statistici Sistem - ' . date('d.m.Y H:i'));
         $item->appendChild($title);
         
-        // Description
-        $desc_text = "Statistici Generale\n\n";
-        $desc_text .= "Total locații: " . $stats['total_locations'] . "\n";
-        $desc_text .= "Comenzi active: " . $stats['active_orders'] . "\n";
-        $desc_text .= "Comenzi astăzi: " . $stats['today_orders'] . "\n";
-        $desc_text .= "Ultima actualizare: " . date('d.m.Y H:i:s');
+        $description = "Statistici Generale:\n";
+        $description .= "Total comenzi: " . ($stats['total_comenzi'] ?? 0) . "\n";
+        $description .= "Comenzi noi: " . ($stats['comenzi_noi'] ?? 0) . "\n";
+        $description .= "Comenzi in curs: " . ($stats['comenzi_in_curs'] ?? 0) . "\n";
+        $description .= "Comenzi finalizate: " . ($stats['comenzi_finalizate'] ?? 0) . "\n";
+        $description .= "Comenzi astazi: " . ($stats['comenzi_astazi'] ?? 0) . "\n";
+        $description .= "Ultima actualizare: " . date('d.m.Y H:i:s');
         
-        $description = $rss->createElement('description', htmlspecialchars($desc_text));
-        $item->appendChild($description);
+        $descElement = $rss->createElement('description', htmlspecialchars($description));
+        $item->appendChild($descElement);
         
-        // GUID
         $guid = $rss->createElement('guid', 'stats-' . date('Y-m-d-H'));
         $guid->setAttribute('isPermaLink', 'false');
         $item->appendChild($guid);
         
-        // Publication date
-        $pub_date = $rss->createElement('pubDate', date('r'));
-        $item->appendChild($pub_date);
-        
-        // Category
-        $category = $rss->createElement('category', 'Statistici');
-        $item->appendChild($category);
+        $pubDate = $rss->createElement('pubDate', date('r'));
+        $item->appendChild($pubDate);
         
         $channel->appendChild($item);
     }
     
     /**
-     * Add order item to RSS feed
+     * RSS general
      */
-    private function addOrderItem($rss, $channel, $order) {
-        $item = $rss->createElement('item');
+    private static function generateGeneralRSS($rss, $channel, $sediuModel, $comandaModel) {
+        self::addChannelInfo($rss, $channel, 'CaS - Feed General', 'Informatii complete sistem spalatorii');
         
-        // Title
-        $service_name = $this->getServiceName($order['TipServiciu']);
-        $title = $rss->createElement('title', htmlspecialchars("Comandă #{$order['id']} - {$service_name}"));
-        $item->appendChild($title);
+        // Adauga statistici generale
+        $stats = $comandaModel->getStatsGeneral();
+        $statsItem = $rss->createElement('item');
         
-        // Description
-        $status_text = $this->getOrderStatusText($order['Status']);
-        $desc_text = "Comandă: #{$order['id']}\n";
-        $desc_text .= "Serviciu: {$service_name}\n";
-        $desc_text .= "Locație: " . ($order['sediu_name'] ?? 'N/A') . "\n";
-        $desc_text .= "Client: " . ($order['client_name'] ?? 'N/A') . "\n";
-        $desc_text .= "Data programare: " . ($order['DataProgramare'] ?? 'N/A') . "\n";
-        $desc_text .= "Status: {$status_text}\n";
-        $desc_text .= "Transport: " . ($order['Transport'] ? 'Da' : 'Nu') . "\n";
-        $desc_text .= "Recurentă: " . ($order['Recurenta'] ? 'Da' : 'Nu');
+        $title = $rss->createElement('title', 'Status General Sistem');
+        $statsItem->appendChild($title);
         
-        $description = $rss->createElement('description', htmlspecialchars($desc_text));
-        $item->appendChild($description);
+        $description = "Status General:\n";
+        $description .= "Total comenzi: " . ($stats['total_comenzi'] ?? 0) . "\n";
+        $description .= "Comenzi astazi: " . ($stats['comenzi_astazi'] ?? 0) . "\n";
+        $description .= "Comenzi active: " . (($stats['comenzi_noi'] ?? 0) + ($stats['comenzi_in_curs'] ?? 0)) . "\n";
+        $description .= "Actualizat: " . date('d.m.Y H:i:s');
         
-        // GUID
-        $guid = $rss->createElement('guid', 'order-' . $order['id']);
-        $guid->setAttribute('isPermaLink', 'false');
-        $item->appendChild($guid);
+        $descElement = $rss->createElement('description', htmlspecialchars($description));
+        $statsItem->appendChild($descElement);
         
-        // Publication date
-        $pub_date = $rss->createElement('pubDate', date('r', strtotime($order['DataProgramare'] ?? 'now')));
-        $item->appendChild($pub_date);
+        $pubDate = $rss->createElement('pubDate', date('r'));
+        $statsItem->appendChild($pubDate);
         
-        // Category
-        $category = $rss->createElement('category', htmlspecialchars($service_name));
-        $item->appendChild($category);
+        $channel->appendChild($statsItem);
         
-        $channel->appendChild($item);
-    }
-    
-    /**
-     * Get system statistics
-     */
-    private function getSystemStats() {
-        try {
-            return [
-                'total_locations' => $this->locationModel->getTotalLocations(),
-                'active_orders' => $this->orderModel->getActiveOrdersCount(),
-                'today_orders' => $this->orderModel->getTodayOrdersCount()
-            ];
-        } catch (Exception $e) {
-            return [
-                'total_locations' => 0,
-                'active_orders' => 0,
-                'today_orders' => 0
-            ];
+        // Adauga cateva sedii active
+        $sedii = $sediuModel->getSediiActive();
+        foreach (array_slice($sedii, 0, 3) as $sediu) {
+            $item = $rss->createElement('item');
+            
+            $title = $rss->createElement('title', 'Sediu Activ: ' . htmlspecialchars($sediu['Nume']));
+            $item->appendChild($title);
+            
+            $description = "Adresa: " . ($sediu['Adresa'] ?? 'N/A') . "\n";
+            $description .= "Status: Activ\n";
+            $description .= "Servicii: Covor, Auto, Textil";
+            
+            $descElement = $rss->createElement('description', htmlspecialchars($description));
+            $item->appendChild($descElement);
+            
+            $pubDate = $rss->createElement('pubDate', date('r'));
+            $item->appendChild($pubDate);
+            
+            $channel->appendChild($item);
         }
     }
     
     /**
-     * Get status text
+     * Adauga informatii channel
      */
-    private function getStatusText($status) {
-        $statuses = [
-            'activ' => 'Activ',
-            'inactiv' => 'Inactiv',
-            'reparatii' => 'În reparații'
-        ];
+    private static function addChannelInfo($rss, $channel, $title, $description) {
+        $titleEl = $rss->createElement('title', htmlspecialchars($title));
+        $channel->appendChild($titleEl);
         
-        return $statuses[$status] ?? $status;
+        $descEl = $rss->createElement('description', htmlspecialchars($description));
+        $channel->appendChild($descEl);
+        
+        $linkEl = $rss->createElement('link', BASE_URL);
+        $channel->appendChild($linkEl);
+        
+        $langEl = $rss->createElement('language', 'ro-RO');
+        $channel->appendChild($langEl);
+        
+        $dateEl = $rss->createElement('lastBuildDate', date('r'));
+        $channel->appendChild($dateEl);
+        
+        $generatorEl = $rss->createElement('generator', 'CaS - Sistem Spalatorii');
+        $channel->appendChild($generatorEl);
+        
+        $ttlEl = $rss->createElement('ttl', '60');
+        $channel->appendChild($ttlEl);
     }
     
     /**
-     * Get order status text
+     * Genereaza RSS de eroare
      */
-    private function getOrderStatusText($status) {
-        $statuses = [
-            'noua' => 'Nouă',
-            'in curs' => 'În curs',
-            'finalizata' => 'Finalizată',
-            'anulata' => 'Anulată'
-        ];
-        
-        return $statuses[$status] ?? $status;
-    }
-    
-    /**
-     * Get service name
-     */
-    private function getServiceName($service) {
-        $services = [
-            'covor' => 'Spălare covoare',
-            'auto' => 'Spălare auto',
-            'textil' => 'Curățenie textile'
-        ];
-        
-        return $services[$service] ?? $service;
-    }
-    
-    /**
-     * Generate error RSS feed
-     */
-    private function generateErrorFeed($error_message) {
+    private static function generateErrorRSS() {
         $rss = new DOMDocument('1.0', 'UTF-8');
         $rss->formatOutput = true;
         
-        $rss_element = $rss->createElement('rss');
-        $rss_element->setAttribute('version', '2.0');
-        $rss->appendChild($rss_element);
+        $rssElement = $rss->createElement('rss');
+        $rssElement->setAttribute('version', '2.0');
+        $rss->appendChild($rssElement);
         
         $channel = $rss->createElement('channel');
-        $rss_element->appendChild($channel);
+        $rssElement->appendChild($channel);
         
-        $title = $rss->createElement('title', 'CaS - Eroare RSS Feed');
+        $title = $rss->createElement('title', 'CaS - Eroare RSS');
         $channel->appendChild($title);
         
-        $description = $rss->createElement('description', htmlspecialchars($error_message));
+        $description = $rss->createElement('description', 'Eroare la generarea feed-ului RSS');
         $channel->appendChild($description);
         
-        $link = $rss->createElement('link', 'http://localhost/CaS_FII-Clean/');
+        $link = $rss->createElement('link', BASE_URL);
         $channel->appendChild($link);
         
-        // Error item
         $item = $rss->createElement('item');
-        $item_title = $rss->createElement('title', 'Eroare RSS Feed');
-        $item_desc = $rss->createElement('description', htmlspecialchars($error_message));
-        $item_date = $rss->createElement('pubDate', date('r'));
+        $itemTitle = $rss->createElement('title', 'Eroare RSS');
+        $itemDesc = $rss->createElement('description', 'A aparut o eroare la generarea feed-ului RSS');
+        $itemDate = $rss->createElement('pubDate', date('r'));
         
-        $item->appendChild($item_title);
-        $item->appendChild($item_desc);
-        $item->appendChild($item_date);
+        $item->appendChild($itemTitle);
+        $item->appendChild($itemDesc);
+        $item->appendChild($itemDate);
         $channel->appendChild($item);
         
         echo $rss->saveXML();
-    }
-    
-    /**
-     * Static method to handle RSS routing
-     */
-    public static function handleRSSRequest($type) {
-        $generator = new self();
-        
-        switch ($type) {
-            case 'locations':
-                $generator->generateLocationsFeed();
-                break;
-            case 'statistics':
-                $generator->generateStatisticsFeed();
-                break;
-            case 'combined':
-                $generator->generateCombinedFeed();
-                break;
-            default:
-                $generator->generateErrorFeed('Tip de feed RSS necunoscut');
-        }
     }
 }
