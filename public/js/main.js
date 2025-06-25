@@ -1,10 +1,13 @@
 /**
  * CaS - Cleaning Web Simulator
- * Main JavaScript file implementing AJAX functionality
+ * Main JavaScript file implementing complete AJAX functionality
+ * Conform cerintelor: invocarea serviciilor Web in maniera asincrona via AJAX
  */
 
 // Global variables
-let currentLocationModal = null;
+let currentModal = null;
+let updateInterval = null;
+let csrfToken = null;
 
 // Document ready function
 document.addEventListener('DOMContentLoaded', function() {
@@ -15,17 +18,45 @@ document.addEventListener('DOMContentLoaded', function() {
  * Initialize application
  */
 function initializeApp() {
+    // Get CSRF token
+    const csrfMeta = document.querySelector('meta[name="csrf-token"]');
+    if (csrfMeta) {
+        csrfToken = csrfMeta.getAttribute('content');
+    }
+    
     // Initialize mobile menu
     initializeMobileMenu();
     
-    // Load dashboard statistics
+    // Load real-time dashboard statistics via AJAX
     loadDashboardStats();
     
-    // Initialize contact form if exists
+    // Initialize contact form AJAX
     initializeContactForm();
     
-    // Set up periodic updates for real-time monitoring
-    setInterval(updateDashboardStats, 30000); // Update every 30 seconds
+    // Initialize order management AJAX
+    initializeOrderManagement();
+    
+    // Set up periodic updates for real-time monitoring (conform cerintelor)
+    startRealTimeUpdates();
+    
+    // Initialize location details AJAX
+    initializeLocationDetails();
+    
+    // Initialize resource monitoring
+    initializeResourceMonitoring();
+}
+
+/**
+ * Real-time monitoring updates via AJAX
+ * Conform cerintelor: monitorizarea in timp-real
+ */
+function startRealTimeUpdates() {
+    // Update dashboard every 30 seconds
+    updateInterval = setInterval(function() {
+        updateDashboardStats();
+        updateLocationStatus();
+        updateResourceAlerts();
+    }, 30000);
 }
 
 /**
@@ -42,9 +73,6 @@ function initializeMobileMenu() {
     }
 }
 
-/**
- * Toggle mobile menu
- */
 function toggleMobileMenu() {
     const nav = document.querySelector('.main-nav');
     if (nav) {
@@ -53,37 +81,68 @@ function toggleMobileMenu() {
 }
 
 /**
- * Load dashboard statistics via AJAX
+ * Load dashboard statistics via AJAX API call
  */
 function loadDashboardStats() {
-    // Simulate loading dashboard data
-    // In a real implementation, this would make AJAX calls to get live data
-    
-    const todayOrdersElement = document.getElementById('today-orders');
-    const avgEfficiencyElement = document.getElementById('avg-efficiency');
-    
-    if (todayOrdersElement) {
-        // Simulate some data
-        todayOrdersElement.textContent = Math.floor(Math.random() * 50) + 10;
-    }
-    
-    if (avgEfficiencyElement) {
-        avgEfficiencyElement.textContent = (Math.random() * 20 + 80).toFixed(1) + '%';
-    }
+    makeAjaxRequest('GET', '?controller=api&action=getStatistici&tip=general', null, {
+        success: function(response) {
+            if (response.success && response.data) {
+                updateDashboardDisplay(response.data);
+            }
+        },
+        error: function() {
+            console.error('Eroare la incarcarea statisticilor');
+        }
+    });
 }
 
 /**
- * Update dashboard statistics
+ * Update dashboard statistics display
  */
 function updateDashboardStats() {
     loadDashboardStats();
 }
 
+function updateDashboardDisplay(stats) {
+    // Update sedii active
+    const activeSediiElement = document.getElementById('active-sedii');
+    if (activeSediiElement) {
+        activeSediiElement.textContent = stats.sedii_active || 0;
+    }
+    
+    // Update comenzi astazi
+    const todayOrdersElement = document.getElementById('today-orders');
+    if (todayOrdersElement) {
+        todayOrdersElement.textContent = stats.comenzi_astazi || 0;
+    }
+    
+    // Update eficienta medie
+    const avgEfficiencyElement = document.getElementById('avg-efficiency');
+    if (avgEfficiencyElement) {
+        const efficiency = stats.comenzi_finalizate && stats.total_comenzi ? 
+            ((stats.comenzi_finalizate / stats.total_comenzi) * 100).toFixed(1) : 0;
+        avgEfficiencyElement.textContent = efficiency + '%';
+    }
+}
+
 /**
- * View location details via AJAX
+ * Location details via AJAX
+ * Conform cerintelor: localizare geografica si tip de servicii
  */
-function viewLocationDetails(locationId) {
-    const modal = document.getElementById('locationModal');
+function initializeLocationDetails() {
+    // Add click handlers for location cards
+    const locationCards = document.querySelectorAll('.location-card');
+    locationCards.forEach(card => {
+        const button = card.querySelector('button[onclick*="viewSediuDetails"]');
+        if (button) {
+            const sediuId = button.getAttribute('onclick').match(/\d+/)[0];
+            button.onclick = () => viewSediuDetails(sediuId);
+        }
+    });
+}
+
+function viewSediuDetails(sediuId) {
+    const modal = document.getElementById('sediuModal');
     const modalBody = document.getElementById('modalBody');
     const modalTitle = document.getElementById('modalTitle');
     
@@ -94,265 +153,51 @@ function viewLocationDetails(locationId) {
     
     // Show modal
     modal.style.display = 'flex';
-    modalBody.innerHTML = '<div class="loading">Se încarcă detaliile locației...</div>';
-    modalTitle.textContent = 'Detalii Locație';
+    modalBody.innerHTML = '<div class="loading">Se încarcă detaliile sediului...</div>';
+    modalTitle.textContent = 'Detalii Sediu';
+    currentModal = modal;
     
-    // Make AJAX request
-    const xhr = new XMLHttpRequest();
-    xhr.open('GET', `?controller=public&action=getLocationDetails&id=${locationId}`, true);
-    xhr.setRequestHeader('X-Requested-With', 'XMLHttpRequest');
-    
-    xhr.onreadystatechange = function() {
-        if (xhr.readyState === 4) {
-            if (xhr.status === 200) {
-                try {
-                    const response = JSON.parse(xhr.responseText);
-                    displayLocationDetails(response);
-                } catch (e) {
-                    modalBody.innerHTML = '<div class="alert alert-error">Eroare la parsarea răspunsului.</div>';
-                }
+    // AJAX call to API
+    makeAjaxRequest('GET', `?controller=api&action=getSediu&id=${sediuId}`, null, {
+        success: function(response) {
+            if (response.success && response.data) {
+                displaySediuDetails(response.data);
             } else {
-                modalBody.innerHTML = '<div class="alert alert-error">Eroare la încărcarea datelor.</div>';
+                modalBody.innerHTML = `<div class="alert alert-error">${response.error || 'Eroare la încărcarea datelor'}</div>`;
             }
+        },
+        error: function() {
+            modalBody.innerHTML = '<div class="alert alert-error">Eroare la încărcarea datelor.</div>';
         }
-    };
-    
-    xhr.onerror = function() {
-        modalBody.innerHTML = '<div class="alert alert-error">Eroare de conexiune.</div>';
-    };
-    
-    xhr.send();
-    currentLocationModal = locationId;
+    });
 }
 
-/**
- * Display location details in modal
- */
-function displayLocationDetails(data) {
+function displaySediuDetails(data) {
     const modalBody = document.getElementById('modalBody');
     const modalTitle = document.getElementById('modalTitle');
     
-    if (data.error) {
-        modalBody.innerHTML = `<div class="alert alert-error">${data.error}</div>`;
-        return;
-    }
+    const sediu = data.sediu;
+    const stats = data.statistici || {};
     
-    const location = data.location;
-    const stats = data.stats || {};
-    const operationalStatus = data.operational_status || 'unknown';
-    const resources = data.resources || [];
-    const orders = data.recent_orders || [];
+    modalTitle.textContent = `Detalii: ${sediu.Nume}`;
     
-    modalTitle.textContent = `Detalii: ${location.Nume}`;
-    
-    const statusClass = operationalStatus === 'operational' ? 'status-active' : 'status-inactive';
-    const statusText = operationalStatus === 'operational' ? 'Operațional' : 
-                      operationalStatus === 'maintenance' ? 'În reparații' :
-                      operationalStatus === 'inactive' ? 'Inactiv' : 'Necunoscut';
+    const statusClass = sediu.Stare === 'activ' ? 'status-active' : 'status-inactive';
+    const statusText = sediu.Stare === 'activ' ? 'Operațional' : 
+                      sediu.Stare === 'reparatii' ? 'În reparații' : 'Inactiv';
     
     modalBody.innerHTML = `
-        <div class="location-details">
+        <div class="sediu-details">
             <div class="detail-section">
                 <h4>Informații Generale</h4>
-                <p><strong>Nume:</strong> ${escapeHtml(location.Nume)}</p>
-                <p><strong>Adresa:</strong> ${escapeHtml(location.Adresa || 'N/A')}</p>
+                <p><strong>Nume:</strong> ${escapeHtml(sediu.Nume)}</p>
+                <p><strong>Adresa:</strong> ${escapeHtml(sediu.Adresa || 'N/A')}</p>
                 <p><strong>Status:</strong> <span class="location-status ${statusClass}">${statusText}</span></p>
-                ${location.Latitudine && location.Longitudine ? 
-                    `<p><strong>Coordonate:</strong> ${parseFloat(location.Latitudine).toFixed(6)}, ${parseFloat(location.Longitudine).toFixed(6)}</p>` : ''}
+                ${sediu.Latitudine && sediu.Longitudine ? 
+                    `<p><strong>Coordonate:</strong> ${parseFloat(sediu.Latitudine).toFixed(6)}, ${parseFloat(sediu.Longitudine).toFixed(6)}</p>` : ''}
             </div>
             
             <div class="detail-section">
-                <h4>Statistici</h4>
+                <h4>Statistici Timp Real</h4>
                 <div class="stats-grid">
                     <div class="stat-item">
                         <span class="stat-label">Comenzi astăzi:</span>
-                        <span class="stat-value">${stats.orders_today || 0}</span>
-                    </div>
-                    <div class="stat-item">
-                        <span class="stat-label">Comenzi luna aceasta:</span>
-                        <span class="stat-value">${stats.orders_month || 0}</span>
-                    </div>
-                    <div class="stat-item">
-                        <span class="stat-label">Comenzi anul acesta:</span>
-                        <span class="stat-value">${stats.orders_year || 0}</span>
-                    </div>
-                    <div class="stat-item">
-                        <span class="stat-label">Rata de finalizare:</span>
-                        <span class="stat-value">${(stats.completion_rate || 0).toFixed(1)}%</span>
-                    </div>
-                </div>
-            </div>
-            
-            <div class="detail-section">
-                <h4>Servicii Disponibile</h4>
-                <div class="services-list">
-                    <span class="service-tag">Spălare covoare</span>
-                    <span class="service-tag">Spălare auto</span>
-                    <span class="service-tag">Curățenie textile</span>
-                </div>
-            </div>
-            
-            ${resources.length > 0 ? `
-            <div class="detail-section">
-                <h4>Resurse</h4>
-                <div class="resources-list">
-                    ${resources.map(resource => `
-                        <div class="resource-item">
-                            <strong>${escapeHtml(resource.Nume)}</strong> (${escapeHtml(resource.Tip)}):
-                            <span class="resource-quantity">${resource.CantitateDisponibila || 0} disponibile</span>
-                        </div>
-                    `).join('')}
-                </div>
-            </div>
-            ` : ''}
-            
-            ${orders.length > 0 ? `
-            <div class="detail-section">
-                <h4>Comenzi Recente</h4>
-                <div class="orders-list">
-                    ${orders.map(order => `
-                        <div class="order-item">
-                            <strong>${escapeHtml(order.client_name)}</strong> - ${escapeHtml(order.TipServiciu)}
-                            <br><small>Data: ${order.DataProgramare} | Status: ${escapeHtml(order.Status)}</small>
-                        </div>
-                    `).join('')}
-                </div>
-            </div>
-            ` : ''}
-        </div>
-    `;
-}
-
-/**
- * Close location modal
- */
-function closeLocationModal() {
-    const modal = document.getElementById('locationModal');
-    if (modal) {
-        modal.style.display = 'none';
-    }
-    currentLocationModal = null;
-}
-
-/**
- * Initialize contact form
- */
-function initializeContactForm() {
-    const contactForm = document.getElementById('contactForm');
-    
-    if (contactForm) {
-        contactForm.addEventListener('submit', function(e) {
-            e.preventDefault();
-            submitContactForm();
-        });
-    }
-}
-
-/**
- * Submit contact form via AJAX
- */
-function submitContactForm() {
-    const form = document.getElementById('contactForm');
-    const formData = new FormData(form);
-    
-    // Add CSRF token
-    if (window.csrfToken) {
-        formData.append('csrf_token', window.csrfToken);
-    }
-    
-    // Show loading state
-    const submitButton = form.querySelector('button[type="submit"]');
-    const originalText = submitButton.textContent;
-    submitButton.textContent = 'Se trimite...';
-    submitButton.disabled = true;
-    
-    const xhr = new XMLHttpRequest();
-    xhr.open('POST', form.action, true);
-    xhr.setRequestHeader('X-Requested-With', 'XMLHttpRequest');
-    
-    xhr.onreadystatechange = function() {
-        if (xhr.readyState === 4) {
-            submitButton.textContent = originalText;
-            submitButton.disabled = false;
-            
-            if (xhr.status === 200) {
-                try {
-                    const response = JSON.parse(xhr.responseText);
-                    if (response.success) {
-                        showAlert('Mesajul a fost trimis cu succes!', 'success');
-                        form.reset();
-                    } else {
-                        showAlert(response.error || 'Eroare la trimiterea mesajului.', 'error');
-                    }
-                } catch (e) {
-                    showAlert('Eroare la procesarea răspunsului.', 'error');
-                }
-            } else {
-                showAlert('Eroare la trimiterea mesajului.', 'error');
-            }
-        }
-    };
-    
-    xhr.onerror = function() {
-        submitButton.textContent = originalText;
-        submitButton.disabled = false;
-        showAlert('Eroare de conexiune.', 'error');
-    };
-    
-    xhr.send(formData);
-}
-
-/**
- * Show alert message
- */
-function showAlert(message, type = 'info') {
-    const alertDiv = document.createElement('div');
-    alertDiv.className = `alert alert-${type}`;
-    alertDiv.textContent = message;
-    
-    // Insert at top of main content
-    const mainContent = document.querySelector('.main-content');
-    if (mainContent) {
-        mainContent.insertBefore(alertDiv, mainContent.firstChild);
-        
-        // Remove after 5 seconds
-        setTimeout(() => {
-            if (alertDiv.parentNode) {
-                alertDiv.parentNode.removeChild(alertDiv);
-            }
-        }, 5000);
-    }
-}
-
-/**
- * Escape HTML to prevent XSS
- */
-function escapeHtml(text) {
-    const div = document.createElement('div');
-    div.textContent = text;
-    return div.innerHTML;
-}
-
-/**
- * Close modal when clicking outside
- */
-document.addEventListener('click', function(e) {
-    const modal = document.getElementById('locationModal');
-    if (modal && e.target === modal) {
-        closeLocationModal();
-    }
-});
-
-/**
- * Close modal with Escape key
- */
-document.addEventListener('keydown', function(e) {
-    if (e.key === 'Escape') {
-        closeLocationModal();
-    }
-});
-
-// Export functions for global access
-window.viewLocationDetails = viewLocationDetails;
-window.closeLocationModal = closeLocationModal;
-window.toggleMobileMenu = toggleMobileMenu;
