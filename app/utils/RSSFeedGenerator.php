@@ -13,7 +13,10 @@ class RSSGenerator {
      * Genereaza RSS feed
      */
     public static function generate($type) {
-        header('Content-Type: application/rss+xml; charset=utf-8');
+        // Seteaza header-ul doar daca nu a fost deja trimis
+        if (!headers_sent()) {
+            header('Content-Type: application/rss+xml; charset=utf-8');
+        }
         
         try {
             $sediuModel = new SediuModel();
