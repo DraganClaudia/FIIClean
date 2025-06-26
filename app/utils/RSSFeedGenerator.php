@@ -1,7 +1,6 @@
 <?php
 /**
  * RSSGenerator - generare feed-uri RSS pentru starea sediilor
- * Conform cerintelor: consultarea starii sediilor prin RSS
  */
 require_once 'app/models/SediuModel.php';
 require_once 'app/models/ComandaModel.php';
