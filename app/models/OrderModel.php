@@ -1,8 +1,4 @@
 <?php
-/**
- * OrderModel - simplified pentru operatiuni cu comenzi
- * Adaptat pentru baza de date fiiclean existenta
- */
 class OrderModel {
     private $db;
     
