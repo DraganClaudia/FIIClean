@@ -18,7 +18,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['idSediu'], $_POST['st
 
 // Preluare locații existente
 $result = $mysqli->query("SELECT * FROM sediu");
-
 include_once __DIR__ . '/../layouts/header.php';
 ?>
 
