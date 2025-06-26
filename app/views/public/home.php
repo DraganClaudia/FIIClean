@@ -90,7 +90,7 @@
                 </div>
                 
                 <div class="location-actions">
-                    <div class="location-card" data-sediu-id="<?php echo $sediu['idSediu']; ?>">
+                    <button onclick="viewSediuDetails(<?php echo $sediu['idSediu']; ?>)" class="btn btn-primary">
                         Vezi Detalii
                     </button>
                 </div>

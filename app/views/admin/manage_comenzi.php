@@ -19,30 +19,17 @@ include_once __DIR__ . '/../layouts/header.php';
     <table class="admin-table">
         <thead>
             <tr>
-                <td><?= htmlspecialchars($comanda['idComanda']) ?></td>
-                <td><?= htmlspecialchars($comanda['idClient']) ?></td>
-                <td><?= htmlspecialchars($comanda['idSediu']) ?></td>
-                <td><?= htmlspecialchars($comanda['NumeClient']) ?></td>
-                <td><?= htmlspecialchars($comanda['TipServiciu']) ?></td>
-                <td><?= htmlspecialchars($comanda['Cantitate']) ?></td>
-                <td><?= htmlspecialchars($comanda['DataProgramare']) ?></td>
-                <td><?= $comanda['Recurenta'] ? 'Da' : 'Nu' ?></td>
-                <td><?= $comanda['Transport'] ? 'Da' : 'Nu' ?></td>
-                <td><?= htmlspecialchars($comanda['Status']) ?></td>
-                <td class="actiuni-cell">
-                <form method="post" action="../../action/update_comanda.php">
-                    <input type="hidden" name="idComanda" value="<?= $comanda['idComanda'] ?>">
-                    <div class="actiuni-form">
-                    <select name="status">
-                        <option <?= $comanda['Status'] === 'noua' ? 'selected' : '' ?>>noua</option>
-                        <option <?= $comanda['Status'] === 'in curs' ? 'selected' : '' ?>>in curs</option>
-                        <option <?= $comanda['Status'] === 'finalizata' ? 'selected' : '' ?>>finalizata</option>
-                        <option <?= $comanda['Status'] === 'refuzata' ? 'selected' : '' ?>>refuzata</option>
-                    </select>
-                    <button type="submit" class="btn-update">Actualizează</button>
-                    </div>
-                </form>
-                </td>
+                <th>ID Comandă</th>
+                <th>ID Client</th>
+                <th>ID Sediu</th>
+                <th>Nume Client</th>
+                <th>Tip Serviciu</th>
+                <th>Cantitate</th>
+                <th>Data Programare</th>
+                <th>Recurentă</th>
+                <th>Transport</th>
+                <th>Status</th>
+                <th>Acțiuni</th>
             </tr>
         </thead>
         <tbody>

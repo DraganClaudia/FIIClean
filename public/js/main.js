@@ -142,30 +142,35 @@ function viewSediuDetails(sediuId) {
     const modalBody = document.getElementById('modalBody');
     const modalTitle = document.getElementById('modalTitle');
     
-    if (!modal || !modalBody || !modalTitle) {
-        console.error('Modal elements not found');
-        return;
-    }
-    
-    // Show modal
     modal.style.display = 'flex';
     modalBody.innerHTML = '<div class="loading">Se încarcă detaliile sediului...</div>';
     modalTitle.textContent = 'Detalii Sediu';
     currentModal = modal;
     
-    // AJAX call to API
-    makeAjaxRequest('GET', `?controller=api&action=getSediu&id=${sediuId}`, null, {
-        success: function(response) {
-            if (response.success && response.data) {
-                displaySediuDetails(response.data);
+    // AJAX simplu cu XMLHttpRequest
+    const xhr = new XMLHttpRequest();
+    xhr.open('GET', `?controller=public&action=getSediuDetails&id=${sediuId}`, true);
+    xhr.setRequestHeader('X-Requested-With', 'XMLHttpRequest');
+    
+    xhr.onreadystatechange = function() {
+        if (xhr.readyState === 4) {
+            if (xhr.status === 200) {
+                try {
+                    const response = JSON.parse(xhr.responseText);
+                    console.log('Response:', response);
+                    displaySediuDetails(response);
+                } catch (e) {
+                    console.log('Parse error:', e);
+                    modalBody.innerHTML = '<div class="alert alert-error">Eroare la parsarea datelor.</div>';
+                }
             } else {
-                modalBody.innerHTML = `<div class="alert alert-error">${response.error || 'Eroare la încărcarea datelor'}</div>`;
+                console.log('HTTP Error:', xhr.status);
+                modalBody.innerHTML = '<div class="alert alert-error">Eroare la încărcarea datelor.</div>';
             }
-        },
-        error: function() {
-            modalBody.innerHTML = '<div class="alert alert-error">Eroare la încărcarea datelor.</div>';
         }
-    });
+    };
+    
+    xhr.send();
 }
 
 function displaySediuDetails(data) {
@@ -173,23 +178,21 @@ function displaySediuDetails(data) {
     const modalTitle = document.getElementById('modalTitle');
     
     const sediu = data.sediu;
-    const stats = data.statistici || {};
+    const stats = data.stats;
     
     modalTitle.textContent = `Detalii: ${sediu.Nume}`;
     
     const statusClass = sediu.Stare === 'activ' ? 'status-active' : 'status-inactive';
-    const statusText = sediu.Stare === 'activ' ? 'Operațional' : 
-                      sediu.Stare === 'reparatii' ? 'În reparații' : 'Inactiv';
+    const statusText = sediu.Stare === 'activ' ? 'Operațional' : 'Inactiv';
     
     modalBody.innerHTML = `
         <div class="sediu-details">
             <div class="detail-section">
                 <h4>Informații Generale</h4>
-                <p><strong>Nume:</strong> ${escapeHtml(sediu.Nume)}</p>
-                <p><strong>Adresa:</strong> ${escapeHtml(sediu.Adresa || 'N/A')}</p>
+                <p><strong>Nume:</strong> ${sediu.Nume}</p>
+                <p><strong>Adresa:</strong> ${sediu.Adresa}</p>
                 <p><strong>Status:</strong> <span class="location-status ${statusClass}">${statusText}</span></p>
-                ${sediu.Latitudine && sediu.Longitudine ? 
-                    `<p><strong>Coordonate:</strong> ${parseFloat(sediu.Latitudine).toFixed(6)}, ${parseFloat(sediu.Longitudine).toFixed(6)}</p>` : ''}
+                <p><strong>Coordonate:</strong> ${sediu.Latitudine}, ${sediu.Longitudine}</p>
             </div>
             
             <div class="detail-section">
@@ -197,19 +200,15 @@ function displaySediuDetails(data) {
                 <div class="stats-grid">
                     <div class="stat-item">
                         <span class="stat-label">Comenzi astăzi:</span>
-                        <span class="stat-value">${stats.comenzi_astazi || 0}</span>
+                        <span class="stat-value">${stats.comenzi_astazi}</span>
                     </div>
                     <div class="stat-item">
                         <span class="stat-label">Comenzi luna aceasta:</span>
-                        <span class="stat-value">${stats.comenzi_luna || 0}</span>
-                    </div>
-                    <div class="stat-item">
-                        <span class="stat-label">Comenzi anul acesta:</span>
-                        <span class="stat-value">${stats.comenzi_an || 0}</span>
+                        <span class="stat-value">${stats.comenzi_luna}</span>
                     </div>
                     <div class="stat-item">
                         <span class="stat-label">Rata de finalizare:</span>
-                        <span class="stat-value">${(stats.rata_finalizare || 0).toFixed(1)}%</span>
+                        <span class="stat-value">${stats.rata_finalizare}%</span>
                     </div>
                 </div>
             </div>
@@ -222,20 +221,6 @@ function displaySediuDetails(data) {
                     <span class="service-tag">👕 Curățenie textile</span>
                 </div>
             </div>
-            
-            ${data.comenzi_recente && data.comenzi_recente.length > 0 ? `
-            <div class="detail-section">
-                <h4>Comenzi Recente</h4>
-                <div class="orders-list">
-                    ${data.comenzi_recente.map(order => `
-                        <div class="order-item">
-                            <strong>${escapeHtml(order.nume_client || 'Client')}</strong> - ${getServiceTypeName(order.TipServiciu)}
-                            <br><small>Data: ${order.DataProgramare} | Status: ${escapeHtml(order.Status)}</small>
-                        </div>
-                    `).join('')}
-                </div>
-            </div>
-            ` : ''}
         </div>
     `;
 }

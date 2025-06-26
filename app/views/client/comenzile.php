@@ -31,10 +31,10 @@
         <div class="comenzi-container">
             <?php if (isset($comenzi) && !empty($comenzi)): ?>
                 <?php foreach ($comenzi as $comanda): ?>
-                    <div class="comanda-card" data-comanda-id="<?php echo $comanda['id']; ?>">
+                    <div class="comanda-card" data-comanda-id="<?php echo $comanda['idComanda']; ?>">
                         <div class="comanda-header">
                             <div class="comanda-info">
-                                <h3>Comanda #<?php echo $comanda['id']; ?></h3>
+                                <h3>Comanda #<?php echo $comanda['idComanda']; ?></h3>
                                 <div class="comanda-meta">
                                     <span class="comanda-data">📅 <?php echo formatDate($comanda['DataProgramare']); ?></span>
                                     <span class="comanda-serviciu">🔧 <?php echo getServiceTypeName($comanda['TipServiciu']); ?></span>
@@ -75,13 +75,13 @@
                             </div>
                             
                             <div class="comanda-actions">
-                                <button onclick="vizualizareComanda(<?php echo $comanda['id']; ?>)" 
+                                <button onclick="vizualizareComanda(<?php echo $comanda['idComanda']; ?>)" 
                                         class="btn btn-sm btn-outline">
                                     👁️ Vezi Detalii
                                 </button>
                                 
                                 <?php if (in_array($comanda['Status'], ['noua', 'in curs'])): ?>
-                                <button onclick="anuleazaComanda(<?php echo $comanda['id']; ?>)" 
+                                <button onclick="anuleazaComanda(<?php echo $comanda['idComanda']; ?>)" 
                                         class="btn btn-sm btn-danger">
                                     ❌ Anuleaza
                                 </button>

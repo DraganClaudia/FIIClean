@@ -34,9 +34,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $_SESSION['rol'] = $rol;
 
                 if ($rol === 'admin') {
-                    header("Location: /CaS_FII-Clean");
+                    header("Location: ../../index.php?controller=admin&action=dashboard");
                 } else {
-                    header("Location: /CaS_FII-Clean/index.php");
+                    header("Location: ../../index.php?controller=client&action=dashboard");
                 }
                 exit;
             } else {

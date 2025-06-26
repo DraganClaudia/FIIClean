@@ -47,7 +47,7 @@ class ClientController extends Controller {
                 'csrf_token' => generate_csrf_token()
             ];
             
-            $this->view('client/dashboard', $data);
+            $this->view('client/user_dashboard', $data);
             
         } catch (Exception $e) {
             error_log("Error in client dashboard: " . $e->getMessage());

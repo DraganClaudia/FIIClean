@@ -18,8 +18,8 @@ include_once __DIR__ . '/../layouts/header.php';
     <h2>Bine ai venit, <?= htmlspecialchars($_SESSION['username']) ?>!</h2>
 
     <div class="dashboard-buttons">
-        <a href="/CaS_FII-Clean/app/views/client/add_order.php" class="dashboard-btn">Plasează Comandă</a>
-        <a href="/CaS_FII-Clean/app/views/client/my_orders.php" class="dashboard-btn">Comenzile Mele</a>
+        <a href="?controller=client&action=comandaNoua" class="dashboard-btn">Plasează Comandă</a>
+        <a href="?controller=client&action=comenzile" class="dashboard-btn">Comenzile Mele</a>
     </div>
 </div>
 

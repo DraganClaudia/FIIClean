@@ -1879,3 +1879,7 @@ body {
    outline-offset: 2px;
    border-radius: 4px;
 }
+.sediu-details,
+.comanda-detalii-full {
+    color: #1e3a8a;
+}
