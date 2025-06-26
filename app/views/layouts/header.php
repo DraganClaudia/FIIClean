@@ -5,8 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title><?php echo isset($title) ? htmlspecialchars($title) : 'CaS - Cleaning Web Simulator'; ?></title>
     
-    <!-- CSS Styles - Căi CORECTE pentru structura ta -->
-    <link rel="stylesheet" href="public/css/style.css">
+    <link rel="stylesheet" href="<?php echo BASE_URL; ?>public/css/style.css">
     
     <!-- Meta tags for SEO and responsive design -->
     <meta name="description" content="Sistem Web pentru managementul activităților de spălătorie - covoare, autoturisme, îmbrăcăminte">
@@ -44,7 +43,7 @@
                         <?php if (isset($_SESSION['user_id'])): ?>
                             <li class="welcome">Bun venit, <strong><?= htmlspecialchars($_SESSION['username'] ?? 'Utilizator') ?></strong></li>
                             
-                            <?php if (($_SESSION['role'] ?? '') === 'admin'): ?>
+                            <?php if (($_SESSION['rol'] ?? '') === 'admin'): ?>
                                 <li><a href="?controller=admin&action=dashboard">Admin</a></li>
                             <?php else: ?>
                                 <li><a href="?controller=client&action=dashboard">Dashboard</a></li>

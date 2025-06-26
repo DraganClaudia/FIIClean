@@ -14,10 +14,10 @@ class SediuModel {
      */
     public function getAllSedii() {
         $sql = "SELECT s.*, COUNT(c.idComanda) as total_comenzi
-                FROM sediu s
-                LEFT JOIN comanda c ON s.idSediu = c.idSediu
-                GROUP BY s.idSediu
-                ORDER BY s.Nume";
+         FROM sediu s
+          LEFT JOIN comanda c ON s.idSediu = c.idSediu
+         GROUP BY s.idSediu
+          ORDER BY s.Nume";
     
         $stmt = $this->db->query($sql);
         return $stmt->fetchAll();

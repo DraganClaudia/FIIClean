@@ -76,7 +76,7 @@ class RSSGenerator {
             $item->appendChild($title);
             
             // Obtine statistici pentru sediu
-            $stats = $sediuModel->getSediuStats($sediu['id']);
+            $stats = $sediuModel->getSediuStats($sediu['idSediu']);
             
             $description = "Status: " . ucfirst($sediu['Stare']) . "\n";
             $description .= "Adresa: " . ($sediu['Adresa'] ?? 'N/A') . "\n";
@@ -89,9 +89,8 @@ class RSSGenerator {
             $item->appendChild($descElement);
             
             // Link catre detaliile sediului
-            $link = $rss->createElement('link', self::escapeXmlUrl(BASE_URL . '?controller=public&action=getLocationDetails&id=' . $sediu['id']));            $item->appendChild($link);
-            
-            $guid = $rss->createElement('guid', 'sediu-' . $sediu['id'] . '-' . time());
+            $link = $rss->createElement('link', self::escapeXmlUrl(BASE_URL . '?controller=public&action=getSediuDetails&id=' . $sediu['idSediu']));            
+            $guid = $rss->createElement('guid', 'sediu-' . $sediu['idSediu'] . '-' . time());
             $guid->setAttribute('isPermaLink', 'false');
             $item->appendChild($guid);
             
@@ -150,6 +149,7 @@ class RSSGenerator {
         
         // Adauga iteme pentru sediile cu probleme
         foreach ($sedii as $sediu) {
+            if (!isset($sediu['idSediu'])) continue; // Skip dacă nu are ID
             if ($sediu['Stare'] !== 'activ') {
                 $alertItem = $rss->createElement('item');
                 

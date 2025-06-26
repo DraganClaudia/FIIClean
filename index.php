@@ -12,7 +12,7 @@ ini_set('display_errors', 1);
 
 // Constante aplicatie
 define('BASE_PATH', __DIR__);
-define('BASE_URL', 'http://localhost/fiiclean/');
+define('BASE_URL', 'http://localhost/' . basename(__DIR__) . '/');
 
 // Autoloader simplificat
 spl_autoload_register(function ($class) {

@@ -14,11 +14,11 @@ class ComandaModel {
      */
     public function getAllComenzi() {
         $sql = "SELECT c.*, cl.username as nume_client, cl.email as email_client, 
-                       s.Nume as nume_sediu, s.Adresa as adresa_sediu
-                FROM comanda c
-                LEFT JOIN client cl ON c.idClient = cl.id
-                LEFT JOIN sediu s ON c.idSediu = s.idSediu
-                ORDER BY c.DataProgramare DESC";
+                s.Nume as nume_sediu, s.Adresa as adresa_sediu
+            FROM comanda c
+            LEFT JOIN client cl ON c.idClient = cl.id
+            LEFT JOIN sediu s ON c.idSediu = s.idSediu
+            ORDER BY c.DataProgramare DESC";
     
         $stmt = $this->db->query($sql);
         return $stmt->fetchAll();
@@ -45,18 +45,18 @@ class ComandaModel {
     public function createComanda($clientId, $sediuId, $tipServiciu, $dataProgramare, $recurenta = false, $transport = false) {
         // Obține numele clientului
         $clientSql = "SELECT username FROM client WHERE id = ?";
-        $clientStmt = $this->db->query($clientSql, [$clientId]);
-        $client = $clientStmt->fetch();
-        $numeClient = $client ? $client['username'] : 'Client';
-    
-        $sql = "INSERT INTO comanda (idClient, idSediu, NumeClient, TipServiciu, DataProgramare, Recurenta, Transport, Status, Cantitate) 
-            VALUES (?, ?, ?, ?, ?, ?, ?, 'noua', 1)";
-    
-        $stmt = $this->db->query($sql, [
-        $clientId, $sediuId, $numeClient, $tipServiciu, $dataProgramare, 
-        $recurenta ? 1 : 0, $transport ? 1 : 0
-        ]);
-    
+                $clientStmt = $this->db->query($clientSql, [$clientId]);
+                $client = $clientStmt->fetch();
+                $numeClient = $client ? $client['username'] : 'Client';
+
+                $sql = "INSERT INTO comanda (idClient, idSediu, NumeClient, TipServiciu, DataProgramare, Recurenta, Transport, Status, Cantitate) 
+                        VALUES (?, ?, ?, ?, ?, ?, ?, 'noua', 1)";
+
+                $stmt = $this->db->query($sql, [
+                    $clientId, $sediuId, $numeClient, $tipServiciu, $dataProgramare, 
+                    $recurenta ? 1 : 0, $transport ? 1 : 0
+                ]);
+                    
         return $this->db->lastInsertId();
     }
     

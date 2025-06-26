@@ -73,7 +73,7 @@
         <h2>Sediile Noastre</h2>
         <div class="locations-grid" id="sedii-grid">
             <?php foreach ($sedii as $sediu): ?>
-            <div class="location-card" data-sediu-id="<?php echo $sediu['id']; ?>">
+            <div class="location-card" data-sediu-id="<?php echo $sediu['idSediu']; ?>">
                 <div class="location-header">
                     <h3><?php echo htmlspecialchars($sediu['Nume']); ?></h3>
                     <span class="location-status <?php echo $sediu['Stare'] === 'activ' ? 'status-active' : 'status-inactive'; ?>">
@@ -90,7 +90,7 @@
                 </div>
                 
                 <div class="location-actions">
-                    <button class="btn btn-primary" onclick="viewSediuDetails(<?php echo $sediu['id']; ?>)">
+                    <div class="location-card" data-sediu-id="<?php echo $sediu['idSediu']; ?>">
                         Vezi Detalii
                     </button>
                 </div>

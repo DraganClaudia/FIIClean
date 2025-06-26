@@ -31,6 +31,7 @@ class AuthController extends Controller {
                 $_SESSION['user_id'] = $result['user']['id'];
                 $_SESSION['username'] = $result['user']['username'];
                 $_SESSION['email'] = $result['user']['email'];
+                $_SESSION['rol'] = $result['user']['rol'];
                 
                 $this->redirect(BASE_URL);
                 return;
