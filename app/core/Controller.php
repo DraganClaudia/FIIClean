@@ -1,7 +1,7 @@
 <?php
 /**
  * Controller de baza - functionalitate comuna pentru toate controller-ele
- * Versiune curățată fără probleme de headers
+ * Versiune curățată fără probleme de headers amen to that
  */
 abstract class Controller {
     protected $db;
