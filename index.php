@@ -1,11 +1,9 @@
 <?php
 /**
- * CaS - Sistema Web pentru Managementul Spalatoriilor
  * Entry Point Principal cu Routing Complet pentru API si RSS
- * Conform cerintelor: arhitectura bazata pe servicii Web
  */
 
-// Pornire output buffering pentru a preveni erorile de header
+// Pornire output buffering pentru a preveni erorile de header => Mi-a dat cu eroare la un moment dat
 ob_start();
 
 session_start();
