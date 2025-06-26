@@ -69,6 +69,19 @@ function calculatePercentage($value, $total) {
 }
 
 /**
+ * Nume pentru tipuri de resurse
+ */
+function getResourceTypeName($type) {
+    $types = [
+        'detergent' => 'Detergent',
+        'apa' => 'Apă',
+        'echipament' => 'Echipament'
+    ];
+    
+    return $types[$type] ?? htmlspecialchars($type);
+}
+
+/**
  * Formatare numar
  */
 function formatNumber($number, $decimals = 0) {
