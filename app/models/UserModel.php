@@ -13,15 +13,15 @@ class UserModel {
      * Autentifica utilizator
      */
     public function authenticateUser($username, $password) {
-        $sql = "SELECT id, username, email, parola FROM utilizator WHERE username = ?";
+        $sql = "SELECT id, username, email, parola, rol FROM client WHERE username = ?";
         $stmt = $this->db->query($sql, [$username]);
         $user = $stmt->fetch();
-        
+    
         if ($user && password_verify($password, $user['parola'])) {
             unset($user['parola']);
             return $user;
         }
-        
+    
         return false;
     }
     
@@ -30,10 +30,10 @@ class UserModel {
      */
     public function createUser($username, $email, $password) {
         $hashedPassword = password_hash($password, PASSWORD_DEFAULT);
-        
-        $sql = "INSERT INTO utilizator (username, email, parola) VALUES (?, ?, ?)";
+    
+        $sql = "INSERT INTO client (username, email, parola, rol) VALUES (?, ?, ?, 'user')";
         $stmt = $this->db->query($sql, [$username, $email, $hashedPassword]);
-        
+    
         return $this->db->lastInsertId();
     }
     
@@ -41,7 +41,7 @@ class UserModel {
      * Verifica daca utilizatorul exista
      */
     public function userExists($username, $email) {
-        $sql = "SELECT id FROM utilizator WHERE username = ? OR email = ?";
+        $sql = "SELECT id FROM client WHERE username = ? OR email = ?";
         $stmt = $this->db->query($sql, [$username, $email]);
         return $stmt->fetch() !== false;
     }
@@ -49,8 +49,8 @@ class UserModel {
     /**
      * Obtine utilizator dupa ID
      */
-    public function getUserById($id) {
-        $sql = "SELECT id, username, email FROM utilizator WHERE id = ?";
+        public function getUserById($id) {
+        $sql = "SELECT id, username, email, rol FROM client WHERE id = ?";
         $stmt = $this->db->query($sql, [$id]);
         return $stmt->fetch();
     }
@@ -59,7 +59,7 @@ class UserModel {
      * Obtine toti utilizatorii
      */
     public function getAllUsers() {
-        $sql = "SELECT id, username, email FROM utilizator ORDER BY username";
+        $sql = "SELECT id, username, email, rol FROM client ORDER BY username";
         $stmt = $this->db->query($sql);
         return $stmt->fetchAll();
     }
@@ -70,13 +70,13 @@ class UserModel {
     public function updateUser($id, $username, $email, $password = null) {
         if ($password) {
             $hashedPassword = password_hash($password, PASSWORD_DEFAULT);
-            $sql = "UPDATE utilizator SET username = ?, email = ?, parola = ? WHERE id = ?";
+            $sql = "UPDATE client SET username = ?, email = ?, parola = ? WHERE id = ?";
             $params = [$username, $email, $hashedPassword, $id];
         } else {
-            $sql = "UPDATE utilizator SET username = ?, email = ? WHERE id = ?";
+            $sql = "UPDATE client SET username = ?, email = ? WHERE id = ?";
             $params = [$username, $email, $id];
         }
-        
+    
         $stmt = $this->db->query($sql, $params);
         return $stmt->rowCount() > 0;
     }
@@ -85,7 +85,7 @@ class UserModel {
      * Sterge utilizator
      */
     public function deleteUser($id) {
-        $sql = "DELETE FROM utilizator WHERE id = ?";
+        $sql = "DELETE FROM client WHERE id = ?";
         $stmt = $this->db->query($sql, [$id]);
         return $stmt->rowCount() > 0;
     }
