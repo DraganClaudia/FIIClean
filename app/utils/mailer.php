@@ -49,7 +49,7 @@ function sendContactAutoReply($data) {
     $body = createAutoReplyBody($data);
     
     $headers = [
-        'From: contact@cas-simulator.ro',
+        'From: contact@fii-clean.ro',
         'X-Mailer: PHP/' . phpversion(),
         'MIME-Version: 1.0',
         'Content-Type: text/html; charset=UTF-8'
@@ -156,7 +156,7 @@ function createAutoReplyBody($data) {
     <body>
         <div class='container'>
             <div class='header'>
-                <h1>CaS - Cleaning Services</h1>
+                <h1>FII-Clean - Cleaning Services</h1>
                 <p>Mulțumim pentru mesajul dumneavoastră!</p>
             </div>
             
@@ -174,8 +174,8 @@ function createAutoReplyBody($data) {
                 <div class='contact-info'>
                     <h3>Informații de contact:</h3>
                     <p><strong>📞 Telefon:</strong> +40 123 456 789</p>
-                    <p><strong>✉️ Email:</strong> contact@cas-simulator.ro</p>
-                    <p><strong>📍 Adresa:</strong> Strada Unirii Nr. 25, București</p>
+                    <p><strong>✉️ Email:</strong> contact@fii-clean.ro</p>
+                    <p><strong>📍 Adresa:</strong> Strada Copou Nr. 4, Camin Iasi</p>
                     <p><strong>🕒 Program:</strong> Luni - Vineri: 08:00 - 18:00</p>
                 </div>
                 
@@ -187,15 +187,15 @@ function createAutoReplyBody($data) {
                     <li>🚚 Transport gratuit la domiciliu</li>
                 </ul>
                 
-                <p>Pentru urgențe, ne puteți contacta la numărul <strong>+40 724 456 789</strong> (disponibil 24/7).</p>
+                <p>Pentru urgențe, ne puteți contacta la numărul <strong>+40 724 206 789</strong> (disponibil 24/7).</p>
                 
                 <p>Cu stimă,<br>
-                <strong>Echipa CaS - Cleaning Services</strong></p>
+                <strong>Echipa FII-Clean</strong></p>
             </div>
             
             <div class='footer'>
                 <p>Acest email a fost generat automat. Vă rugăm să nu răspundeți la această adresa.</p>
-                <p>Pentru întrebări, folosiți adresa: contact@cas-simulator.ro</p>
+                <p>Pentru întrebări, folosiți adresa: contact@fii-clean.ro</p>
             </div>
         </div>
     </body>
@@ -229,7 +229,7 @@ function isEmailConfigured() {
 /**
  * Send test email to verify configuration
  */
-function sendTestEmail($to = 'test@cas-simulator.ro') {
+function sendTestEmail($to = 'test@fii-clean.ro') {
     if (!isEmailConfigured()) {
         return false;
     }
@@ -246,7 +246,7 @@ function sendTestEmail($to = 'test@cas-simulator.ro') {
     </html>';
     
     $headers = [
-        'From: noreply@cas-simulator.ro',
+        'From: noreply@fii-clean.ro',
         'MIME-Version: 1.0',
         'Content-Type: text/html; charset=UTF-8'
     ];
@@ -366,14 +366,14 @@ function cleanEmailQueue($days = 7) {
  * Send notification email for new orders
  */
 function sendOrderNotification($orderData) {
-    $to = 'orders@cas-simulator.ro';
+    $to = 'orders@fii-clean.ro';
     $subject = 'Comandă nouă #' . $orderData['id'];
     
     $body = createOrderEmailBody($orderData);
     
     $headers = [
-        'From: noreply@cas-simulator.ro',
-        'Reply-To: contact@cas-simulator.ro',
+        'From: noreply@fii-clean.ro',
+        'Reply-To: contact@fii-clean.ro',
         'X-Mailer: PHP/' . phpversion(),
         'MIME-Version: 1.0',
         'Content-Type: text/html; charset=UTF-8'
@@ -502,8 +502,8 @@ function sendOrderStatusUpdate($orderData, $newStatus) {
     $body = createStatusUpdateEmailBody($orderData, $newStatus);
     
     $headers = [
-        'From: noreply@cas-simulator.ro',
-        'Reply-To: contact@cas-simulator.ro',
+        'From: noreply@fii-clean.ro',
+        'Reply-To: contact@fii-clean.ro',
         'X-Mailer: PHP/' . phpversion(),
         'MIME-Version: 1.0',
         'Content-Type: text/html; charset=UTF-8'
@@ -575,7 +575,7 @@ function createStatusUpdateEmailBody($orderData, $newStatus) {
                 <div class='contact-info'>
                     <h3>🌟 Mulțumim că ați ales serviciile noastre!</h3>
                     <p>Sperăm că sunteți mulțumit de calitatea serviciilor noastre. Feedback-ul dumneavoastră este foarte important pentru noi.</p>
-                    <p>Pentru evaluarea serviciului, vă rugăm să ne contactați la: <strong>contact@cas-simulator.ro</strong></p>
+                    <p>Pentru evaluarea serviciului, vă rugăm să ne contactați la: <strong>contact@fii-clean.ro</strong></p>
                 </div>";
     } elseif ($newStatus === 'anulata') {
         $body .= "
@@ -588,8 +588,8 @@ function createStatusUpdateEmailBody($orderData, $newStatus) {
     $body .= "
                 <div class='contact-info'>
                     <h3>Informații de contact:</h3>
-                    <p><strong>📞 Telefon:</strong> +40 123 456 789</p>
-                    <p><strong>✉️ Email:</strong> contact@cas-simulator.ro</p>
+                    <p><strong>📞 Telefon:</strong> +40 423 456 789</p>
+                    <p><strong>✉️ Email:</strong> contact@fii-clean.ro</p>
                     <p><strong>🕒 Program:</strong> Luni - Vineri: 08:00 - 18:00</p>
                 </div>
                 
@@ -681,14 +681,14 @@ function createEmailTemplate($title, $content, $headerColor = '#3498db') {
     <body>
         <div class='container'>
             <div class='header'>
-                <h1>CaS - Cleaning Services</h1>
+                <h1>FII-Clean - Clean up</h1>
             </div>
             <div class='content'>
                 {$content}
             </div>
             <div class='footer'>
-                <p>&copy; " . date('Y') . " CaS - Cleaning Web Simulator. Toate drepturile rezervate.</p>
-                <p>📧 contact@cas-simulator.ro | 📞 +40 123 456 789</p>
+                <p>&copy; " . date('Y') . " FII-Clean Clean up. Ne-am pus</p>
+                <p>📧 contact@fii-clean.ro | 📞 +40 193 456 123</p>
             </div>
         </div>
     </body>
