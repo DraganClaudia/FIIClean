@@ -13,7 +13,9 @@ class ResourceModel {
      * Obtine toate resursele
      */
     public function getAllResources() {
-        $sql = "SELECT * FROM Resursa ORDER BY Tip, Nume";
+        $sql = "SELECT r.*, s.Nume as nume_sediu FROM resursa r 
+                LEFT JOIN sediu s ON r.idSediu = s.idSediu 
+                ORDER BY r.Tip, r.Nume";
         $stmt = $this->db->query($sql);
         return $stmt->fetchAll();
     }
@@ -39,9 +41,9 @@ class ResourceModel {
     /**
      * Creeaza resursa noua
      */
-    public function createResource($type, $name, $quantity) {
-        $sql = "INSERT INTO Resursa (Tip, Nume, CantitateDisponibila) VALUES (?, ?, ?)";
-        $stmt = $this->db->query($sql, [$type, $name, $quantity]);
+    public function createResource($sediuId, $type, $name, $quantity) {
+        $sql = "INSERT INTO resursa (idSediu, Tip, Nume, CantitateDisponibila) VALUES (?, ?, ?, ?)";
+        $stmt = $this->db->query($sql, [$sediuId, $type, $name, $quantity]);
         return $this->db->lastInsertId();
     }
     
