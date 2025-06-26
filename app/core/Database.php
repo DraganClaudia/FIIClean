@@ -1,6 +1,6 @@
 <?php
 /**
- * Database - Conexiune PDO simplificata pentru MySQL
+ * Database
  */
 class Database {
     private static $instance = null;
