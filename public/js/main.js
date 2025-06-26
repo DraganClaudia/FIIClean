@@ -1,7 +1,5 @@
 /**
- * CaS - Cleaning Web Simulator
  * Main JavaScript file implementing complete AJAX functionality
- * Conform cerintelor: invocarea serviciilor Web in maniera asincrona via AJAX
  */
 
 // Global variables
@@ -48,7 +46,6 @@ function initializeApp() {
 
 /**
  * Real-time monitoring updates via AJAX
- * Conform cerintelor: monitorizarea in timp-real
  */
 function startRealTimeUpdates() {
     // Update dashboard every 30 seconds
@@ -127,7 +124,6 @@ function updateDashboardDisplay(stats) {
 
 /**
  * Location details via AJAX
- * Conform cerintelor: localizare geografica si tip de servicii
  */
 function initializeLocationDetails() {
     // Add click handlers for location cards
@@ -312,7 +308,6 @@ function submitContactForm() {
 
 /**
  * Order management AJAX
- * Conform cerintelor: managementul comenzilor
  */
 function initializeOrderManagement() {
     // Initialize order creation form if exists
@@ -410,7 +405,6 @@ function cancelOrder(orderId) {
 
 /**
  * Resource monitoring AJAX
- * Conform cerintelor: gestiunea resurselor (detergenti, echipamente)
  */
 function initializeResourceMonitoring() {
     // Check for low stock resources
@@ -483,7 +477,6 @@ function updateResourceQuantity(form) {
 
 /**
  * Location status updates for real-time monitoring
- * Conform cerintelor: monitorizarea in timp-real a fiecarui sediu
  */
 function updateLocationStatus() {
     makeAjaxRequest('GET', '?controller=api&action=getSedii', null, {
@@ -526,7 +519,6 @@ function updateLocationDisplays(sedii) {
 
 /**
  * Generic AJAX request function
- * Implements complete AJAX functionality as required
  */
 function makeAjaxRequest(method, url, data, callbacks) {
     const xhr = new XMLHttpRequest();
