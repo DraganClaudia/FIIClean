@@ -13,7 +13,7 @@ class ClientModel {
      * Obtine toti clientii
      */
     public function getAllClienti() {
-        $sql = "SELECT * FROM Client ORDER BY Nume";
+        $sql = "SELECT * FROM client ORDER BY username";
         $stmt = $this->db->query($sql);
         return $stmt->fetchAll();
     }
@@ -31,8 +31,9 @@ class ClientModel {
      * Creeaza client nou
      */
     public function createClient($nume, $email, $telefon = '', $adresa = '') {
-        $sql = "INSERT INTO Client (Nume, Email, Telefon, Adresa) VALUES (?, ?, ?, ?)";
-        $stmt = $this->db->query($sql, [$nume, $email, $telefon, $adresa]);
+        $sql = "INSERT INTO client (username, email, parola, rol) VALUES (?, ?, ?, 'user')";
+        $defaultPassword = password_hash('defaultpass123', PASSWORD_DEFAULT);
+        $stmt = $this->db->query($sql, [$nume, $email, $defaultPassword]);
         return $this->db->lastInsertId();
     }
     
@@ -40,8 +41,8 @@ class ClientModel {
      * Actualizeaza client
      */
     public function updateClient($id, $nume, $email, $telefon = '', $adresa = '') {
-        $sql = "UPDATE Client SET Nume = ?, Email = ?, Telefon = ?, Adresa = ? WHERE id = ?";
-        $stmt = $this->db->query($sql, [$nume, $email, $telefon, $adresa, $id]);
+        $sql = "UPDATE client SET username = ?, email = ? WHERE id = ?";
+        $stmt = $this->db->query($sql, [$nume, $email, $id]);
         return $stmt->rowCount() > 0;
     }
     
@@ -50,15 +51,15 @@ class ClientModel {
      */
     public function deleteClient($id) {
         // Verifica daca are comenzi
-        $checkSql = "SELECT COUNT(*) as count FROM Comanda WHERE idClient = ?";
+        $checkSql = "SELECT COUNT(*) as count FROM comanda WHERE idClient = ?";
         $checkStmt = $this->db->query($checkSql, [$id]);
         $result = $checkStmt->fetch();
-        
+    
         if ($result['count'] > 0) {
             return false; // Nu poate fi sters
         }
-        
-        $sql = "DELETE FROM Client WHERE id = ?";
+    
+        $sql = "DELETE FROM client WHERE id = ?";
         $stmt = $this->db->query($sql, [$id]);
         return $stmt->rowCount() > 0;
     }
@@ -67,7 +68,7 @@ class ClientModel {
      * Cauta client dupa email
      */
     public function getClientByEmail($email) {
-        $sql = "SELECT * FROM Client WHERE Email = ?";
+        $sql = "SELECT * FROM client WHERE email = ?";
         $stmt = $this->db->query($sql, [$email]);
         return $stmt->fetch();
     }
@@ -77,11 +78,11 @@ class ClientModel {
      */
     public function getClientComenzi($clientId) {
         $sql = "SELECT c.*, s.Nume as nume_sediu
-                FROM Comanda c
-                LEFT JOIN Sediu s ON c.idSediu = s.id
+                FROM comanda c
+                LEFT JOIN sediu s ON c.idSediu = s.idSediu
                 WHERE c.idClient = ?
                 ORDER BY c.DataProgramare DESC";
-        
+    
         $stmt = $this->db->query($sql, [$clientId]);
         return $stmt->fetchAll();
     }
