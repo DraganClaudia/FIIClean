@@ -37,8 +37,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         if ($stare === 'reparatii') {
             $eroare = "Sediul selectat este în reparații. Te rugăm să alegi alt sediu.";
         } else {
-            $stmt = $mysqli->prepare("INSERT INTO comanda (idClient, idSediu, TipServiciu, DataProgramare, Recurenta, Transport, Status, Cantitate) VALUES (?, ?, ?, ?, ?, ?, 'noua', ?)");
-            $stmt->bind_param("iissiii", $idClient, $idSediu, $tipServiciu, $data, $recurenta, $transport, $cantitate);
+            $stmt = $mysqli->prepare("INSERT INTO comanda (idClient, idSediu, NumeClient, TipServiciu, DataProgramare, Recurenta, Transport, Status, Cantitate) VALUES (?, ?, (SELECT username FROM client WHERE id = ?), ?, ?, ?, ?, 'noua', ?)");
+            $stmt->bind_param("iissiiii", $idClient, $idSediu, $idClient, $tipServiciu, $data, $recurenta, $transport, $cantitate);
             $stmt->execute();
             $mesaj = "Comanda a fost plasată cu succes!";
         }
