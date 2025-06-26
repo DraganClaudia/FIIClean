@@ -10,7 +10,7 @@
     <!-- Meta tags for SEO and responsive design -->
     <meta name="description" content="Sistem Web pentru managementul activităților de spălătorie - covoare, autoturisme, îmbrăcăminte">
     <meta name="keywords" content="spălătorie, curățenie, management, web simulator">
-    <meta name="author" content="CaS Team">
+    <meta name="author" content="FII Clean Team">
     
     <!-- Favicon -->
     <link rel="icon" type="image/x-icon" href="public/favicon.ico">
@@ -31,13 +31,14 @@
         <div class="container">
             <div class="header-content">
                 <div class="logo">
-                    <h1><a href="?controller=public&action=home">CaS</a></h1>
-                    <span class="tagline">Cleaning Web Simulator</span>
+                    <h1><a href="?controller=public&action=home">FII-Clean</a></h1>
+                    <span class="tagline">Clean up.</span>
                 </div>
                 
                 <nav class="main-nav">
                     <ul>
                         <li><a href="?controller=public&action=home">Acasă</a></li>
+                        <li><a href="?controller=public&action=scholarFII">ScholarFII</a></li>
                         <li><a href="?controller=public&action=contact">Contact</a></li>
                         
                         <?php if (isset($_SESSION['user_id'])): ?>

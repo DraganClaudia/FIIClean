@@ -2,8 +2,8 @@
     <!-- Hero Section -->
     <section class="hero">
         <div class="hero-content">
-            <h1>Bun venit la CaS</h1>
-            <p class="hero-subtitle">Sistem Web pentru managementul spalatoriilor</p>
+            <h1>Bun venit la FII CLEAN</h1>
+            <p class="hero-subtitle">Clean EVERYTHING up (well not really)</p>
             <p class="hero-description">
                 Monitorizati in timp real activitatile de spalare pentru covoare, autoturisme si textile. 
                 Gestionati resursele, planificati serviciile si urmariti eficienta fiecarui sediu.

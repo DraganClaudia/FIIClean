@@ -35,6 +35,14 @@ class PublicController extends Controller {
             ]);
         }
     }
+
+    /**
+     * Pagina ScholarFII - Specificații tehnice
+     */
+    public function scholarFII() {
+         include 'app/views/public/scholar_fii.php';
+        exit;
+    }
     
     /**
      * Detalii sediu via AJAX
