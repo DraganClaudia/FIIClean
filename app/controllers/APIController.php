@@ -1,7 +1,6 @@
 <?php
 /**
  * APIController - servicii Web REST pentru sistemul de spalatorii
- * Implementeaza arhitectura bazata pe servicii Web conform specificatiilor
  */
 require_once 'app/models/SediuModel.php';
 require_once 'app/models/ComandaModel.php';
