@@ -1,7 +1,6 @@
 <?php
 /**
  * ResourceModel - simplified pentru operatiuni cu resurse
- * Adaptat pentru baza de date fiiclean existenta
  */
 class ResourceModel {
     private $db;
