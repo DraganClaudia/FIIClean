@@ -13,12 +13,12 @@ class SediuModel {
      * Obtine toate sediile
      */
     public function getAllSedii() {
-        $sql = "SELECT s.*, COUNT(c.id) as total_comenzi
-                FROM Sediu s
-                LEFT JOIN Comanda c ON s.id = c.idSediu
-                GROUP BY s.id
+        $sql = "SELECT s.*, COUNT(c.idComanda) as total_comenzi
+                FROM sediu s
+                LEFT JOIN comanda c ON s.idSediu = c.idSediu
+                GROUP BY s.idSediu
                 ORDER BY s.Nume";
-        
+    
         $stmt = $this->db->query($sql);
         return $stmt->fetchAll();
     }
@@ -27,7 +27,7 @@ class SediuModel {
      * Obtine sediu dupa ID
      */
     public function getSediuById($id) {
-        $sql = "SELECT * FROM Sediu WHERE id = ?";
+        $sql = "SELECT * FROM sediu WHERE idSediu = ?";
         $stmt = $this->db->query($sql, [$id]);
         return $stmt->fetch();
     }
@@ -41,9 +41,9 @@ class SediuModel {
                     COUNT(CASE WHEN MONTH(DataProgramare) = MONTH(CURDATE()) THEN 1 END) as comenzi_luna,
                     COUNT(CASE WHEN YEAR(DataProgramare) = YEAR(CURDATE()) THEN 1 END) as comenzi_an,
                     AVG(CASE WHEN Status = 'finalizata' THEN 1 ELSE 0 END) * 100 as rata_finalizare
-                FROM Comanda 
+                FROM comanda 
                 WHERE idSediu = ?";
-        
+    
         $stmt = $this->db->query($sql, [$sediuId]);
         return $stmt->fetch();
     }
@@ -61,9 +61,9 @@ class SediuModel {
      * Adauga sediu nou
      */
     public function addSediu($nume, $adresa, $latitudine = null, $longitudine = null) {
-        $sql = "INSERT INTO Sediu (Nume, Adresa, Latitudine, Longitudine, Stare) 
+        $sql = "INSERT INTO sediu (Nume, Adresa, Latitudine, Longitudine, Stare) 
                 VALUES (?, ?, ?, ?, 'activ')";
-        
+    
         $stmt = $this->db->query($sql, [$nume, $adresa, $latitudine, $longitudine]);
         return $this->db->lastInsertId();
     }
@@ -72,9 +72,9 @@ class SediuModel {
      * Actualizeaza sediu
      */
     public function updateSediu($id, $nume, $adresa, $stare, $latitudine = null, $longitudine = null) {
-        $sql = "UPDATE Sediu SET Nume = ?, Adresa = ?, Stare = ?, Latitudine = ?, Longitudine = ? 
-                WHERE id = ?";
-        
+        $sql = "UPDATE sediu SET Nume = ?, Adresa = ?, Stare = ?, Latitudine = ?, Longitudine = ? 
+                WHERE idSediu = ?";
+    
         $stmt = $this->db->query($sql, [$nume, $adresa, $stare, $latitudine, $longitudine, $id]);
         return $stmt->rowCount() > 0;
     }
@@ -84,15 +84,15 @@ class SediuModel {
      */
     public function deleteSediu($id) {
         // Verifica daca are comenzi
-        $checkSql = "SELECT COUNT(*) as count FROM Comanda WHERE idSediu = ?";
+        $checkSql = "SELECT COUNT(*) as count FROM comanda WHERE idSediu = ?";
         $checkStmt = $this->db->query($checkSql, [$id]);
         $result = $checkStmt->fetch();
-        
+    
         if ($result['count'] > 0) {
             // Nu sterge, doar dezactiveaza
-            return $this->updateSediuStatus($id, 'inactiv');
+            return $this->updateSediuStatus($id, 'reparatii');
         } else {
-            $sql = "DELETE FROM Sediu WHERE id = ?";
+            $sql = "DELETE FROM sediu WHERE idSediu = ?";
             $stmt = $this->db->query($sql, [$id]);
             return $stmt->rowCount() > 0;
         }
@@ -102,7 +102,7 @@ class SediuModel {
      * Actualizeaza status sediu
      */
     public function updateSediuStatus($id, $stare) {
-        $sql = "UPDATE Sediu SET Stare = ? WHERE id = ?";
+        $sql = "UPDATE sediu SET Stare = ? WHERE idSediu = ?";
         $stmt = $this->db->query($sql, [$stare, $id]);
         return $stmt->rowCount() > 0;
     }
@@ -111,10 +111,10 @@ class SediuModel {
      * Cauta sedii
      */
     public function searchSedii($query) {
-        $sql = "SELECT * FROM Sediu 
+        $sql = "SELECT * FROM sediu 
                 WHERE Nume LIKE ? OR Adresa LIKE ?
                 ORDER BY Nume";
-        
+    
         $searchTerm = '%' . $query . '%';
         $stmt = $this->db->query($sql, [$searchTerm, $searchTerm]);
         return $stmt->fetchAll();
@@ -124,14 +124,14 @@ class SediuModel {
      * Da sedii dupa stare
      */
     public function getSediiByStare($stare) {
-    $sql = "SELECT s.*, COUNT(c.id) as total_comenzi
-            FROM Sediu s
-            LEFT JOIN Comanda c ON s.id = c.idSediu
-            WHERE s.Stare = ?
-            GROUP BY s.id
-            ORDER BY s.Nume";
+        $sql = "SELECT s.*, COUNT(c.idComanda) as total_comenzi
+                FROM sediu s
+                LEFT JOIN comanda c ON s.idSediu = c.idSediu
+                WHERE s.Stare = ?
+                GROUP BY s.idSediu
+                ORDER BY s.Nume";
     
-    $stmt = $this->db->query($sql, [$stare]);
-    return $stmt->fetchAll();
+        $stmt = $this->db->query($sql, [$stare]);
+        return $stmt->fetchAll();
     }
 }
