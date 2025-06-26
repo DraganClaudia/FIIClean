@@ -8,6 +8,10 @@ require_once 'app/models/ComandaModel.php';
 require_once 'app/models/ResourceModel.php';
 
 class RSSGenerator {
+
+    private static function escapeXmlUrl($url) {
+        return htmlspecialchars($url, ENT_XML1, 'UTF-8');
+    }
     
     /**
      * Genereaza RSS feed
@@ -86,8 +90,7 @@ class RSSGenerator {
             $item->appendChild($descElement);
             
             // Link catre detaliile sediului
-            $link = $rss->createElement('link', BASE_URL . '?controller=public&action=getLocationDetails&id=' . $sediu['id']);
-            $item->appendChild($link);
+            $link = $rss->createElement('link', self::escapeXmlUrl(BASE_URL . '?controller=public&action=getLocationDetails&id=' . $sediu['id']));            $item->appendChild($link);
             
             $guid = $rss->createElement('guid', 'sediu-' . $sediu['id'] . '-' . time());
             $guid->setAttribute('isPermaLink', 'false');
@@ -135,8 +138,7 @@ class RSSGenerator {
         $descElement = $rss->createElement('description', htmlspecialchars($description));
         $item->appendChild($descElement);
         
-        $link = $rss->createElement('link', BASE_URL . '?controller=admin&action=dashboard');
-        $item->appendChild($link);
+        $link = $rss->createElement('link', self::escapeXmlUrl(BASE_URL . '?controller=admin&action=dashboard'));        $item->appendChild($link);
         
         $guid = $rss->createElement('guid', 'stats-' . date('Y-m-d-H'));
         $guid->setAttribute('isPermaLink', 'false');
@@ -250,7 +252,7 @@ class RSSGenerator {
         $descElement = $rss->createElement('description', htmlspecialchars($description));
         $statsItem->appendChild($descElement);
         
-        $link = $rss->createElement('link', BASE_URL);
+        $link = $rss->createElement('link', self::escapeXmlUrl(BASE_URL));
         $statsItem->appendChild($link);
         
         $pubDate = $rss->createElement('pubDate', date('r'));
@@ -292,7 +294,7 @@ class RSSGenerator {
         $descEl = $rss->createElement('description', htmlspecialchars($description));
         $channel->appendChild($descEl);
         
-        $linkEl = $rss->createElement('link', BASE_URL);
+        $linkEl = $rss->createElement('link', self::escapeXmlUrl(BASE_URL));
         $channel->appendChild($linkEl);
         
         $langEl = $rss->createElement('language', 'ro-RO');
