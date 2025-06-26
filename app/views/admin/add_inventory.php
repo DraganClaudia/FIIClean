@@ -30,9 +30,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $stmt = $mysqli->prepare("INSERT INTO resursa (idSediu, Tip, Nume, CantitateDisponibila) VALUES (?, ?, ?, ?)");
         $stmt->bind_param("issi", $idSediu, $tip, $nume, $cantitate);
         $stmt->execute();
-
+    
         $mesaj = "Resursa a fost adăugată cu succes!";
-    }
+}
 }
 
 
