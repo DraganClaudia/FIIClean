@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FII-Clean - Gestionare Comenzi</title>
+    <link rel="stylesheet" href="css/main.css">
+</head>
+<body>
+    <header>
+        <h1>FII-Clean - Gestionare Comenzi</h1>
+        <nav id="main-nav">
+            <a href="index.html">Acasă</a>
+            <a href="locations.html">Locații</a>
+            <a href="orders.html">Comenzi</a>
+            <a href="dashboard.html">Dashboard</a>
+        </nav>
+    </header>
+    
+    <main>
+        <section id="orders-section">
+            <h2>Comenzi Active</h2>
+            
+            <div class="filter-section">
+                <label for="status-filter">Filtrează după status:</label>
+                <select id="status-filter">
+                    <option value="all">Toate</option>
+                    <option value="pending">În așteptare</option>
+                    <option value="in_progress">În progres</option>
+                    <option value="completed">Completate</option>
+                    <option value="cancelled">Anulate</option>
+                </select>
+            </div>
+            
+            <div id="orders-list">
+                <p>Se încarcă comenzile...</p>
+            </div>
+            
+            <button id="add-order-btn">Adaugă Comandă Nouă</button>
+            
+            <div id="add-order-form" style="display: none;">
+                <h3>Comandă Nouă</h3>
+                <form id="order-form">
+                    <select id="location-select" required>
+                        <option value="">Selectează locația</option>
+                    </select>
+                    
+                    <input type="text" id="client-name" placeholder="Numele clientului" required>
+                    <input type="tel" id="client-phone" placeholder="Telefon client">
+                    <input type="email" id="client-email" placeholder="Email client">
+                    
+                    <select id="service-type" required>
+                        <option value="">Selectează serviciul</option>
+                        <option value="covoare">Spălare covoare</option>
+                        <option value="auto">Spălare auto</option>
+                        <option value="haine">Curățare haine</option>
+                        <option value="textile">Curățare textile</option>
+                    </select>
+                    
+                    <input type="text" id="pickup-address" placeholder="Adresa de ridicare">
+                    <input type="text" id="delivery-address" placeholder="Adresa de livrare">
+                    <input type="datetime-local" id="scheduled-date">
+                    <input type="number" id="price" placeholder="Preț (RON)" step="0.01">
+                    <textarea id="notes" placeholder="Observații..."></textarea>
+                    
+                    <button type="submit">Salvează Comanda</button>
+                    <button type="button" id="cancel-order-btn">Anulează</button>
+                </form>
+            </div>
+        </section>
+        
+        <section id="order-statistics">
+            <h2>Statistici Comenzi</h2>
+            <div id="stats-content">
+                <p>Se încarcă statisticile...</p>
+            </div>
+        </section>
+    </main>
+    
+    <script src="js/api.js"></script>
+    <script src="js/orders.js"></script>
+</body>
+</html>
