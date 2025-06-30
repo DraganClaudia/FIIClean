@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FII-Clean</title>
+    <link rel="stylesheet" href="css/main.css">
+</head>
+<body>
+    <header>
+        <h1>FII-clean</h1>
+        <nav id="main-nav">
+            <a href="index.html">Acasă</a>
+            <a href="locations.html">Locații</a>
+            <a href="orders.html">Comenzi</a>
+            <a href="dashboard.html">Dashboard</a>
+        </nav>
+    </header>
+    
+    <main>
+        <section id="locations-section">
+            <h2>Locații Spălătorii</h2>
+            <div id="locations-list">
+                <p>Se încarcă locațiile...</p>
+            </div>
+            
+            <button id="add-location-btn">Adaugă Locație</button>
+            
+            <div id="add-location-form" style="display: none;">
+                <h3>Locație Nouă</h3>
+                <form id="location-form">
+                    <input type="text" id="name" placeholder="Nume locație" required>
+                    <input type="text" id="address" placeholder="Adresă" required>
+                    <input type="number" id="latitude" placeholder="Latitudine" step="any">
+                    <input type="number" id="longitude" placeholder="Longitudine" step="any">
+                    <input type="text" id="services" placeholder="Servicii (covoare, auto, etc.)">
+                    <button type="submit">Salvează</button>
+                    <button type="button" id="cancel-btn">Anulează</button>
+                </form>
+            </div>
+        </section>
+    </main>
+    
+    <script src="js/api.js"></script>
+    <script src="js/main.js"></script>
+</body>
+</html>
