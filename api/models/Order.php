@@ -1,65 +1,70 @@
 <?php
-require_once '../config/Database.php';
-class Order {
-    private $db;
+class Database
+{
+    private $db_file;
+    private $pdo;
 
     public function __construct() {
-        $this->db = (new Database())->connect();
+        // Calea corectă către api/data/database.sqlite
+        $this->db_file = __DIR__ . '/../data/database.sqlite';
     }
 
-    public function getAll() {
-        $stmt = $this->db->prepare("SELECT o.*, l.name as location_name 
-            FROM orders o 
-            LEFT JOIN locations l ON o.location_id = l.id 
-            ORDER BY o.created_at DESC");
-        $stmt->execute();
-        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    public function connect(){
+        try {
+            // Creează directorul dacă nu există
+            $dataDir = dirname($this->db_file);
+            if (!is_dir($dataDir)) {
+                mkdir($dataDir, 0777, true);
+            }
+            
+            // Creează fișierul dacă nu există
+            if (!file_exists($this->db_file)) {
+                touch($this->db_file);
+            }
+            
+            $this->pdo = new PDO('sqlite:' . $this->db_file);
+            $this->pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+            return $this->pdo;
+        } catch (PDOException $e) {
+            echo 'Connection failed: ' . $e->getMessage();
+            return false;
+        }
     }
 
-    public function getByLocation($locationId) {
-        $stmt = $this->db->prepare("SELECT * FROM orders WHERE location_id = ? ORDER BY created_at DESC");
-        $stmt->execute([$locationId]);
-        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    public function initTables(){
+        $sql = "
+            CREATE TABLE IF NOT EXISTS locations (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                name TEXT NOT NULL,
+                address TEXT NOT NULL,
+                latitude REAL NOT NULL,
+                longitude REAL NOT NULL,
+                services TEXT,
+                status TEXT DEFAULT 'active',
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            );
+
+            CREATE TABLE IF NOT EXISTS orders (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                location_id INTEGER,
+                client_name TEXT NOT NULL,
+                client_phone TEXT,
+                client_email TEXT,
+                service_type TEXT NOT NULL,
+                pickup_address TEXT,
+                delivery_address TEXT,
+                scheduled_date DATETIME,
+                status TEXT DEFAULT 'pending',
+                price DECIMAL(10,2),
+                notes TEXT,
+                created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (location_id) REFERENCES locations (id)
+            );
+        ";
+
+        $this->pdo->exec($sql);
     }
 
-    public function create($data) {
-        $stmt = $this->db->prepare("
-            INSERT INTO orders (location_id, client_name, client_phone, client_email, 
-                              service_type, pickup_address, delivery_address, 
-                              scheduled_date, price, notes) 
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-        ");
-        return $stmt->execute([
-            $data['location_id'],
-            $data['client_name'],
-            $data['client_phone'],
-            $data['client_email'],
-            $data['service_type'],
-            $data['pickup_address'],
-            $data['delivery_address'],
-            $data['scheduled_date'],
-            $data['price'],
-            $data['notes']
-        ]);
-    }
-
-    public function updateStatus($orderId, $status) {
-        $stmt = $this->db->prepare("UPDATE orders SET status = ? WHERE id = ?");
-        return $stmt->execute([$status, $orderId]);
-    }
-
-    public function getStatistics() {
-    $stmt = $this->db->prepare("
-        SELECT 
-            COUNT(*) as total_orders,
-            COUNT(CASE WHEN status = 'pending' THEN 1 END) as pending_orders,
-            COUNT(CASE WHEN status = 'completed' THEN 1 END) as completed_orders,
-            AVG(total_price) as average_price,
-            SUM(total_price) as total_revenue
-        FROM orders
-    ");
-    $stmt->execute();
-    return $stmt->fetch(PDO::FETCH_ASSOC);
 }
-
-}
+?>
