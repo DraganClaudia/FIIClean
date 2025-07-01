@@ -5,19 +5,16 @@ class Database
     private $pdo;
 
     public function __construct() {
-        // Calea corectă către api/data/database.sqlite
         $this->db_file = __DIR__ . '/../data/database.sqlite';
     }
 
     public function connect(){
         try {
-            // Creează directorul dacă nu există
             $dataDir = dirname($this->db_file);
             if (!is_dir($dataDir)) {
                 mkdir($dataDir, 0777, true);
             }
             
-            // Creează fișierul dacă nu există
             if (!file_exists($this->db_file)) {
                 touch($this->db_file);
             }
@@ -25,7 +22,6 @@ class Database
             $this->pdo = new PDO('sqlite:' . $this->db_file);
             $this->pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
             
-            // Activează foreign keys pentru SQLite
             $this->pdo->exec('PRAGMA foreign_keys = ON');
             
             return $this->pdo;
