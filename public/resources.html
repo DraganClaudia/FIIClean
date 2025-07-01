@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>FII-Clean - Gestionare Resurse</title>
+  <link rel="stylesheet" href="css/main.css" />
+</head>
+<body>
+  <header>
+    <h1>FII-Clean - Gestionare Resurse</h1>
+    <nav id="main-nav">
+      <a href="index.html">Acasă</a>
+      <a href="locations.html">Locații</a>
+      <a href="orders.html">Comenzi</a>
+      <a href="resources.html">Resurse</a>
+      <a href="dashboard.html">Dashboard</a>
+    </nav>
+  </header>
+
+  <main>
+    <!-- SECȚIUNEA LISTARE RESURSE -->
+    <section id="resources-section">
+      <h2>Resurse Disponibile</h2>
+
+      <div class="filter-section">
+        <label for="location-filter">Filtrează după locație:</label>
+        <select id="location-filter">
+          <option value="all">Toate locațiile</option>
+        </select>
+      </div>
+
+      <div id="resources-list">
+        <p>Se încarcă resursele...</p>
+      </div>
+    </section>
+
+    <!-- SECȚIUNEA CREARE RESURSĂ -->
+    <section id="resource-create">
+      <h2>Adaugă Resursă Nouă</h2>
+      <button id="add-resource-btn">Formular Resursă Nouă</button>
+
+      <div id="add-resource-form" style="display:none;">
+        <h3>Formular Resursă</h3>
+        <form id="resource-form">
+          <select id="resource-location-select" required>
+            <option value="">Selectează locația</option>
+          </select>
+          <input type="text" id="resource-name" placeholder="Nume resursă" required />
+          <input type="text" id="resource-type" placeholder="Tip resursă" required />
+          <input type="number" id="resource-quantity" placeholder="Cantitate" required />
+          <input type="text" id="resource-unit" placeholder="Unitate (bucăți, litri, etc.)" />
+          <input type="number" id="resource-min-threshold" placeholder="Prag minim" required />
+          <input type="number" id="resource-cost" placeholder="Cost unitar (RON)" step="0.01" />
+          <input type="text" id="resource-supplier" placeholder="Furnizor" />
+          <input type="datetime-local" id="resource-last-restocked" />
+          <button type="submit">Salvează Resursa</button>
+          <button type="button" id="cancel-resource-btn">Anulează</button>
+        </form>
+      </div>
+    </section>
+
+    <!-- SECȚIUNEA ADĂUGARE CANTITATE -->
+    <section id="resource-add-quantity">
+      <h2>Adaugă Cantitate Resursă</h2>
+      <form id="add-quantity-form">
+        <input type="text" id="update-resource-name" placeholder="Nume resursă" required />
+        <input type="text" id="update-department-name" placeholder="Nume departament" required />
+        <input type="number" id="update-quantity" placeholder="Cantitate de adăugat" required />
+        <button type="submit">Adaugă</button>
+      </form>
+    </section>
+
+    <!-- SECȚIUNEA SCĂDERE CANTITATE -->
+    <section id="resource-subtract-quantity">
+      <h2>Scade Cantitate Resursă</h2>
+      <form id="subtract-quantity-form">
+        <input type="text" id="subtract-resource-name" placeholder="Nume resursă" required />
+        <input type="text" id="subtract-department-name" placeholder="Nume departament" required />
+        <input type="number" id="subtract-quantity" placeholder="Cantitate de scăzut" required />
+        <button type="submit">Scade</button>
+      </form>
+    </section>
+  </main>
+
+  <script src="js/api.js"></script>
+  <script src="js/resource.js"></script>
+</body>
+</html>
