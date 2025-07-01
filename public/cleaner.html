@@ -204,7 +204,6 @@
     </main>
 
     <script>
-        // Verifică autentificarea și rolul
         if (!localStorage.getItem('auth_token')) {
             window.location.href = 'login.html';
         }
@@ -224,7 +223,6 @@
         
         async function loadCleanerDashboard() {
             try {
-                // Încarcă info utilizator
                 const userResponse = await fetch('../api/auth.php?action=me', {
                     headers: { 'Authorization': `Bearer ${localStorage.getItem('auth_token')}` }
                 });
@@ -320,7 +318,6 @@
         function getTaskClass(task) {
             if (task.cleaning_status === 'completed') return 'completed';
             
-            // Verifică dacă este urgent
             if (task.scheduled_date) {
                 const scheduledTime = new Date(task.scheduled_date);
                 const now = new Date();
@@ -385,7 +382,7 @@
                     task.cleaning_status === 'completed' && 
                     task.created_at.startsWith(today)
                 ).length;
-        }       // === FUNCȚII PENTRU SARCINI ===
+        }      
         
         async function startCleaningTask(taskId) {
             try {
@@ -404,7 +401,7 @@
                     currentTaskId = taskId;
                     document.getElementById('current-task').textContent = `Comanda #${taskId}`;
                     startTimer();
-                    loadMyCleaningTasks(); // Reîncarcă sarcinile
+                    loadMyCleaningTasks();
                     alert('Curățare începută! Succes! 🧹');
                 } else {
                     alert('Eroare la începerea curățării');
@@ -432,7 +429,7 @@
                         if (currentTaskId === taskId) {
                             stopTimer();
                         }
-                        loadMyCleaningTasks(); // Reîncarcă sarcinile
+                        loadMyCleaningTasks();
                         alert('Curățare finalizată cu succes! 🎉');
                     } else {
                         alert('Eroare la finalizarea curățării');
@@ -463,7 +460,6 @@
             
             if (problemType) {
                 alert(`Problema pentru comanda #${taskId} a fost raportată: "${problemType}"\nManagerul va fi notificat.`);
-                // În implementarea reală ar trimite problema către manager
             }
         }
         
