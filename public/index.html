@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="ro">
 <head>
+    <script src="js/header.js"></script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>FII-Clean</title>
@@ -58,29 +59,7 @@
         }
     </style>
 </head>
-<body>
-    <header>
-        <h1>FII-Clean</h1>
-        <div class="auth-section">
-            <span class="user-info" id="user-info" style="display: none;">
-                Bun venit, <span id="user-name"></span>
-                <a href="#" id="dashboard-link" class="user-dashboard-link">
-                    <span id="dashboard-icon">📊</span> 
-                    <span id="dashboard-text">Dashboard</span>
-                </a>
-                <button onclick="logout()" class="btn-logout">Logout</button>
-            </span>
-            <a href="login.html" id="login-link" class="btn-login">🔑 Login</a>
-        </div>
-        <nav id="main-nav">
-            <a href="index.html">🏠 Acasă</a>
-            <a href="locations.html">📍 Locații</a>
-            <a href="orders.html" id="orders-nav">📋 Comenzi</a>
-            <a href="resources.html" id="resources-nav">📦 Resurse</a>
-            <a href="dashboard.html">📊 Dashboard Public</a>
-        </nav>
-    </header>
-    
+<body> 
     <main>
         <!-- Conținut pentru utilizatori neautentificați -->
         <div id="guest-content">
