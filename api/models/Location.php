@@ -25,4 +25,13 @@ class Location {
             $data['services']
         ]);
     }
+
+    public function updateStatus($id, $status) {
+        $stmt = $this->db->prepare("
+            UPDATE locations 
+            SET status = ?, updated_at = datetime('now') 
+            WHERE id = ?
+        ");
+        return $stmt->execute([$status, $id]);
+    }
 }
