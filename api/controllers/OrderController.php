@@ -1,6 +1,6 @@
 <?php
 require_once __DIR__ . '/../models/Order.php';
-require_once __DIR__ . '/../helpers/SimpleAuth.php';
+require_once __DIR__ . '/../helpers/Auth.php';
 
 class OrderController {
     private $orderModel;
@@ -46,31 +46,31 @@ class OrderController {
     }
     
     private function getAllOrders() {
+        // Pentru acces public la comenzi (fără autentificare strictă)
+        header('Content-Type: application/json');
+        
+        try {
+            $orders = $this->orderModel->getAll();
+            echo json_encode($orders);
+        } catch (Exception $e) {
+            http_response_code(500);
+            echo json_encode(['error' => 'Database error: ' . $e->getMessage()]);
+        }
+    }
+    
+    private function getMyOrders() {
         $user = $this->auth->checkAuth();
         if (!$user) return;
         
         header('Content-Type: application/json');
         
-        if ($user['role'] === 'admin') {
-            $orders = $this->orderModel->getAll();
-        } elseif ($user['role'] === 'manager') {
-            $orders = $this->orderModel->getByLocation($user['location_id']);
-        } else {
-            echo json_encode(['error' => 'Access denied']);
-            return;
+        try {
+            $orders = $this->orderModel->getByClient($user['id']);
+            echo json_encode($orders);
+        } catch (Exception $e) {
+            http_response_code(500);
+            echo json_encode(['error' => 'Database error: ' . $e->getMessage()]);
         }
-        
-        echo json_encode($orders);
-    }
-    
-    private function getMyOrders() {
-        if (!$this->auth->requireRole('client')) return;
-        
-        $user = $GLOBALS['current_user'];
-        header('Content-Type: application/json');
-        
-        $orders = $this->orderModel->getByClient($user['id']);
-        echo json_encode($orders);
     }
     
     private function getAssignedOrders() {
@@ -78,54 +78,92 @@ class OrderController {
         if (!$user) return;
         
         if (!in_array($user['role'], ['worker_transport', 'worker_cleaner'])) {
+            http_response_code(403);
             echo json_encode(['error' => 'Access denied']);
             return;
         }
         
         header('Content-Type: application/json');
         
-        if ($user['role'] === 'worker_transport') {
-            $orders = $this->orderModel->getByTransportWorker($user['id']);
-        } else {
-            $orders = $this->orderModel->getByCleaningWorker($user['id']);
+        try {
+            if ($user['role'] === 'worker_transport') {
+                $orders = $this->orderModel->getByTransportWorker($user['id']);
+            } else {
+                $orders = $this->orderModel->getByCleaningWorker($user['id']);
+            }
+            
+            echo json_encode($orders);
+        } catch (Exception $e) {
+            http_response_code(500);
+            echo json_encode(['error' => 'Database error: ' . $e->getMessage()]);
         }
-        
-        echo json_encode($orders);
     }
     
     private function createOrder() {
-        $user = $this->auth->checkAuth();
-        if (!$user) return;
+        header('Content-Type: application/json');
         
-        // Verifică că are permisiunea să creeze comenzi
-        if (!in_array($user['role'], ['admin', 'manager', 'client'])) {
-            echo json_encode(['error' => 'Access denied']);
+        // Verifică dacă datele sunt trimise ca JSON
+        $rawInput = file_get_contents('php://input');
+        
+        if (empty($rawInput)) {
+            http_response_code(400);
+            echo json_encode(['error' => 'No data received']);
             return;
         }
         
-        header('Content-Type: application/json');
-        $input = json_decode(file_get_contents('php://input'), true);
+        $input = json_decode($rawInput, true);
         
-        // Pentru client-i, setează automat datele lor
-        if ($user['role'] === 'client') {
-            $input['client_id'] = $user['id'];
-            $input['client_name'] = $user['first_name'] . ' ' . $user['last_name'];
-            $input['client_email'] = $user['email'];
-            $input['client_phone'] = $user['phone'];
+        if (json_last_error() !== JSON_ERROR_NONE) {
+            http_response_code(400);
+            echo json_encode(['error' => 'Invalid JSON data']);
+            return;
         }
         
-        // Manager poate crea comenzi doar pentru locația sa
-        if ($user['role'] === 'manager') {
-            if (!$this->auth->checkLocationAccess($input['location_id'])) {
-                echo json_encode(['error' => 'Cannot create orders for this location']);
+        // Validare câmpuri obligatorii
+        $requiredFields = ['service_type', 'client_name'];
+        foreach ($requiredFields as $field) {
+            if (empty($input[$field])) {
+                http_response_code(400);
+                echo json_encode(['error' => "Field $field is required"]);
                 return;
             }
         }
         
-        if($this->orderModel->create($input)) {
-            echo json_encode(['success' => true, 'message' => 'Order created']);
-        } else {
-            echo json_encode(['success' => false, 'message' => 'Error creating order']);
+        // Verifică autentificarea pentru utilizatori logați
+        $user = null;
+        $authHeader = $_SERVER['HTTP_AUTHORIZATION'] ?? '';
+        
+        if ($authHeader) {
+            $user = $this->auth->checkAuth();
+            
+            // Pentru client-i, setează automat datele lor
+            if ($user && $user['role'] === 'client') {
+                $input['client_id'] = $user['id'];
+                $input['client_name'] = $user['first_name'] . ' ' . $user['last_name'];
+                $input['client_email'] = $user['email'];
+                $input['client_phone'] = $user['phone'];
+            }
+            
+            // Manager poate crea comenzi doar pentru locația sa
+            if ($user && $user['role'] === 'manager') {
+                if (isset($input['location_id']) && !$this->auth->checkLocationAccess($input['location_id'])) {
+                    http_response_code(403);
+                    echo json_encode(['error' => 'Cannot create orders for this location']);
+                    return;
+                }
+            }
+        }
+        
+        try {
+            if ($this->orderModel->create($input)) {
+                echo json_encode(['success' => true, 'message' => 'Order created successfully']);
+            } else {
+                http_response_code(500);
+                echo json_encode(['success' => false, 'message' => 'Error creating order']);
+            }
+        } catch (Exception $e) {
+            http_response_code(500);
+            echo json_encode(['error' => 'Database error: ' . $e->getMessage()]);
         }
     }
     
@@ -134,40 +172,56 @@ class OrderController {
         if (!$user) return;
         
         header('Content-Type: application/json');
-        $input = json_decode(file_get_contents('php://input'), true);
         
-        // Verifică cine poate actualiza această comandă
-        $order = $this->orderModel->getById($id);
-        if (!$order) {
-            echo json_encode(['error' => 'Order not found']);
+        $rawInput = file_get_contents('php://input');
+        $input = json_decode($rawInput, true);
+        
+        if (!$input) {
+            http_response_code(400);
+            echo json_encode(['error' => 'Invalid JSON data']);
             return;
         }
         
-        $canUpdate = false;
-        
-        if ($user['role'] === 'admin') {
-            $canUpdate = true;
-        } elseif ($user['role'] === 'manager' && $order['location_id'] == $user['location_id']) {
-            $canUpdate = true;
-        } elseif ($user['role'] === 'worker_transport' && $order['assigned_transport'] == $user['id']) {
-            // Worker transport poate actualiza doar transport_status
-            $input = ['transport_status' => $input['transport_status'] ?? $input['status']];
-            $canUpdate = true;
-        } elseif ($user['role'] === 'worker_cleaner' && $order['assigned_cleaner'] == $user['id']) {
-            // Worker cleaner poate actualiza doar cleaning_status
-            $input = ['cleaning_status' => $input['cleaning_status'] ?? $input['status']];
-            $canUpdate = true;
-        }
-        
-        if (!$canUpdate) {
-            echo json_encode(['error' => 'Access denied']);
-            return;
-        }
-        
-        if($this->orderModel->updateStatus($id, $input)) {
-            echo json_encode(['success' => true, 'message' => 'Status updated']);
-        } else {
-            echo json_encode(['success' => false, 'message' => 'Error updating status']);
+        try {
+            // Verifică cine poate actualiza această comandă
+            $order = $this->orderModel->getById($id);
+            if (!$order) {
+                http_response_code(404);
+                echo json_encode(['error' => 'Order not found']);
+                return;
+            }
+            
+            $canUpdate = false;
+            
+            if ($user['role'] === 'admin') {
+                $canUpdate = true;
+            } elseif ($user['role'] === 'manager' && $order['location_id'] == $user['location_id']) {
+                $canUpdate = true;
+            } elseif ($user['role'] === 'worker_transport' && $order['assigned_transport'] == $user['id']) {
+                // Worker transport poate actualiza doar transport_status
+                $input = ['transport_status' => $input['transport_status'] ?? $input['status']];
+                $canUpdate = true;
+            } elseif ($user['role'] === 'worker_cleaner' && $order['assigned_cleaner'] == $user['id']) {
+                // Worker cleaner poate actualiza doar cleaning_status
+                $input = ['cleaning_status' => $input['cleaning_status'] ?? $input['status']];
+                $canUpdate = true;
+            }
+            
+            if (!$canUpdate) {
+                http_response_code(403);
+                echo json_encode(['error' => 'Access denied']);
+                return;
+            }
+            
+            if ($this->orderModel->updateStatus($id, $input)) {
+                echo json_encode(['success' => true, 'message' => 'Status updated']);
+            } else {
+                http_response_code(500);
+                echo json_encode(['success' => false, 'message' => 'Error updating status']);
+            }
+        } catch (Exception $e) {
+            http_response_code(500);
+            echo json_encode(['error' => 'Database error: ' . $e->getMessage()]);
         }
     }
     
@@ -177,44 +231,64 @@ class OrderController {
         
         // Doar admin și manager pot asigna worker-i
         if (!in_array($user['role'], ['admin', 'manager'])) {
+            http_response_code(403);
             echo json_encode(['error' => 'Access denied']);
             return;
         }
         
         header('Content-Type: application/json');
-        $input = json_decode(file_get_contents('php://input'), true);
+        
+        $rawInput = file_get_contents('php://input');
+        $input = json_decode($rawInput, true);
+        
+        if (!$input || !isset($input['worker_id']) || !isset($input['worker_type'])) {
+            http_response_code(400);
+            echo json_encode(['error' => 'Invalid data']);
+            return;
+        }
         
         $workerId = $input['worker_id'];
         $workerType = $input['worker_type']; // 'transport' sau 'cleaner'
         
         $field = $workerType === 'transport' ? 'assigned_transport' : 'assigned_cleaner';
         
-        if($this->orderModel->assignWorker($id, $workerId, $field)) {
-            echo json_encode(['success' => true, 'message' => 'Worker assigned']);
-        } else {
-            echo json_encode(['success' => false, 'message' => 'Error assigning worker']);
+        try {
+            if ($this->orderModel->assignWorker($id, $workerId, $field)) {
+                echo json_encode(['success' => true, 'message' => 'Worker assigned']);
+            } else {
+                http_response_code(500);
+                echo json_encode(['success' => false, 'message' => 'Error assigning worker']);
+            }
+        } catch (Exception $e) {
+            http_response_code(500);
+            echo json_encode(['error' => 'Database error: ' . $e->getMessage()]);
         }
     }
     
-    // Restul metodelor rămân la fel
     private function getOrdersByLocation($locationId) {
-        if (!$this->auth->checkLocationAccess($locationId)) {
-            echo json_encode(['error' => 'Access denied']);
-            return;
-        }
-        
+        // Permite acces public pentru locații
         header('Content-Type: application/json');
-        $orders = $this->orderModel->getByLocation($locationId);
-        echo json_encode($orders);
+        
+        try {
+            $orders = $this->orderModel->getByLocation($locationId);
+            echo json_encode($orders);
+        } catch (Exception $e) {
+            http_response_code(500);
+            echo json_encode(['error' => 'Database error: ' . $e->getMessage()]);
+        }
     }
     
     private function getOrderStatistics() {
-        $user = $this->auth->checkAuth();
-        if (!$user) return;
-        
+        // Permite acces public pentru statistici
         header('Content-Type: application/json');
-        $stats = $this->orderModel->getStatistics();
-        echo json_encode($stats);
+        
+        try {
+            $stats = $this->orderModel->getStatistics();
+            echo json_encode($stats);
+        } catch (Exception $e) {
+            http_response_code(500);
+            echo json_encode(['error' => 'Database error: ' . $e->getMessage()]);
+        }
     }
 }
 ?>
