@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="ro">
 <head>
+    <script src="js/header.js"></script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>FII-Clean - Dashboard Transport</title>
@@ -126,11 +127,6 @@
     </style>
 </head>
 <body>
-    <header>
-        <h1>FII-Clean - Dashboard Transport</h1>
-        <button onclick="logout()" class="logout-btn" style="background: #e74c3c; color: white; border: none; padding: 0.5rem 1rem; border-radius: 4px; cursor: pointer; float: right;">Logout</button>
-    </header>
-    
     <main>
         <div class="transport-header">
             <h2>🚛 Worker Transport</h2>
@@ -167,7 +163,6 @@
     </main>
 
     <script>
-        // Verifică autentificarea și rolul
         if (!localStorage.getItem('auth_token')) {
             window.location.href = 'login.html';
         }
@@ -184,7 +179,6 @@
         
         async function loadTransportDashboard() {
             try {
-                // Încarcă info utilizator
                 const userResponse = await fetch('../api/auth.php?action=me', {
                     headers: { 'Authorization': `Bearer ${localStorage.getItem('auth_token')}` }
                 });
@@ -278,7 +272,6 @@
         function getTaskClass(task) {
             if (task.transport_status === 'completed') return 'completed';
             
-            // Verifică dacă este urgent (programat în următoarele 2 ore)
             if (task.scheduled_date) {
                 const scheduledTime = new Date(task.scheduled_date);
                 const now = new Date();
@@ -343,7 +336,6 @@
             return icons[status] || '⏳';
         }
         
-        // === FUNCȚII PENTRU ACȚIUNI ===
         
         async function updateTaskStatus(taskId, newStatus) {
             try {
@@ -359,7 +351,7 @@
                 const result = await response.json();
                 
                 if (result.success) {
-                    loadMyTasks(); // Reîncarcă sarcinile
+                    loadMyTasks(); 
                     if (newStatus === 'in_progress') {
                         alert('Transport pornit! Succes pe drum! 🚛');
                     } else if (newStatus === 'completed') {
@@ -377,7 +369,6 @@
             const problem = prompt('Descrieți problema întâlnită:');
             if (problem) {
                 alert(`Problema pentru comanda #${taskId} a fost raportată: "${problem}"\nManagerul va fi notificat.`);
-                // În implementarea reală ar trimite problema către manager
             }
         }
         
