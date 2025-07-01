@@ -571,8 +571,8 @@
                         ${user.last_login ? `<br><small style="color: #666;">Ultima conectare: ${new Date(user.last_login).toLocaleDateString('ro-RO')}</small>` : ''}
                     </div>
                     <div class="user-actions">
-                        <button class="btn-small" style="background: ${user.is_active ? '#f39c12' : '#28a745'}; color: white;" onclick="toggleUserStatus(${user.id}, ${user.is_active})">
-                            ${user.is_active ? 'Dezactivează' : 'Activează'}
+                        <button class="btn-small" style="background: #e74c3c; color: white;" onclick="toggleUserStatus(${user.id}, ${user.is_active})">
+                            🗑️ Șterge
                         </button>
                     </div>
                 </div>
@@ -777,18 +777,17 @@
         }
         
         async function toggleUserStatus(userId, currentStatus) {
-            if (!confirm(`Sigur vrei să ${currentStatus ? 'dezactivezi' : 'activezi'} acest utilizator?`)) {
+            if (!confirm('Sigur vrei să ștergi acest utilizator? Această acțiune nu poate fi anulată!')) {
                 return;
             }
             
             try {
-                const response = await fetch(`../api/users.php?action=update&id=${userId}`, {
+                const response = await fetch(`../api/users.php?action=delete&id=${userId}`, {
                     method: 'PUT',
                     headers: {
                         'Content-Type': 'application/json',
                         'Authorization': `Bearer ${localStorage.getItem('auth_token')}`
-                    },
-                    body: JSON.stringify({ is_active: currentStatus ? 0 : 1 })
+                    }
                 });
                 
                 const result = await response.json();
@@ -797,13 +796,13 @@
                     loadUsers(); // Reîncarcă lista
                     loadStatistics(); // Actualizează statisticile
                     loadSystemAlerts(); // Actualizează alertele
-                    alert(`Utilizatorul a fost ${currentStatus ? 'dezactivat' : 'activat'} cu succes!`);
+                    alert('Utilizatorul a fost șters cu succes!');
                 } else {
-                    alert('Eroare la actualizarea statusului utilizatorului: ' + (result.error || 'Eroare necunoscută'));
+                    alert('Eroare la ștergerea utilizatorului: ' + (result.error || 'Eroare necunoscută'));
                 }
             } catch (error) {
                 alert('Eroare de conexiune');
-                console.error('Eroare toggle user status:', error);
+                console.error('Eroare delete user:', error);
             }
         }
         
