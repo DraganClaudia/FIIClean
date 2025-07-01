@@ -31,11 +31,17 @@ switch($resource) {
         $controller = new ExportController();
         $controller->handleRequest();
         break;
-        
     case 'rss':
         require_once __DIR__ . '/controllers/RSSController.php';
         $controller = new RSSController();
         $controller->handleRequest();
+        break;
+    case 'auth':
+        require_once __DIR__ . '/auth.php';
+        break;
+        
+    case 'users':
+        require_once __DIR__ . '/users.php';
         break;
     default:
         header('HTTP/1.1 404 Not Found');
