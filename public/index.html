@@ -1,67 +1,15 @@
 <!DOCTYPE html>
 <html lang="ro">
 <head>
-    <script src="js/header.js"></script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>FII-Clean</title>
+    <title>FII-Clean - Sistem Management Spălătorii</title>
     <link rel="stylesheet" href="css/main.css">
-    <style>
-        .user-dashboard-link {
-            background: linear-gradient(135deg, #3498db, #2980b9);
-            color: white;
-            padding: 1rem 2rem;
-            border-radius: 8px;
-            text-decoration: none;
-            font-weight: bold;
-            display: inline-flex;
-            align-items: center;
-            gap: 0.5rem;
-            margin-left: 1rem;
-            transition: transform 0.2s;
-        }
-        
-        .user-dashboard-link:hover {
-            transform: translateY(-2px);
-        }
-        
-        .role-based-content {
-            margin-top: 2rem;
-            padding: 2rem;
-            background: #f8f9fa;
-            border-radius: 12px;
-            border-left: 4px solid #3498db;
-        }
-        
-        .service-cards {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-            gap: 1.5rem;
-            margin: 2rem 0;
-        }
-        
-        .service-card {
-            background: white;
-            padding: 2rem;
-            border-radius: 12px;
-            text-align: center;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-            transition: transform 0.3s ease;
-        }
-        
-        .service-card:hover {
-            transform: translateY(-5px);
-        }
-        
-        .service-icon {
-            font-size: 3rem;
-            margin-bottom: 1rem;
-        }
-    </style>
 </head>
-<body> 
+<body>
+    <script src="js/header.js"></script>
+    
     <main>
-        <!-- Conținut pentru utilizatori neautentificați -->
         <div id="guest-content">
             <section class="welcome-section">
                 <h2>Bun venit la FII-Clean! 🧽</h2>
@@ -69,152 +17,51 @@
                 <div class="quick-access">
                     <a href="login.html" class="quick-btn">🔑 Conectare</a>
                     <a href="dashboard.html" class="quick-btn">📊 Dashboard Public</a>
+                    <a href="locations.html" class="quick-btn">📍 Locații</a>
                 </div>
             </section>
             
-            <section class="service-cards">
-                <div class="service-card">
-                    <div class="service-icon">🧽</div>
-                    <h3>Spălare Covoare</h3>
-                    <p>Servicii profesionale de curățare pentru covoare și mochetă</p>
-                </div>
-                <div class="service-card">
-                    <div class="service-icon">🚗</div>
-                    <h3>Spălare Auto</h3>
-                    <p>Curățare completă interior și exterior pentru vehicule</p>
-                </div>
-                <div class="service-card">
-                    <div class="service-icon">👔</div>
-                    <h3>Curățare Haine</h3>
-                    <p>Servicii de curățare chimică pentru îmbrăcăminte</p>
+            <section>
+                <h2>🏢 Serviciile Noastre</h2>
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 2rem; margin: 2rem 0;">
+                    <div class="card" style="text-align: center;">
+                        <div style="font-size: 3rem; margin-bottom: 1rem;">🧽</div>
+                        <h3>Spălare Covoare</h3>
+                        <p>Servicii profesionale de curățare pentru covoare și mochetă</p>
+                    </div>
+                    <div class="card" style="text-align: center;">
+                        <div style="font-size: 3rem; margin-bottom: 1rem;">🚗</div>
+                        <h3>Spălare Auto</h3>
+                        <p>Curățare completă interior și exterior pentru vehicule</p>
+                    </div>
+                    <div class="card" style="text-align: center;">
+                        <div style="font-size: 3rem; margin-bottom: 1rem;">👔</div>
+                        <h3>Curățare Haine</h3>
+                        <p>Servicii de curățare chimică pentru îmbrăcăminte</p>
+                    </div>
                 </div>
             </section>
         </div>
         
-        <!-- Conținut pentru clienți autentificați -->
-        <div id="client-content" style="display: none;">
+        <div id="user-content" style="display: none;">
             <section class="welcome-section">
                 <h2>Bun venit înapoi! 👋</h2>
-                <p>Gestionează-ți comenzile și serviciile cu ușurință</p>
-                <div class="quick-access">
-                    <a href="client.html" class="quick-btn">📋 Comenzile Mele</a>
-                    <a href="#" onclick="quickOrder()" class="quick-btn">➕ Comandă Rapidă</a>
+                <p id="user-welcome-message">Loading...</p>
+                <div class="quick-access" id="user-quick-actions">
                 </div>
             </section>
             
-            <div class="role-based-content">
-                <h3>🎯 Acces Rapid la Servicii</h3>
-                <div class="service-cards">
-                    <div class="service-card" onclick="quickOrder('covoare')">
-                        <div class="service-icon">🧽</div>
-                        <h4>Comandă Spălare Covoare</h4>
-                    </div>
-                    <div class="service-card" onclick="quickOrder('auto')">
-                        <div class="service-icon">🚗</div>
-                        <h4>Comandă Spălare Auto</h4>
-                    </div>
-                    <div class="service-card" onclick="quickOrder('haine')">
-                        <div class="service-icon">👔</div>
-                        <h4>Comandă Curățare Haine</h4>
-                    </div>
-                </div>
+            <div id="role-specific-content">
             </div>
         </div>
         
-        <!-- Conținut pentru manageri -->
-        <div id="manager-content" style="display: none;">
-            <section class="welcome-section">
-                <h2>Dashboard Manager 👨‍💼</h2>
-                <p>Gestionează locația și echipa ta</p>
-                <div class="quick-access">
-                    <a href="manager.html" class="quick-btn">📊 Dashboard Manager</a>
-                    <a href="orders.html" class="quick-btn">📋 Gestionare Comenzi</a>
-                </div>
-            </section>
-            
-            <div class="role-based-content">
-                <h3>🎯 Acces Rapid Manager</h3>
-                <div class="service-cards">
-                    <div class="service-card" onclick="window.location.href='manager.html'">
-                        <div class="service-icon">👷</div>
-                        <h4>Worker-ii Mei</h4>
-                    </div>
-                    <div class="service-card" onclick="window.location.href='orders.html'">
-                        <div class="service-icon">📋</div>
-                        <h4>Comenzi Locație</h4>
-                    </div>
-                    <div class="service-card" onclick="window.location.href='resources.html'">
-                        <div class="service-icon">📦</div>
-                        <h4>Resurse</h4>
-                    </div>
-                </div>
-            </div>
-        </div>
-        
-        <!-- Conținut pentru workeri -->
-        <div id="worker-content" style="display: none;">
-            <section class="welcome-section">
-                <h2>Dashboard Worker 👷</h2>
-                <p>Accesează-ți sarcinile și informațiile importante</p>
-                <div class="quick-access">
-                    <a href="#" id="worker-dashboard-link" class="quick-btn">📋 Sarcinile Mele</a>
-                    <a href="orders.html" class="quick-btn">📊 Toate Comenzile</a>
-                </div>
-            </section>
-            
-            <div class="role-based-content">
-                <h3 id="worker-role-title">🎯 Sarcini Worker</h3>
-                <div class="service-cards">
-                    <div class="service-card" onclick="window.location.href=document.getElementById('worker-dashboard-link').href">
-                        <div class="service-icon" id="worker-icon">👷</div>
-                        <h4 id="worker-task-title">Sarcinile Mele</h4>
-                    </div>
-                    <div class="service-card" onclick="window.location.href='orders.html'">
-                        <div class="service-icon">📋</div>
-                        <h4>Toate Comenzile</h4>
-                    </div>
-                </div>
-            </div>
-        </div>
-        
-        <!-- Conținut pentru admin -->
-        <div id="admin-content" style="display: none;">
-            <section class="welcome-section">
-                <h2>Dashboard Administrator 👑</h2>
-                <p>Control complet asupra sistemului</p>
-                <div class="quick-access">
-                    <a href="admin.html" class="quick-btn">👑 Admin Panel</a>
-                    <a href="dashboard.html" class="quick-btn">📊 Dashboard Central</a>
-                </div>
-            </section>
-            
-            <div class="role-based-content">
-                <h3>🎯 Acces Rapid Admin</h3>
-                <div class="service-cards">
-                    <div class="service-card" onclick="window.location.href='admin.html'">
-                        <div class="service-icon">👥</div>
-                        <h4>Gestionare Utilizatori</h4>
-                    </div>
-                    <div class="service-card" onclick="window.location.href='orders.html'">
-                        <div class="service-icon">📋</div>
-                        <h4>Toate Comenzile</h4>
-                    </div>
-                    <div class="service-card" onclick="window.location.href='locations.html'">
-                        <div class="service-icon">📍</div>
-                        <h4>Gestionare Locații</h4>
-                    </div>
-                </div>
-            </div>
-        </div>
-        
-        <!-- Locații pentru toți utilizatorii -->
         <section id="locations-section">
             <h2>📍 Locațiile Noastre</h2>
             <div id="locations-list">
                 <p>Se încarcă locațiile...</p>
             </div>
             <div style="text-align: center; margin-top: 2rem;">
-                <a href="locations.html" class="quick-btn">Vezi Toate Locațiile</a>
+                <a href="locations.html" class="btn btn-primary">Vezi Toate Locațiile</a>
             </div>
         </section>
     </main>
@@ -222,16 +69,187 @@
     <script src="js/api.js"></script>
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-            checkAuthStatus();
-            loadLocationsPreview();
+            initializePage();
         });
+
+        async function initializePage() {
+            const isAuthenticated = checkAuthStatus();
+            
+            if (isAuthenticated) {
+                await loadUserContent();
+                document.getElementById('guest-content').style.display = 'none';
+                document.getElementById('user-content').style.display = 'block';
+            } else {
+                document.getElementById('guest-content').style.display = 'block';
+                document.getElementById('user-content').style.display = 'none';
+            }
+            
+            await loadLocationsPreview();
+        }
+
+        async function loadUserContent() {
+            try {
+                const userData = await AuthAPI.getMe();
+                if (userData.success) {
+                    const user = userData.user;
+                    
+                    document.getElementById('user-welcome-message').textContent = 
+                        `Salut, ${user.first_name}! Gestionează-ți activitatea cu ușurință.`;
+                    
+                    setupRoleContent(user.role);
+                }
+            } catch (error) {
+                console.error('Eroare la încărcarea datelor utilizatorului:', error);
+                document.getElementById('guest-content').style.display = 'block';
+                document.getElementById('user-content').style.display = 'none';
+            }
+        }
+
+        function setupRoleContent(role) {
+            const actionsContainer = document.getElementById('user-quick-actions');
+            const contentContainer = document.getElementById('role-specific-content');
+            
+            const roleConfigs = {
+                'admin': {
+                    actions: [
+                        { href: 'admin.html', icon: '👑', text: 'Admin Panel' },
+                        { href: 'orders.html', icon: '📋', text: 'Toate Comenzile' },
+                        { href: 'locations.html', icon: '📍', text: 'Gestionare Locații' }
+                    ],
+                    content: `
+                        <div class="card">
+                            <h3>🎯 Acces Rapid Admin</h3>
+                            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-top: 1rem;">
+                                <a href="admin.html" class="btn" style="padding: 2rem; text-align: center; text-decoration: none;">
+                                    <div style="font-size: 2rem; margin-bottom: 0.5rem;">👥</div>
+                                    Gestionare Utilizatori
+                                </a>
+                                <a href="orders.html" class="btn" style="padding: 2rem; text-align: center; text-decoration: none;">
+                                    <div style="font-size: 2rem; margin-bottom: 0.5rem;">📋</div>
+                                    Toate Comenzile
+                                </a>
+                                <a href="locations.html" class="btn" style="padding: 2rem; text-align: center; text-decoration: none;">
+                                    <div style="font-size: 2rem; margin-bottom: 0.5rem;">📍</div>
+                                    Gestionare Locații
+                                </a>
+                            </div>
+                        </div>
+                    `
+                },
+                'manager': {
+                    actions: [
+                        { href: 'manager.html', icon: '👨‍💼', text: 'Manager Dashboard' },
+                        { href: 'orders.html', icon: '📋', text: 'Comenzi Locația' },
+                        { href: 'resources.html', icon: '📦', text: 'Resurse' }
+                    ],
+                    content: `
+                        <div class="card">
+                            <h3>🎯 Acces Rapid Manager</h3>
+                            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-top: 1rem;">
+                                <a href="manager.html" class="btn" style="padding: 2rem; text-align: center; text-decoration: none;">
+                                    <div style="font-size: 2rem; margin-bottom: 0.5rem;">👷</div>
+                                    Worker-ii Mei
+                                </a>
+                                <a href="orders.html" class="btn" style="padding: 2rem; text-align: center; text-decoration: none;">
+                                    <div style="font-size: 2rem; margin-bottom: 0.5rem;">📋</div>
+                                    Comenzi Locație
+                                </a>
+                                <a href="resources.html" class="btn" style="padding: 2rem; text-align: center; text-decoration: none;">
+                                    <div style="font-size: 2rem; margin-bottom: 0.5rem;">📦</div>
+                                    Resurse
+                                </a>
+                            </div>
+                        </div>
+                    `
+                },
+                'client': {
+                    actions: [
+                        { href: 'client.html', icon: '👤', text: 'Contul Meu' },
+                        { onclick: 'quickOrder()', icon: '➕', text: 'Comandă Rapidă' },
+                        { href: 'orders.html', icon: '📋', text: 'Comenzile Mele' }
+                    ],
+                    content: `
+                        <div class="card">
+                            <h3>🎯 Acces Rapid la Servicii</h3>
+                            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 1rem; margin-top: 1rem;">
+                                <button onclick="quickOrder('covoare')" class="btn" style="padding: 2rem; display: flex; flex-direction: column; align-items: center; gap: 0.5rem;">
+                                    <span style="font-size: 2rem;">🧽</span>
+                                    <span>Comandă Spălare Covoare</span>
+                                </button>
+                                <button onclick="quickOrder('auto')" class="btn" style="padding: 2rem; display: flex; flex-direction: column; align-items: center; gap: 0.5rem;">
+                                    <span style="font-size: 2rem;">🚗</span>
+                                    <span>Comandă Spălare Auto</span>
+                                </button>
+                                <button onclick="quickOrder('haine')" class="btn" style="padding: 2rem; display: flex; flex-direction: column; align-items: center; gap: 0.5rem;">
+                                    <span style="font-size: 2rem;">👔</span>
+                                    <span>Comandă Curățare Haine</span>
+                                </button>
+                            </div>
+                        </div>
+                    `
+                },
+                'worker_transport': {
+                    actions: [
+                        { href: 'transport.html', icon: '🚛', text: 'Transport Dashboard' },
+                        { href: 'orders.html', icon: '📋', text: 'Sarcinile Mele' }
+                    ],
+                    content: `
+                        <div class="card">
+                            <h3>🚛 Sarcini Transport</h3>
+                            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-top: 1rem;">
+                                <a href="transport.html" class="btn" style="padding: 2rem; text-align: center; text-decoration: none;">
+                                    <div style="font-size: 2rem; margin-bottom: 0.5rem;">🚛</div>
+                                    Sarcinile Mele
+                                </a>
+                                <a href="orders.html" class="btn" style="padding: 2rem; text-align: center; text-decoration: none;">
+                                    <div style="font-size: 2rem; margin-bottom: 0.5rem;">📋</div>
+                                    Toate Comenzile
+                                </a>
+                            </div>
+                        </div>
+                    `
+                },
+                'worker_cleaner': {
+                    actions: [
+                        { href: 'cleaner.html', icon: '🧽', text: 'Cleaner Dashboard' },
+                        { href: 'orders.html', icon: '📋', text: 'Sarcinile Mele' }
+                    ],
+                    content: `
+                        <div class="card">
+                            <h3>🧽 Sarcini Curățare</h3>
+                            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-top: 1rem;">
+                                <a href="cleaner.html" class="btn" style="padding: 2rem; text-align: center; text-decoration: none;">
+                                    <div style="font-size: 2rem; margin-bottom: 0.5rem;">🧽</div>
+                                    Sarcinile Mele
+                                </a>
+                                <a href="orders.html" class="btn" style="padding: 2rem; text-align: center; text-decoration: none;">
+                                    <div style="font-size: 2rem; margin-bottom: 0.5rem;">📋</div>
+                                    Toate Comenzile
+                                </a>
+                            </div>
+                        </div>
+                    `
+                }
+            };
+
+            const config = roleConfigs[role];
+            if (config) {
+                actionsContainer.innerHTML = config.actions.map(action => 
+                    action.onclick ? 
+                        `<button onclick="${action.onclick}" class="quick-btn">${action.icon} ${action.text}</button>` :
+                        `<a href="${action.href}" class="quick-btn">${action.icon} ${action.text}</a>`
+                ).join('');
+
+                contentContainer.innerHTML = config.content;
+            }
+        }
 
         async function loadLocationsPreview() {
             try {
                 const locations = await LocationsAPI.getAll();
                 displayLocationsPreview(locations.slice(0, 3));
             } catch (error) {
-                document.getElementById('locations-list').innerHTML = 'Eroare la încărcarea locațiilor.';
+                document.getElementById('locations-list').innerHTML = '<p>Eroare la încărcarea locațiilor.</p>';
             }
         }
 
@@ -244,101 +262,24 @@
             }
             
             const html = locations.map(location => `
-                <div class="location-item">
+                <div class="card" style="margin-bottom: 1rem;">
                     <h3>📍 ${location.name}</h3>
                     <p><strong>Adresă:</strong> ${location.address}</p>
                     <p><strong>Servicii:</strong> ${location.services || 'Nu sunt specificate'}</p>
-                    <p><strong>Status:</strong> ${location.status === 'active' ? '🟢 Activ' : '🔴 Inactiv'}</p>
+                    <p><strong>Status:</strong> ${location.status === 'active' ? 
+                        '<span class="status-active">🟢 Activ</span>' : 
+                        '<span class="status-inactive">🔴 Inactiv</span>'}</p>
                 </div>
             `).join('');
             
             container.innerHTML = html;
         }
 
-        function checkAuthStatus() {
-            const token = localStorage.getItem('auth_token');
-            const userData = JSON.parse(localStorage.getItem('user_data') || '{}');
-            
-            if (token && userData.username) {
-                // Utilizator autentificat
-                document.getElementById('user-info').style.display = 'inline-flex';
-                document.getElementById('user-name').textContent = userData.first_name || userData.username;
-                document.getElementById('login-link').style.display = 'none';
-                
-                // Setează link-ul către dashboard-ul corespunzător
-                const dashboards = {
-                    'admin': { url: 'admin.html', icon: '👑', text: 'Admin Panel' },
-                    'manager': { url: 'manager.html', icon: '👨‍💼', text: 'Manager Dashboard' },
-                    'client': { url: 'client.html', icon: '👤', text: 'Contul Meu' },
-                    'worker_transport': { url: 'transport.html', icon: '🚛', text: 'Transport Dashboard' },
-                    'worker_cleaner': { url: 'cleaner.html', icon: '🧽', text: 'Cleaner Dashboard' }
-                };
-                
-                const dashboard = dashboards[userData.role] || { url: 'dashboard.html', icon: '📊', text: 'Dashboard' };
-                document.getElementById('dashboard-link').href = dashboard.url;
-                document.getElementById('dashboard-icon').textContent = dashboard.icon;
-                document.getElementById('dashboard-text').textContent = dashboard.text;
-                
-                // Afișează conținutul specific pentru rol
-                showRoleContent(userData.role);
-                
-                // Ascunde conținutul pentru guest
-                document.getElementById('guest-content').style.display = 'none';
-            } else {
-                // Utilizator neautentificat
-                document.getElementById('guest-content').style.display = 'block';
-            }
-        }
-
-        function showRoleContent(role) {
-            // Ascunde toate conținuturile de rol
-            document.querySelectorAll('[id$="-content"]').forEach(el => {
-                if (el.id !== 'guest-content') el.style.display = 'none';
-            });
-            
-            // Afișează conținutul pentru rolul specific
-            switch(role) {
-                case 'client':
-                    document.getElementById('client-content').style.display = 'block';
-                    break;
-                case 'manager':
-                    document.getElementById('manager-content').style.display = 'block';
-                    break;
-                case 'worker_transport':
-                    document.getElementById('worker-content').style.display = 'block';
-                    document.getElementById('worker-dashboard-link').href = 'transport.html';
-                    document.getElementById('worker-role-title').textContent = '🚛 Sarcini Transport';
-                    document.getElementById('worker-icon').textContent = '🚛';
-                    document.getElementById('worker-task-title').textContent = 'Transport Tasks';
-                    break;
-                case 'worker_cleaner':
-                    document.getElementById('worker-content').style.display = 'block';
-                    document.getElementById('worker-dashboard-link').href = 'cleaner.html';
-                    document.getElementById('worker-role-title').textContent = '🧽 Sarcini Curățare';
-                    document.getElementById('worker-icon').textContent = '🧽';
-                    document.getElementById('worker-task-title').textContent = 'Cleaning Tasks';
-                    break;
-                case 'admin':
-                    document.getElementById('admin-content').style.display = 'block';
-                    break;
-            }
-        }
-
         function quickOrder(serviceType = null) {
-            // Redirect către client dashboard cu serviciul pre-selectat
             if (serviceType) {
                 localStorage.setItem('quick_order_service', serviceType);
             }
             window.location.href = 'client.html';
-        }
-
-        function logout() {
-            if (confirm('Sigur vrei să te deconectezi?')) {
-                localStorage.removeItem('auth_token');
-                localStorage.removeItem('user_data');
-                localStorage.removeItem('quick_order_service');
-                window.location.reload();
-            }
         }
     </script>
 </body>
