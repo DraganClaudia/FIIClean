@@ -41,7 +41,7 @@ switch($action) {
 }
 
 function handleUsersList($db, $auth) {
-    if (!$auth->requireRole('admin')) return;
+    if (!$auth->hasRole('admin')) return;
     
     $role = $_GET['role'] ?? null;
     $sql = "SELECT id, username, email, first_name, last_name, phone, role, location_id, is_active, last_login, created_at FROM users WHERE 1=1";
@@ -62,7 +62,7 @@ function handleUsersList($db, $auth) {
 }
 
 function handleCreateUser($db, $auth) {
-    if (!$auth->requireRole('admin')) return;
+    if (!$auth->hasRole('admin')) return;
     
     $input = json_decode(file_get_contents('php://input'), true);
     
@@ -104,7 +104,7 @@ function handleCreateUser($db, $auth) {
 }
 
 function handleUpdateUser($db, $auth) {
-    if (!$auth->requireRole('admin')) return;
+    if (!$auth->hasRole('admin')) return;
     
     $id = $_GET['id'];
     $input = json_decode(file_get_contents('php://input'), true);
@@ -136,11 +136,10 @@ function handleUpdateUser($db, $auth) {
 }
 
 function handleDeleteUser($db, $auth) {
-    if (!$auth->requireRole('admin')) return;
+    if (!$auth->hasRole('admin')) return;
     
     $id = $_GET['id'];
     
-    // Nu permite ștergerea ultimului admin
     $stmt = $db->prepare("SELECT role FROM users WHERE id = ?");
     $stmt->execute([$id]);
     $role = $stmt->fetchColumn();
@@ -153,7 +152,6 @@ function handleDeleteUser($db, $auth) {
         }
     }
     
-    // Soft delete
     $stmt = $db->prepare("UPDATE users SET is_active = 0 WHERE id = ?");
     
     if ($stmt->execute([$id])) {
@@ -208,7 +206,6 @@ function handleGetWorkers($db, $auth) {
     
     $locationId = $_GET['location_id'] ?? $user['location_id'];
     
-    // Manager poate vedea doar worker-ii din locația sa
     if ($user['role'] === 'manager' && $locationId != $user['location_id']) {
         echo json_encode(['error' => 'Access denied']);
         return;
