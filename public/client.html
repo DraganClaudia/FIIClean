@@ -281,16 +281,20 @@
     </div>
 
     <script>
+        // JavaScript pentru client.html - versiunea corectată
+
         // Verifică autentificarea
         if (!localStorage.getItem('auth_token')) {
             window.location.href = 'login.html';
         }
-        
+
         // Inițializare
         document.addEventListener('DOMContentLoaded', loadClientDashboard);
-        
+
         async function loadClientDashboard() {
             try {
+                console.log('Loading client dashboard...');
+                
                 // Încarcă info utilizator
                 const userResponse = await fetch('../api/auth.php?action=me', {
                     headers: {
@@ -301,6 +305,7 @@
                 if (userResponse.ok) {
                     const userData = await userResponse.json();
                     if (userData.success) {
+                        console.log('User data loaded:', userData.user);
                         document.getElementById('user-info').innerHTML = `
                             <strong>${userData.user.first_name} ${userData.user.last_name}</strong><br>
                             📧 ${userData.user.email}
@@ -310,6 +315,8 @@
                         // Salvează datele pentru folosire ulterioară
                         window.currentUser = userData.user;
                     }
+                } else {
+                    console.error('Failed to load user data:', userResponse.status);
                 }
                 
                 // Încarcă comenzile
@@ -322,46 +329,70 @@
                 console.error('Eroare la încărcarea dashboard-ului:', error);
             }
         }
-        
+
         async function loadMyOrders() {
             try {
+                console.log('Loading my orders...');
+                
                 const response = await fetch('../api/index.php?resource=orders&action=my-orders', {
                     headers: {
                         'Authorization': `Bearer ${localStorage.getItem('auth_token')}`
                     }
                 });
                 
+                console.log('My orders response status:', response.status);
+                
                 if (response.ok) {
                     const orders = await response.json();
+                    console.log('My orders data:', orders);
                     displayOrders(orders);
+                } else {
+                    const errorText = await response.text();
+                    console.error('Failed to load orders:', errorText);
+                    document.getElementById('orders-list').innerHTML = '<p>Eroare la încărcarea comenzilor.</p>';
                 }
             } catch (error) {
+                console.error('Error loading orders:', error);
                 document.getElementById('orders-list').innerHTML = '<p>Eroare la încărcarea comenzilor.</p>';
             }
         }
-        
+
         function displayOrders(orders) {
             const container = document.getElementById('orders-list');
             
-            if (orders.length === 0) {
+            if (!Array.isArray(orders) || orders.length === 0) {
                 container.innerHTML = '<p>Nu aveți comenzi înregistrate încă.</p>';
                 return;
             }
             
             const html = orders.map(order => `
-                <div class="order-card ${order.status}">
+                <div class="order-card ${order.status || 'pending'}">
                     <h3>Comanda #${order.id}</h3>
-                    <p><strong>Serviciu:</strong> ${order.service_type}</p>
+                    <p><strong>Serviciu:</strong> ${getServiceName(order.service_type)}</p>
                     <p><strong>Status:</strong> ${getStatusLabel(order.status)}</p>
-                    <p><strong>Data:</strong> ${new Date(order.created_at).toLocaleDateString('ro-RO')}</p>
+                    <p><strong>Data:</strong> ${order.created_at ? new Date(order.created_at).toLocaleDateString('ro-RO') : 'Necunoscută'}</p>
+                    ${order.scheduled_date ? `<p><strong>Programat pentru:</strong> ${new Date(order.scheduled_date).toLocaleString('ro-RO')}</p>` : ''}
                     ${order.price ? `<p><strong>Preț:</strong> ${order.price} RON</p>` : ''}
+                    ${order.pickup_address ? `<p><strong>Ridicare din:</strong> ${order.pickup_address}</p>` : ''}
+                    ${order.delivery_address ? `<p><strong>Livrare la:</strong> ${order.delivery_address}</p>` : ''}
                     ${order.notes ? `<p><strong>Observații:</strong> ${order.notes}</p>` : ''}
+                    ${order.location_name ? `<p><strong>Locația:</strong> ${order.location_name}</p>` : ''}
                 </div>
             `).join('');
             
             container.innerHTML = html;
         }
-        
+
+        function getServiceName(serviceType) {
+            const services = {
+                'covoare': 'Spălare Covoare',
+                'auto': 'Spălare Auto',
+                'haine': 'Curățare Haine',
+                'textile': 'Curățare Textile'
+            };
+            return services[serviceType] || serviceType;
+        }
+
         function getStatusLabel(status) {
             const labels = {
                 'pending': '⏳ În așteptare',
@@ -369,41 +400,55 @@
                 'completed': '✅ Completată',
                 'cancelled': '❌ Anulată'
             };
-            return labels[status] || status;
+            return labels[status] || '⏳ În așteptare';
         }
-        
+
         async function loadLocations() {
             try {
+                console.log('Loading locations...');
+                
                 const response = await fetch('../api/index.php?resource=locations&action=list');
                 
                 if (response.ok) {
                     const locations = await response.json();
+                    console.log('Locations loaded:', locations);
+                    
                     const select = document.getElementById('location-select');
                     
-                    locations.forEach(location => {
-                        const option = document.createElement('option');
-                        option.value = location.id;
-                        option.textContent = location.name;
-                        select.appendChild(option);
-                    });
+                    // Șterge opțiunile existente (păstrează prima)
+                    while (select.children.length > 1) {
+                        select.removeChild(select.lastChild);
+                    }
+                    
+                    if (Array.isArray(locations)) {
+                        locations.forEach(location => {
+                            const option = document.createElement('option');
+                            option.value = location.id;
+                            option.textContent = location.name;
+                            select.appendChild(option);
+                        });
+                    }
+                } else {
+                    console.error('Failed to load locations:', response.status);
                 }
             } catch (error) {
-                console.error('Eroare la încărcarea locațiilor:', error);
+                console.error('Error loading locations:', error);
             }
         }
-        
+
         // === FUNCȚII PENTRU ACȚIUNI ===
-        
+
         function newOrder(serviceType) {
+            console.log('Creating new order for service:', serviceType);
             document.getElementById('service-type').value = serviceType;
             document.getElementById('order-modal').style.display = 'block';
         }
-        
+
         function closeOrderModal() {
             document.getElementById('order-modal').style.display = 'none';
             document.getElementById('new-order-form').reset();
         }
-        
+
         async function showProfile() {
             if (window.currentUser) {
                 document.getElementById('profile-first-name').value = window.currentUser.first_name;
@@ -413,15 +458,17 @@
             }
             document.getElementById('profile-modal').style.display = 'block';
         }
-        
+
         function closeProfileModal() {
             document.getElementById('profile-modal').style.display = 'none';
         }
-        
+
         // === EVENT HANDLERS ===
-        
+
         document.getElementById('new-order-form').addEventListener('submit', async function(e) {
             e.preventDefault();
+            
+            console.log('Submitting new order form...');
             
             const orderData = {
                 service_type: document.getElementById('service-type').value,
@@ -431,6 +478,24 @@
                 scheduled_date: document.getElementById('scheduled-date').value || null,
                 notes: document.getElementById('order-notes').value
             };
+            
+            console.log('Order data:', orderData);
+            
+            // Validare
+            if (!orderData.service_type) {
+                alert('Selectați tipul serviciului');
+                return;
+            }
+            
+            if (!orderData.location_id) {
+                alert('Selectați locația');
+                return;
+            }
+            
+            if (!orderData.pickup_address) {
+                alert('Introduceți adresa de ridicare');
+                return;
+            }
             
             try {
                 const response = await fetch('../api/index.php?resource=orders&action=create', {
@@ -442,20 +507,24 @@
                     body: JSON.stringify(orderData)
                 });
                 
-                const result = await response.json();
+                console.log('Create order response status:', response.status);
                 
-                if (result.success) {
+                const result = await response.json();
+                console.log('Create order result:', result);
+                
+                if (response.ok && result.success) {
                     alert('Comanda a fost plasată cu succes!');
                     closeOrderModal();
                     loadMyOrders(); // Reîncarcă lista
                 } else {
-                    alert('Eroare la plasarea comenzii: ' + result.message);
+                    alert('Eroare la plasarea comenzii: ' + (result.message || result.error || 'Eroare necunoscută'));
                 }
             } catch (error) {
-                alert('Eroare de conexiune');
+                console.error('Error creating order:', error);
+                alert('Eroare de conexiune la plasarea comenzii');
             }
         });
-        
+
         document.getElementById('profile-form').addEventListener('submit', async function(e) {
             e.preventDefault();
             
@@ -483,13 +552,13 @@
                     closeProfileModal();
                     loadClientDashboard(); // Reîncarcă datele
                 } else {
-                    alert('Eroare la actualizarea profilului: ' + result.message);
+                    alert('Eroare la actualizarea profilului: ' + (result.error || 'Eroare necunoscută'));
                 }
             } catch (error) {
                 alert('Eroare de conexiune');
             }
         });
-        
+
         function logout() {
             if (confirm('Sigur vrei să te deconectezi?')) {
                 localStorage.removeItem('auth_token');
@@ -497,7 +566,7 @@
                 window.location.href = 'login.html';
             }
         }
-        
+
         // Închide modalele dacă se dă click în afara lor
         window.onclick = function(event) {
             const orderModal = document.getElementById('order-modal');
@@ -510,6 +579,17 @@
                 closeProfileModal();
             }
         }
+
+        // Funcții pentru debugging - verifică starea aplicației
+        function debugStatus() {
+            console.log('=== DEBUG STATUS ===');
+            console.log('Auth token:', localStorage.getItem('auth_token') ? 'Present' : 'Missing');
+            console.log('Current user:', window.currentUser);
+            console.log('Location select options:', document.getElementById('location-select').children.length);
+        }
+
+        // Apelează debug la încărcare pentru a verifica starea
+        setTimeout(debugStatus, 2000);
     </script>
 </body>
 </html>
