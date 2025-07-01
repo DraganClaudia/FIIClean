@@ -163,27 +163,6 @@
                     <p>Se încarcă sarcinile...</p>
                 </div>
             </div>
-            
-            <div class="transport-card">
-                <h3>🗺️ Ruta Zilei</h3>
-                <div id="daily-route">
-                    <p>Se calculează ruta...</p>
-                </div>
-            </div>
-            
-            <div class="transport-card">
-                <h3>📊 Progresul Meu</h3>
-                <div id="my-progress">
-                    <p>Se încarcă progresul...</p>
-                </div>
-            </div>
-            
-            <div class="transport-card">
-                <h3>📞 Contact Manager</h3>
-                <div id="manager-contact">
-                    <p>Se încarcă informațiile de contact...</p>
-                </div>
-            </div>
         </div>
     </main>
 
@@ -346,45 +325,6 @@
                 ).length;
         }
         
-        async function loadDailyRoute() {
-            try {
-                // Simulare de rută - în implementarea reală ar calcula ruta optimă
-                const routeStops = [
-                    { address: 'Str. Principală 123', time: '09:00', type: 'ridicare', status: 'completed' },
-                    { address: 'Bd. Unirii 45', time: '09:30', type: 'livrare', status: 'completed' },
-                    { address: 'Str. Florilor 67', time: '10:15', type: 'ridicare', status: 'current' },
-                    { address: 'Calea Victoriei 89', time: '11:00', type: 'livrare', status: 'pending' }
-                ];
-                
-                const container = document.getElementById('daily-route');
-                
-                const html = `
-                    <div style="margin-bottom: 1rem;">
-                        <strong>📅 Ruta pentru ${new Date().toLocaleDateString('ro-RO')}</strong>
-                    </div>
-                    ${routeStops.map(stop => `
-                        <div style="padding: 0.8rem; border-left: 3px solid ${getRouteStatusColor(stop.status)}; margin-bottom: 0.5rem; background: #f8f9fa;">
-                            <div style="display: flex; justify-content: space-between;">
-                                <span><strong>${stop.time}</strong></span>
-                                <span>${getRouteStatusIcon(stop.status)}</span>
-                            </div>
-                            <div>${stop.type === 'ridicare' ? '📍' : '🎯'} ${stop.address}</div>
-                            <small style="color: #666;">${stop.type === 'ridicare' ? 'Ridicare' : 'Livrare'}</small>
-                        </div>
-                    `).join('')}
-                    
-                    <button class="btn-action" style="background: #3498db; color: white; width: 100%; margin-top: 1rem;" onclick="openMapsRoute()">
-                        🗺️ Deschide în Maps
-                    </button>
-                `;
-                
-                container.innerHTML = html;
-                
-            } catch (error) {
-                document.getElementById('daily-route').innerHTML = '<p>Eroare la încărcarea rutei.</p>';
-            }
-        }
-        
         function getRouteStatusColor(status) {
             const colors = {
                 'completed': '#27ae60',
@@ -401,77 +341,6 @@
                 'pending': '⏳'
             };
             return icons[status] || '⏳';
-        }
-        
-        async function loadMyProgress() {
-            try {
-                // Simulare progres - în implementarea reală ar veni de la API
-                const progress = {
-                    weeklyCompleted: 23,
-                    weeklyTarget: 30,
-                    monthlyCompleted: 95,
-                    monthlyTarget: 120,
-                    rating: 4.8
-                };
-                
-                const container = document.getElementById('my-progress');
-                
-                const html = `
-                    <div style="margin-bottom: 1rem;">
-                        <h4>📈 Săptămâna Curentă</h4>
-                        <div style="background: #e9ecef; border-radius: 4px; overflow: hidden; margin: 0.5rem 0;">
-                            <div style="background: #28a745; height: 20px; width: ${(progress.weeklyCompleted / progress.weeklyTarget) * 100}%;"></div>
-                        </div>
-                        <small>${progress.weeklyCompleted}/${progress.weeklyTarget} sarcini</small>
-                    </div>
-                    
-                    <div style="margin-bottom: 1rem;">
-                        <h4>📊 Luna Curentă</h4>
-                        <div style="background: #e9ecef; border-radius: 4px; overflow: hidden; margin: 0.5rem 0;">
-                            <div style="background: #007bff; height: 20px; width: ${(progress.monthlyCompleted / progress.monthlyTarget) * 100}%;"></div>
-                        </div>
-                        <small>${progress.monthlyCompleted}/${progress.monthlyTarget} sarcini</small>
-                    </div>
-                    
-                    <div>
-                        <h4>⭐ Rating Performanță</h4>
-                        <div style="font-size: 1.5rem; color: #f39c12;">
-                            ${'★'.repeat(Math.floor(progress.rating))}${'☆'.repeat(5 - Math.floor(progress.rating))}
-                        </div>
-                        <small>${progress.rating}/5.0</small>
-                    </div>
-                `;
-                
-                container.innerHTML = html;
-                
-            } catch (error) {
-                document.getElementById('my-progress').innerHTML = '<p>Eroare la încărcarea progresului.</p>';
-            }
-        }
-        
-        async function loadManagerContact() {
-            try {
-                // În implementarea reală ar încărca datele managerului de la API
-                const container = document.getElementById('manager-contact');
-                
-                const html = `
-                    <div style="text-align: center;">
-                        <h4>👨‍💼 Manager Locație</h4>
-                        <p><strong>Ion Popescu</strong></p>
-                        <p>📞 <a href="tel:0721234567">0721 234 567</a></p>
-                        <p>📧 <a href="mailto:manager@fiiclean.ro">manager@fiiclean.ro</a></p>
-                        
-                        <button class="btn-action" style="background: #28a745; color: white; width: 100%; margin-top: 1rem;" onclick="callManager()">
-                            📞 Sună Manager
-                        </button>
-                    </div>
-                `;
-                
-                container.innerHTML = html;
-                
-            } catch (error) {
-                document.getElementById('manager-contact').innerHTML = '<p>Eroare la încărcarea contactelor.</p>';
-            }
         }
         
         // === FUNCȚII PENTRU ACȚIUNI ===
@@ -509,17 +378,6 @@
             if (problem) {
                 alert(`Problema pentru comanda #${taskId} a fost raportată: "${problem}"\nManagerul va fi notificat.`);
                 // În implementarea reală ar trimite problema către manager
-            }
-        }
-        
-        function openMapsRoute() {
-            // În implementarea reală ar deschide Google Maps cu ruta optimizată
-            alert('Funcția Maps va fi implementată pentru a deschide ruta optimizată.');
-        }
-        
-        function callManager() {
-            if (confirm('Doriți să sunați managerul?')) {
-                window.location.href = 'tel:0721234567';
             }
         }
         
