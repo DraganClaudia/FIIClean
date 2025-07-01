@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FII-Clean - Locații</title>
+    <link rel="stylesheet" href="css/main.css">
+</head>
+<body>
+    <header>
+        <h1>FII-Clean - Locații Spălătorii</h1>
+        <nav id="main-nav">
+            <a href="index.html">Acasă</a>
+            <a href="locations.html">Locații</a>
+            <a href="orders.html">Comenzi</a>
+            <a href="resources.html">Resurse</a>
+            <a href="dashboard.html">Dashboard</a>
+            <a href="login.html">Autentificare</a>
+        </nav>
+    </header>
+    
+    <main>
+        <section id="locations-section">
+            <h2>📍 Locații Disponibile</h2>
+            <button onclick="refreshLocations()" style="margin-bottom: 1rem;">🔄 Actualizează</button>
+            <div id="locations-list">
+                <p>Se încarcă locațiile...</p>
+            </div>
+        </section>
+    </main>
+    
+    <script src="js/api.js"></script>
+    <script src="js/locations.js"></script>
+</body>
+</html>
