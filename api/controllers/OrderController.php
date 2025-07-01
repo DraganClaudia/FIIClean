@@ -102,6 +102,10 @@ class OrderController {
     private function createOrder() {
         header('Content-Type: application/json');
         
+        error_log("=== ORDER CREATION DEBUG ===");
+        error_log("REQUEST_METHOD: " . $_SERVER['REQUEST_METHOD']);
+        error_log("RAW INPUT: " . file_get_contents('php://input'));
+        error_log("AUTH HEADER: " . ($_SERVER['HTTP_AUTHORIZATION'] ?? 'MISSING'));
         // Verifică dacă datele sunt trimise ca JSON
         $rawInput = file_get_contents('php://input');
         
@@ -118,17 +122,7 @@ class OrderController {
             echo json_encode(['error' => 'Invalid JSON data']);
             return;
         }
-        
-        // Validare câmpuri obligatorii
-        $requiredFields = ['service_type', 'client_name'];
-        foreach ($requiredFields as $field) {
-            if (empty($input[$field])) {
-                http_response_code(400);
-                echo json_encode(['error' => "Field $field is required"]);
-                return;
-            }
-        }
-        
+
         // Verifică autentificarea pentru utilizatori logați
         $user = null;
         $authHeader = $_SERVER['HTTP_AUTHORIZATION'] ?? '';
@@ -142,6 +136,11 @@ class OrderController {
                 $input['client_name'] = $user['first_name'] . ' ' . $user['last_name'];
                 $input['client_email'] = $user['email'];
                 $input['client_phone'] = $user['phone'];
+            } elseif (empty($input['client_name'])) {
+                // Dacă nu e client autentificat și nu are client_name, returnează eroare
+                http_response_code(400);
+                echo json_encode(['error' => 'Client name is required']);
+                return;
             }
             
             // Manager poate crea comenzi doar pentru locația sa
@@ -151,6 +150,16 @@ class OrderController {
                     echo json_encode(['error' => 'Cannot create orders for this location']);
                     return;
                 }
+            }
+        }
+        
+        // Validare câmpuri obligatorii
+        $required = ['service_type'];
+        foreach ($required as $field) {
+            if (empty($input[$field])) {
+                http_response_code(400);
+                echo json_encode(['error' => "Field $field is required"]);
+                return;
             }
         }
         
