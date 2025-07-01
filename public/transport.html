@@ -1,0 +1,535 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FII-Clean - Dashboard Transport</title>
+    <link rel="stylesheet" href="css/main.css">
+    <style>
+        .transport-header {
+            background: linear-gradient(135deg, #f39c12 0%, #e67e22 100%);
+            color: white;
+            padding: 2rem;
+            border-radius: 12px;
+            margin-bottom: 2rem;
+            text-align: center;
+        }
+        
+        .transport-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+            margin: 2rem 0;
+        }
+        
+        .transport-card {
+            background: white;
+            border-radius: 12px;
+            padding: 2rem;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+        
+        .transport-card h3 {
+            color: #2c3e50;
+            margin-bottom: 1rem;
+            border-bottom: 2px solid #f39c12;
+            padding-bottom: 0.5rem;
+        }
+        
+        .stats-row {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+        
+        .stat-box {
+            background: linear-gradient(135deg, #f39c12, #d68910);
+            color: white;
+            padding: 1.5rem;
+            border-radius: 8px;
+            text-align: center;
+        }
+        
+        .stat-number {
+            font-size: 2rem;
+            font-weight: bold;
+            display: block;
+        }
+        
+        .task-item {
+            border: 1px solid #e1e1e1;
+            border-radius: 8px;
+            padding: 1.5rem;
+            margin-bottom: 1rem;
+            border-left: 4px solid #f39c12;
+        }
+        
+        .task-item.urgent {
+            border-left-color: #e74c3c;
+            background: #fdf2f2;
+        }
+        
+        .task-item.completed {
+            border-left-color: #27ae60;
+            background: #f0f9f0;
+        }
+        
+        .task-actions {
+            margin-top: 1rem;
+            display: flex;
+            gap: 0.5rem;
+        }
+        
+        .btn-action {
+            padding: 0.5rem 1rem;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.9rem;
+        }
+        
+        .btn-start {
+            background: #3498db;
+            color: white;
+        }
+        
+        .btn-complete {
+            background: #27ae60;
+            color: white;
+        }
+        
+        .btn-problem {
+            background: #e74c3c;
+            color: white;
+        }
+        
+        .route-info {
+            background: #f8f9fa;
+            padding: 1rem;
+            border-radius: 6px;
+            margin: 1rem 0;
+        }
+        
+        .priority-high {
+            color: #e74c3c;
+            font-weight: bold;
+        }
+        
+        .priority-normal {
+            color: #f39c12;
+        }
+        
+        .priority-low {
+            color: #27ae60;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>FII-Clean - Dashboard Transport</h1>
+        <button onclick="logout()" class="logout-btn" style="background: #e74c3c; color: white; border: none; padding: 0.5rem 1rem; border-radius: 4px; cursor: pointer; float: right;">Logout</button>
+    </header>
+    
+    <main>
+        <div class="transport-header">
+            <h2>🚛 Worker Transport</h2>
+            <p id="transport-info">Se încarcă informațiile...</p>
+        </div>
+        
+        <div class="stats-row">
+            <div class="stat-box">
+                <span class="stat-number" id="total-tasks">-</span>
+                <span>Sarcini Total</span>
+            </div>
+            <div class="stat-box">
+                <span class="stat-number" id="pending-tasks">-</span>
+                <span>În Așteptare</span>
+            </div>
+            <div class="stat-box">
+                <span class="stat-number" id="in-progress-tasks">-</span>
+                <span>În Progres</span>
+            </div>
+            <div class="stat-box">
+                <span class="stat-number" id="completed-today">-</span>
+                <span>Finalizate Azi</span>
+            </div>
+        </div>
+        
+        <div class="transport-grid">
+            <div class="transport-card">
+                <h3>📋 Sarcinile Mele de Transport</h3>
+                <div id="my-tasks">
+                    <p>Se încarcă sarcinile...</p>
+                </div>
+            </div>
+            
+            <div class="transport-card">
+                <h3>🗺️ Ruta Zilei</h3>
+                <div id="daily-route">
+                    <p>Se calculează ruta...</p>
+                </div>
+            </div>
+            
+            <div class="transport-card">
+                <h3>📊 Progresul Meu</h3>
+                <div id="my-progress">
+                    <p>Se încarcă progresul...</p>
+                </div>
+            </div>
+            
+            <div class="transport-card">
+                <h3>📞 Contact Manager</h3>
+                <div id="manager-contact">
+                    <p>Se încarcă informațiile de contact...</p>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        // Verifică autentificarea și rolul
+        if (!localStorage.getItem('auth_token')) {
+            window.location.href = 'login.html';
+        }
+        
+        const userData = JSON.parse(localStorage.getItem('user_data') || '{}');
+        if (userData.role !== 'worker_transport') {
+            alert('Acces neautorizat!');
+            window.location.href = 'login.html';
+        }
+        
+        let currentUser = null;
+        
+        document.addEventListener('DOMContentLoaded', loadTransportDashboard);
+        
+        async function loadTransportDashboard() {
+            try {
+                // Încarcă info utilizator
+                const userResponse = await fetch('../api/auth.php?action=me', {
+                    headers: { 'Authorization': `Bearer ${localStorage.getItem('auth_token')}` }
+                });
+                
+                if (userResponse.ok) {
+                    const result = await userResponse.json();
+                    if (result.success) {
+                        currentUser = result.user;
+                        
+                        document.getElementById('transport-info').innerHTML = `
+                            <strong>${result.user.first_name} ${result.user.last_name}</strong><br>
+                            Locația: ${result.user.location_name || 'Nedefinită'}
+                        `;
+                    }
+                }
+                
+                await Promise.all([
+                    loadMyTasks(),
+                    loadDailyRoute(),
+                    loadMyProgress(),
+                    loadManagerContact()
+                ]);
+                
+            } catch (error) {
+                console.error('Eroare la încărcarea dashboard-ului transport:', error);
+            }
+        }
+        
+        async function loadMyTasks() {
+            try {
+                const response = await fetch('../api/index.php?resource=orders&action=assigned', {
+                    headers: { 'Authorization': `Bearer ${localStorage.getItem('auth_token')}` }
+                });
+                
+                const tasks = await response.json();
+                displayMyTasks(tasks);
+                updateTaskStatistics(tasks);
+                
+            } catch (error) {
+                document.getElementById('my-tasks').innerHTML = '<p>Eroare la încărcarea sarcinilor.</p>';
+            }
+        }
+        
+        function displayMyTasks(tasks) {
+            const container = document.getElementById('my-tasks');
+            
+            if (tasks.length === 0) {
+                container.innerHTML = '<p>Nu aveți sarcini de transport asignate.</p>';
+                return;
+            }
+            
+            const html = tasks.map(task => `
+                <div class="task-item ${getTaskClass(task)}">
+                    <h4>Comanda #${task.id} ${getPriorityIcon(task)}</h4>
+                    <p><strong>Client:</strong> ${task.client_name}</p>
+                    <p><strong>Serviciu:</strong> ${task.service_type}</p>
+                    
+                    <div class="route-info">
+                        <p><strong>📍 Ridicare:</strong> ${task.pickup_address || 'Nedefinită'}</p>
+                        <p><strong>🎯 Livrare:</strong> ${task.delivery_address || 'Nedefinită'}</p>
+                        ${task.scheduled_date ? `<p><strong>⏰ Programat:</strong> ${new Date(task.scheduled_date).toLocaleString('ro-RO')}</p>` : ''}
+                    </div>
+                    
+                    <p><strong>Status Transport:</strong> ${getTransportStatusLabel(task.transport_status)}</p>
+                    
+                    ${task.notes ? `<p><strong>Observații:</strong> ${task.notes}</p>` : ''}
+                    
+                    <div class="task-actions">
+                        ${task.transport_status === 'pending' ? `
+                            <button class="btn-action btn-start" onclick="updateTaskStatus(${task.id}, 'in_progress')">
+                                🚀 Pornește Transport
+                            </button>
+                        ` : ''}
+                        
+                        ${task.transport_status === 'in_progress' ? `
+                            <button class="btn-action btn-complete" onclick="updateTaskStatus(${task.id}, 'completed')">
+                                ✅ Finalizează Transport
+                            </button>
+                        ` : ''}
+                        
+                        <button class="btn-action btn-problem" onclick="reportProblem(${task.id})">
+                            ⚠️ Raportează Problemă
+                        </button>
+                    </div>
+                </div>
+            `).join('');
+            
+            container.innerHTML = html;
+        }
+        
+        function getTaskClass(task) {
+            if (task.transport_status === 'completed') return 'completed';
+            
+            // Verifică dacă este urgent (programat în următoarele 2 ore)
+            if (task.scheduled_date) {
+                const scheduledTime = new Date(task.scheduled_date);
+                const now = new Date();
+                const diffHours = (scheduledTime - now) / (1000 * 60 * 60);
+                if (diffHours <= 2 && diffHours > 0) return 'urgent';
+            }
+            
+            return '';
+        }
+        
+        function getPriorityIcon(task) {
+            if (task.scheduled_date) {
+                const scheduledTime = new Date(task.scheduled_date);
+                const now = new Date();
+                const diffHours = (scheduledTime - now) / (1000 * 60 * 60);
+                
+                if (diffHours <= 1 && diffHours > 0) return '<span class="priority-high">🔴 URGENT</span>';
+                if (diffHours <= 4 && diffHours > 0) return '<span class="priority-normal">🟡 PRIORITATE</span>';
+            }
+            return '<span class="priority-low">🟢 NORMAL</span>';
+        }
+        
+        function getTransportStatusLabel(status) {
+            const labels = {
+                'pending': '⏳ În așteptare',
+                'in_progress': '🚛 În transport',
+                'completed': '✅ Finalizat'
+            };
+            return labels[status] || status;
+        }
+        
+        function updateTaskStatistics(tasks) {
+            const today = new Date().toISOString().split('T')[0];
+            
+            document.getElementById('total-tasks').textContent = tasks.length;
+            document.getElementById('pending-tasks').textContent = 
+                tasks.filter(task => task.transport_status === 'pending').length;
+            document.getElementById('in-progress-tasks').textContent = 
+                tasks.filter(task => task.transport_status === 'in_progress').length;
+            document.getElementById('completed-today').textContent = 
+                tasks.filter(task => 
+                    task.transport_status === 'completed' && 
+                    task.created_at.startsWith(today)
+                ).length;
+        }
+        
+        async function loadDailyRoute() {
+            try {
+                // Simulare de rută - în implementarea reală ar calcula ruta optimă
+                const routeStops = [
+                    { address: 'Str. Principală 123', time: '09:00', type: 'ridicare', status: 'completed' },
+                    { address: 'Bd. Unirii 45', time: '09:30', type: 'livrare', status: 'completed' },
+                    { address: 'Str. Florilor 67', time: '10:15', type: 'ridicare', status: 'current' },
+                    { address: 'Calea Victoriei 89', time: '11:00', type: 'livrare', status: 'pending' }
+                ];
+                
+                const container = document.getElementById('daily-route');
+                
+                const html = `
+                    <div style="margin-bottom: 1rem;">
+                        <strong>📅 Ruta pentru ${new Date().toLocaleDateString('ro-RO')}</strong>
+                    </div>
+                    ${routeStops.map(stop => `
+                        <div style="padding: 0.8rem; border-left: 3px solid ${getRouteStatusColor(stop.status)}; margin-bottom: 0.5rem; background: #f8f9fa;">
+                            <div style="display: flex; justify-content: space-between;">
+                                <span><strong>${stop.time}</strong></span>
+                                <span>${getRouteStatusIcon(stop.status)}</span>
+                            </div>
+                            <div>${stop.type === 'ridicare' ? '📍' : '🎯'} ${stop.address}</div>
+                            <small style="color: #666;">${stop.type === 'ridicare' ? 'Ridicare' : 'Livrare'}</small>
+                        </div>
+                    `).join('')}
+                    
+                    <button class="btn-action" style="background: #3498db; color: white; width: 100%; margin-top: 1rem;" onclick="openMapsRoute()">
+                        🗺️ Deschide în Maps
+                    </button>
+                `;
+                
+                container.innerHTML = html;
+                
+            } catch (error) {
+                document.getElementById('daily-route').innerHTML = '<p>Eroare la încărcarea rutei.</p>';
+            }
+        }
+        
+        function getRouteStatusColor(status) {
+            const colors = {
+                'completed': '#27ae60',
+                'current': '#f39c12',
+                'pending': '#95a5a6'
+            };
+            return colors[status] || '#95a5a6';
+        }
+        
+        function getRouteStatusIcon(status) {
+            const icons = {
+                'completed': '✅',
+                'current': '🔄',
+                'pending': '⏳'
+            };
+            return icons[status] || '⏳';
+        }
+        
+        async function loadMyProgress() {
+            try {
+                // Simulare progres - în implementarea reală ar veni de la API
+                const progress = {
+                    weeklyCompleted: 23,
+                    weeklyTarget: 30,
+                    monthlyCompleted: 95,
+                    monthlyTarget: 120,
+                    rating: 4.8
+                };
+                
+                const container = document.getElementById('my-progress');
+                
+                const html = `
+                    <div style="margin-bottom: 1rem;">
+                        <h4>📈 Săptămâna Curentă</h4>
+                        <div style="background: #e9ecef; border-radius: 4px; overflow: hidden; margin: 0.5rem 0;">
+                            <div style="background: #28a745; height: 20px; width: ${(progress.weeklyCompleted / progress.weeklyTarget) * 100}%;"></div>
+                        </div>
+                        <small>${progress.weeklyCompleted}/${progress.weeklyTarget} sarcini</small>
+                    </div>
+                    
+                    <div style="margin-bottom: 1rem;">
+                        <h4>📊 Luna Curentă</h4>
+                        <div style="background: #e9ecef; border-radius: 4px; overflow: hidden; margin: 0.5rem 0;">
+                            <div style="background: #007bff; height: 20px; width: ${(progress.monthlyCompleted / progress.monthlyTarget) * 100}%;"></div>
+                        </div>
+                        <small>${progress.monthlyCompleted}/${progress.monthlyTarget} sarcini</small>
+                    </div>
+                    
+                    <div>
+                        <h4>⭐ Rating Performanță</h4>
+                        <div style="font-size: 1.5rem; color: #f39c12;">
+                            ${'★'.repeat(Math.floor(progress.rating))}${'☆'.repeat(5 - Math.floor(progress.rating))}
+                        </div>
+                        <small>${progress.rating}/5.0</small>
+                    </div>
+                `;
+                
+                container.innerHTML = html;
+                
+            } catch (error) {
+                document.getElementById('my-progress').innerHTML = '<p>Eroare la încărcarea progresului.</p>';
+            }
+        }
+        
+        async function loadManagerContact() {
+            try {
+                // În implementarea reală ar încărca datele managerului de la API
+                const container = document.getElementById('manager-contact');
+                
+                const html = `
+                    <div style="text-align: center;">
+                        <h4>👨‍💼 Manager Locație</h4>
+                        <p><strong>Ion Popescu</strong></p>
+                        <p>📞 <a href="tel:0721234567">0721 234 567</a></p>
+                        <p>📧 <a href="mailto:manager@fiiclean.ro">manager@fiiclean.ro</a></p>
+                        
+                        <button class="btn-action" style="background: #28a745; color: white; width: 100%; margin-top: 1rem;" onclick="callManager()">
+                            📞 Sună Manager
+                        </button>
+                    </div>
+                `;
+                
+                container.innerHTML = html;
+                
+            } catch (error) {
+                document.getElementById('manager-contact').innerHTML = '<p>Eroare la încărcarea contactelor.</p>';
+            }
+        }
+        
+        // === FUNCȚII PENTRU ACȚIUNI ===
+        
+        async function updateTaskStatus(taskId, newStatus) {
+            try {
+                const response = await fetch(`../api/index.php?resource=orders&action=updateStatus&id=${taskId}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${localStorage.getItem('auth_token')}`
+                    },
+                    body: JSON.stringify({ transport_status: newStatus })
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    loadMyTasks(); // Reîncarcă sarcinile
+                    if (newStatus === 'in_progress') {
+                        alert('Transport pornit! Succes pe drum! 🚛');
+                    } else if (newStatus === 'completed') {
+                        alert('Transport finalizat cu succes! 🎉');
+                    }
+                } else {
+                    alert('Eroare la actualizarea statusului');
+                }
+            } catch (error) {
+                alert('Eroare de conexiune');
+            }
+        }
+        
+        function reportProblem(taskId) {
+            const problem = prompt('Descrieți problema întâlnită:');
+            if (problem) {
+                alert(`Problema pentru comanda #${taskId} a fost raportată: "${problem}"\nManagerul va fi notificat.`);
+                // În implementarea reală ar trimite problema către manager
+            }
+        }
+        
+        function openMapsRoute() {
+            // În implementarea reală ar deschide Google Maps cu ruta optimizată
+            alert('Funcția Maps va fi implementată pentru a deschide ruta optimizată.');
+        }
+        
+        function callManager() {
+            if (confirm('Doriți să sunați managerul?')) {
+                window.location.href = 'tel:0721234567';
+            }
+        }
+        
+        function logout() {
+            if (confirm('Sigur vrei să te deconectezi?')) {
+                localStorage.removeItem('auth_token');
+                localStorage.removeItem('user_data');
+                window.location.href = 'login.html';
+            }
+        }
+    </script>
+</body>
+</html>
