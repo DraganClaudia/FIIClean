@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="ro">
 <head>
+    <script src="js/header.js"></script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>FII-Clean - Dashboard Client</title>
@@ -13,13 +14,6 @@
             border-radius: 12px;
             margin-bottom: 2rem;
             text-align: center;
-        }
-        
-        .quick-actions {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-            gap: 1.5rem;
-            margin: 2rem 0;
         }
         
         .action-card {
@@ -153,41 +147,10 @@
     </style>
 </head>
 <body>
-    <header>
-        <h1>FII-Clean - Dashboard Client</h1>
-        <button onclick="logout()" class="logout-btn">Logout</button>
-    </header>
-    
     <main>
         <div class="client-header">
             <h2>Bun venit!</h2>
             <p id="user-info">Se încarcă...</p>
-        </div>
-        
-        <div class="quick-actions">
-            <div class="action-card" onclick="newOrder('covoare')">
-                <div class="action-icon">🧽</div>
-                <h3>Spălare Covoare</h3>
-                <p>Programează servicii de spălare covoare</p>
-            </div>
-            
-            <div class="action-card" onclick="newOrder('auto')">
-                <div class="action-icon">🚗</div>
-                <h3>Spălare Auto</h3>
-                <p>Rezervă spălare pentru mașina ta</p>
-            </div>
-            
-            <div class="action-card" onclick="newOrder('haine')">
-                <div class="action-icon">👔</div>
-                <h3>Curățare Haine</h3>
-                <p>Servicii profesionale de curățare</p>
-            </div>
-            
-            <div class="action-card" onclick="showProfile()">
-                <div class="action-icon">👤</div>
-                <h3>Profilul Meu</h3>
-                <p>Actualizează datele personale</p>
-            </div>
         </div>
         
         <div class="my-orders">
