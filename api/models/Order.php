@@ -92,10 +92,10 @@ class Order {
             $result = $stmt->execute([
                 $data['location_id'] ?? null,
                 $data['client_id'] ?? null,
-                $data['client_name'],
+                $data['client_name'] ?? 'Client Necunoscut',
                 $data['client_phone'] ?? null,
                 $data['client_email'] ?? null,
-                $data['service_type'],
+                $data['service_type'] ?? 'nedefinit',
                 $data['pickup_address'] ?? null,
                 $data['delivery_address'] ?? null,
                 $data['scheduled_date'] ?? null,
