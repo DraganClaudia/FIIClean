@@ -1,4 +1,3 @@
-
 <?php
 class Database
 {
@@ -68,7 +67,7 @@ class Database
                     FOREIGN KEY (location_id) REFERENCES locations (id)
                 );
 
-                CREATE TABLE IF NOT EXISTS orders (
+                CREATE TABLE orders (
                     id INTEGER PRIMARY KEY AUTOINCREMENT,
                     location_id INTEGER,
                     client_id INTEGER,
