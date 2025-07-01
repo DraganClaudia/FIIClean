@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FII-Clean - Dashboard</title>
+    <link rel="stylesheet" href="css/main.css">
+</head>
+<body>
+    <header>
+        <h1>FII-Clean - Dashboard Central</h1>
+        <nav id="main-nav">
+            <a href="index.html">Acasă</a>
+            <a href="locations.html">Locații</a>
+            <a href="orders.html">Comenzi</a>
+            <a href="resources.html">Resurse</a>
+            <a href="dashboard.html">Dashboard</a>
+        </nav>
+    </header>
+    
+    <main>
+        <section id="quick-stats">
+            <h2>📊 Statistici Generale</h2>
+            <div id="overall-stats" class="stats-grid">
+                <div class="stat-item">
+                    <h4>Locații Active</h4>
+                    <p class="stat-number" id="total-locations">-</p>
+                </div>
+                <div class="stat-item">
+                    <h4>Comenzi Totale</h4>
+                    <p class="stat-number" id="total-orders">-</p>
+                </div>
+                <div class="stat-item">
+                    <h4>Resurse Gestionate</h4>
+                    <p class="stat-number" id="total-resources">-</p>
+                </div>
+                <div class="stat-item">
+                    <h4>Venit Total</h4>
+                    <p class="stat-number" id="total-revenue">-</p>
+                </div>
+            </div>
+        </section>
+        
+        <section id="alerts-summary">
+            <h2>🚨 Alerte și Notificări</h2>
+            <div id="alerts-dashboard">
+                <p>Se încarcă alertele...</p>
+            </div>
+        </section>
+        
+        <section id="recent-activity">
+            <h2>📋 Activitate Recentă</h2>
+            <div id="activity-feed">
+                <p>Se încarcă activitatea...</p>
+            </div>
+        </section>
+        
+        <section id="export-tools">
+            <h2>📥 Instrumente Export</h2>
+            <div class="export-grid">
+                <div class="export-option">
+                    <h4>Export Locații</h4>
+                    <button onclick="ExportAPI.exportData('locations', 'json')">JSON</button>
+                    <button onclick="ExportAPI.exportData('locations', 'csv')">CSV</button>
+                </div>
+                <div class="export-option">
+                    <h4>Export Comenzi</h4>
+                    <button onclick="ExportAPI.exportData('orders', 'json')">JSON</button>
+                    <button onclick="ExportAPI.exportData('orders', 'csv')">CSV</button>
+                </div>
+                <div class="export-option">
+                    <h4>Export Resurse</h4>
+                    <button onclick="ExportAPI.exportData('resources', 'json')">JSON</button>
+                    <button onclick="ExportAPI.exportData('resources', 'csv')">CSV</button>
+                </div>
+                <div class="export-option">
+                    <h4>Export Complet</h4>
+                    <button onclick="ExportAPI.exportData('all', 'json')">JSON Complet</button>
+                </div>
+            </div>
+        </section>
+        
+        <section id="rss-feeds">
+            <h2>📡 Feed-uri RSS</h2>
+            <div class="rss-links">
+                <a href="../api/index.php?resource=rss&type=status" target="_blank">📍 Status Locații RSS</a>
+                <a href="../api/index.php?resource=rss&type=orders" target="_blank">📋 Comenzi RSS</a>
+                <a href="../api/index.php?resource=rss&type=alerts" target="_blank">🚨 Alerte RSS</a>
+            </div>
+        </section>
+        
+        <section id="system-info">
+            <h2>ℹ️ Informații Sistem</h2>
+            <div id="system-stats">
+                <p><strong>Ultima actualizare:</strong> <span id="last-update">-</span></p>
+                <p><strong>Versiune:</strong> 1.0.0</p>
+                <p><strong>Status sistem:</strong> <span class="status-ok">🟢 Operațional</span></p>
+            </div>
+        </section>
+    </main>
+    
+    <script src="js/api.js"></script>
+    <script src="js/dashboard.js"></script>
+</body>
+</html>
