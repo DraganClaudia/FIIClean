@@ -47,6 +47,7 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
+            color: #2c3e50 !important;
         }
         
         .user-info {
@@ -278,8 +279,8 @@
                 <div id="locations-list">
                     <p>Se încarcă locațiile...</p>
                 </div>
-                <button onclick="window.location.href='locations.html'" class="btn-primary" style="margin-top: 1rem; width: 100%;">
-                    Gestionează Locațiile
+                <button onclick="showCreateLocationModal()" class="btn-primary" style="margin-top: 1rem; width: 100%;">
+                    ➕ Adaugă Locație Nouă
                 </button>
             </div>
             
@@ -314,6 +315,43 @@
             </div>
         </div>
     </main>
+
+    <!-- Modal pentru crearea locațiilor -->
+    <div id="location-modal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeLocationModal()">&times;</span>
+            <h2>Locație Nouă</h2>
+            <form id="location-form">
+                <div class="form-group">
+                    <label>Nume Locație</label>
+                    <input type="text" id="location-name" required>
+                </div>
+                
+                <div class="form-group">
+                    <label>Adresă</label>
+                    <input type="text" id="location-address" required>
+                </div>
+                
+                <div class="form-group">
+                    <label>Latitudine</label>
+                    <input type="number" id="location-latitude" step="any">
+                </div>
+                
+                <div class="form-group">
+                    <label>Longitudine</label>
+                    <input type="number" id="location-longitude" step="any">
+                </div>
+                
+                <div class="form-group">
+                    <label>Servicii (separate prin virgulă)</label>
+                    <input type="text" id="location-services" placeholder="covoare,auto,haine">
+                </div>
+                
+                <button type="submit" class="btn-primary">Creează Locația</button>
+                <button type="button" class="btn-secondary" onclick="closeLocationModal()">Anulează</button>
+            </form>
+        </div>
+    </div>
 
     <!-- Modal pentru crearea utilizatorilor -->
     <div id="user-modal" class="modal">
@@ -622,10 +660,16 @@
                     <div style="padding: 0.8rem; border-bottom: 1px solid #eee;">
                         <strong>📍 ${location.name}</strong><br>
                         <small>${location.address}</small><br>
-                        <small style="color: ${location.status === 'active' ? '#27ae60' : '#e74c3c'};">
-                            Status: ${location.status === 'active' ? '🟢 Activ' : '🔴 Inactiv'}
+                        <small>
+                            Status: 
+                            <select onchange="updateLocationStatus(${location.id}, this.value)" style="color: #333; background: white; border: 1px solid #ddd; padding: 0.2rem;">
+                                <option value="active" ${location.status === 'active' ? 'selected' : ''}>🟢 Activ</option>
+                                <option value="inactive" ${location.status === 'inactive' ? 'selected' : ''}>🔴 Inactiv</option>
+                                <option value="maintenance" ${location.status === 'maintenance' ? 'selected' : ''}>🔧 Mentenanță</option>
+                            </select>
                         </small>
                         ${location.services ? `<br><small>Servicii: ${location.services}</small>` : ''}
+                        <br><small style="color: #666;">ID: ${location.id} | Creat: ${new Date(location.created_at).toLocaleDateString('ro-RO')}</small>
                     </div>
                 `).join('');
                 
@@ -839,6 +883,81 @@
             loadAdvancedStats();
             loadSystemAlerts();
         }, 5 * 60 * 1000);
+
+        // Adaugă aceste funcții în script-ul din admin.html
+
+        function showCreateLocationModal() {
+            document.getElementById('location-modal').style.display = 'block';
+        }
+
+        function closeLocationModal() {
+            document.getElementById('location-modal').style.display = 'none';
+            document.getElementById('location-form').reset();
+        }
+
+        // Adaugă event listener pentru form
+        document.getElementById('location-form').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const locationData = {
+                name: document.getElementById('location-name').value,
+                address: document.getElementById('location-address').value,
+                latitude: document.getElementById('location-latitude').value || null,
+                longitude: document.getElementById('location-longitude').value || null,
+                services: document.getElementById('location-services').value
+            };
+            
+            try {
+                const response = await fetch('../api/index.php?resource=locations&action=create', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${localStorage.getItem('auth_token')}`
+                    },
+                    body: JSON.stringify(locationData)
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    alert('Locația a fost creată cu succes!');
+                    closeLocationModal();
+                    loadLocations();
+                } else {
+                    alert('Eroare la crearea locației: ' + (result.message || 'Eroare necunoscută'));
+                }
+            } catch (error) {
+                alert('Eroare de conexiune');
+            }
+        });
+
+        // Adaugă această funcție în script-ul din admin.html
+
+        async function updateLocationStatus(locationId, newStatus) {
+            try {
+                const response = await fetch(`../api/index.php?resource=locations&action=update-status&id=${locationId}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${localStorage.getItem('auth_token')}`
+                    },
+                    body: JSON.stringify({ status: newStatus })
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    loadLocations(); // Reîncarcă lista
+                    alert('Status-ul locației a fost actualizat cu succes!');
+                } else {
+                    alert('Eroare la actualizarea status-ului: ' + (result.error || 'Eroare necunoscută'));
+                    loadLocations(); // Reîncarcă pentru a reveni la starea anterioară
+                }
+            } catch (error) {
+                alert('Eroare de conexiune');
+                loadLocations(); // Reîncarcă pentru a reveni la starea anterioară
+            }
+        }
     </script>
 </body>
 </html>
