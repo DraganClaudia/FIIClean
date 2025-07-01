@@ -76,20 +76,46 @@ class Database
                 created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
                 FOREIGN KEY (location_id) REFERENCES locations (id)
             );
-            CREATE TABLE IF NOT EXISTS users (
+                CREATE TABLE IF NOT EXISTS users (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 username TEXT UNIQUE NOT NULL,
+                email TEXT UNIQUE NOT NULL,
                 password TEXT NOT NULL,
-                email TEXT,
-                role TEXT DEFAULT 'operator',
+                first_name TEXT NOT NULL,
+                last_name TEXT NOT NULL,
+                phone TEXT,
+                role TEXT NOT NULL DEFAULT 'client',
                 location_id INTEGER,
+                is_active INTEGER DEFAULT 1,
+                last_login DATETIME,
                 created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
                 FOREIGN KEY (location_id) REFERENCES locations (id)
             );
-        ";
-
+            ";
+            
         $this->pdo->exec($sql);
+        $this->createAdminUser();
     }
 
+    private function createAdminUser() {
+        $stmt = $this->pdo->prepare("SELECT COUNT(*) FROM users WHERE role = 'admin'");
+        $stmt->execute();
+        
+        if ($stmt->fetchColumn() == 0) {
+            $stmt = $this->pdo->prepare("
+                INSERT INTO users (username, email, password, first_name, last_name, role, is_active) 
+                VALUES (?, ?, ?, ?, ?, ?, ?)
+            ");
+            $stmt->execute([
+                'admin',
+                'admin@fiiclean.ro',
+                password_hash('admin123', PASSWORD_DEFAULT),
+                'Administrator',
+                'Sistem',
+                'admin',
+                1
+            ]);
+        }
+    }
 }
 ?>
