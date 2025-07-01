@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="ro">
 <head>
+    <script src="js/header.js"></script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>FII-Clean - Dashboard Manager</title>
@@ -143,11 +144,6 @@
     </style>
 </head>
 <body>
-    <header>
-        <h1>FII-Clean - Dashboard Manager</h1>
-        <button onclick="logout()" class="logout-btn" style="background: #e74c3c; color: white; border: none; padding: 0.5rem 1rem; border-radius: 4px; cursor: pointer; float: right;">Logout</button>
-    </header>
-    
     <main>
         <div class="manager-header">
             <h2>👨‍💼 Panou Manager</h2>
@@ -204,19 +200,16 @@
         </div>
     </main>
 
-    <!-- Modal pentru asignarea worker-ilor -->
     <div id="assign-modal" class="modal">
         <div class="modal-content">
             <span class="close" onclick="closeAssignModal()">&times;</span>
             <h2>Asignează Worker</h2>
             <div id="assign-content">
-                <!-- Conținutul se completează dinamic -->
             </div>
         </div>
     </div>
 
     <script>
-        // Verifică autentificarea și rolul
         if (!localStorage.getItem('auth_token')) {
             window.location.href = 'login.html';
         }
@@ -234,7 +227,6 @@
         
         async function loadManagerDashboard() {
             try {
-                // Încarcă info utilizator
                 const userResponse = await fetch('../api/auth.php?action=me', {
                     headers: { 'Authorization': `Bearer ${localStorage.getItem('auth_token')}` }
                 });
@@ -366,7 +358,6 @@
                 const workers = await response.json();
                 displayWorkers(workers);
                 
-                // Actualizează statisticile
                 const activeWorkers = workers.filter(worker => worker.is_active).length;
                 document.getElementById('active-workers').textContent = activeWorkers;
                 
@@ -431,11 +422,9 @@
             }
         }
         
-        // === FUNCȚII PENTRU ASIGNAREA WORKER-ILOR ===
         
         async function showAssignModal(orderId) {
             try {
-                // Încarcă worker-ii disponibili
                 const response = await fetch(`../api/users.php?action=workers&location_id=${currentLocationId}`, {
                     headers: { 'Authorization': `Bearer ${localStorage.getItem('auth_token')}` }
                 });
@@ -506,7 +495,7 @@
                 if (result.success) {
                     alert('Worker asignat cu succes!');
                     closeAssignModal();
-                    loadLocationOrders(); // Reîncarcă comenzile
+                    loadLocationOrders(); 
                 } else {
                     alert('Eroare la asignarea worker-ului');
                 }
@@ -531,8 +520,8 @@
                 const result = await response.json();
                 
                 if (result.success) {
-                    loadLocationOrders(); // Reîncarcă comenzile
-                    loadLocationStatistics(); // Actualizează statisticile
+                    loadLocationOrders();
+                    loadLocationStatistics(); 
                 } else {
                     alert('Eroare la actualizarea statusului');
                 }
@@ -552,7 +541,6 @@
                 const orders = await response.json();
                 const today = new Date().toISOString().split('T')[0];
                 
-                // Grupează comenzile finalizate azi după worker
                 const completedToday = orders.filter(order => 
                     (order.transport_status === 'completed' || order.cleaning_status === 'completed') && 
                     order.created_at && order.created_at.startsWith(today)
@@ -608,7 +596,6 @@
             }
         }
         
-        // Închide modalul dacă se dă click în afara lui
         window.onclick = function(event) {
             const modal = document.getElementById('assign-modal');
             if (event.target === modal) {
