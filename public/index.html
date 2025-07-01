@@ -9,16 +9,32 @@
 <body>
     <header>
         <h1>FII-clean</h1>
+        <div class="auth-section">
+            <a href="login.html" class="btn-login">🔑 Login</a>
+            <span class="user-info" id="user-info" style="display: none;">
+                Bun venit, <span id="user-name"></span>
+                <button onclick="logout()" class="btn-logout">Logout</button>
+            </span>
+        </div>
         <nav id="main-nav">
             <a href="index.html">Acasă</a>
             <a href="locations.html">Locații</a>
             <a href="orders.html">Comenzi</a>
             <a href="resources.html">Resurse</a>
             <a href="dashboard.html">Dashboard</a>
+            <a href="login.html">Autentificare</a>
         </nav>
     </header>
     
     <main>
+        <section class="welcome-section">
+            <h2>Bun venit la FII-Clean!</h2>
+            <p>Sistem complet de management pentru spălătorii</p>
+            <div class="quick-access">
+                <a href="login.html" class="quick-btn">👤 Acces Utilizatori</a>
+                <a href="dashboard.html" class="quick-btn">📊 Dashboard Public</a>
+            </div>
+        </section>
         <section id="locations-section">
             <h2>Locații Spălătorii</h2>
             <div id="locations-list">
