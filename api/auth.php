@@ -35,9 +35,6 @@ switch($action) {
     default:
         echo json_encode(['error' => 'Invalid action']);
 }
-
-// === FUNCȚIILE DE GESTIONARE ===
-
 function handleLogin($db) {
     if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
         echo json_encode(['error' => 'Method not allowed']);
@@ -53,7 +50,6 @@ function handleLogin($db) {
         return;
     }
     
-    // Caută utilizatorul
     $stmt = $db->prepare("
         SELECT u.*, l.name as location_name 
         FROM users u 
@@ -68,14 +64,11 @@ function handleLogin($db) {
         return;
     }
     
-    // Actualizează last_login
     $stmt = $db->prepare("UPDATE users SET last_login = datetime('now') WHERE id = ?");
     $stmt->execute([$user['id']]);
     
-    // Creează token
     $token = JWT::create($user['id'], $user['username'], $user['role'], $user['location_id']);
     
-    // Șterge parola din răspuns
     unset($user['password']);
     
     echo json_encode([
@@ -93,7 +86,6 @@ function handleRegister($db) {
     
     $input = json_decode(file_get_contents('php://input'), true);
     
-    // Validare
     $required = ['username', 'email', 'password', 'first_name', 'last_name'];
     foreach ($required as $field) {
         if (empty($input[$field])) {
@@ -102,19 +94,16 @@ function handleRegister($db) {
         }
     }
     
-    // Validare email
     if (!filter_var($input['email'], FILTER_VALIDATE_EMAIL)) {
         echo json_encode(['error' => 'Invalid email']);
         return;
     }
     
-    // Validare parolă
     if (strlen($input['password']) < 6) {
         echo json_encode(['error' => 'Password must be at least 6 characters']);
         return;
     }
     
-    // Verifică dacă utilizatorul există
     $stmt = $db->prepare("SELECT COUNT(*) FROM users WHERE username = ? OR email = ?");
     $stmt->execute([$input['username'], $input['email']]);
     if ($stmt->fetchColumn() > 0) {
@@ -122,7 +111,6 @@ function handleRegister($db) {
         return;
     }
     
-    // Creează utilizatorul (doar client-ii se pot înregistra singuri)
     $stmt = $db->prepare("
         INSERT INTO users (username, email, password, first_name, last_name, phone, role) 
         VALUES (?, ?, ?, ?, ?, ?, 'client')
@@ -140,7 +128,6 @@ function handleRegister($db) {
         
         $userId = $db->lastInsertId();
         
-        // Auto-login pentru client nou
         $token = JWT::create($userId, $input['username'], 'client', null);
         
         echo json_encode([
@@ -166,7 +153,6 @@ function handleMe() {
 }
 
 function handleLogout() {
-    // Pentru o versiune simplă, logout-ul e doar pe frontend
     echo json_encode(['success' => true, 'message' => 'Logged out']);
 }
 
