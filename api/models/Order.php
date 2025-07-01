@@ -81,63 +81,114 @@ class Order {
     }
 
     public function create($data) {
-        $stmt = $this->db->prepare("
-            INSERT INTO orders (location_id, client_id, client_name, client_phone, client_email, 
-                              service_type, pickup_address, delivery_address, 
-                              scheduled_date, price, notes) 
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-        ");
-        return $stmt->execute([
-            $data['location_id'],
-            $data['client_id'] ?? null,
-            $data['client_name'],
-            $data['client_phone'] ?? null,
-            $data['client_email'] ?? null,
-            $data['service_type'],
-            $data['pickup_address'] ?? null,
-            $data['delivery_address'] ?? null,
-            $data['scheduled_date'] ?? null,
-            $data['price'] ?? null,
-            $data['notes'] ?? null
-        ]);
+        try {
+            $stmt = $this->db->prepare("
+                INSERT INTO orders (location_id, client_id, client_name, client_phone, client_email, 
+                                  service_type, pickup_address, delivery_address, 
+                                  scheduled_date, price, notes) 
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            ");
+            
+            $result = $stmt->execute([
+                $data['location_id'] ?? null,
+                $data['client_id'] ?? null,
+                $data['client_name'],
+                $data['client_phone'] ?? null,
+                $data['client_email'] ?? null,
+                $data['service_type'],
+                $data['pickup_address'] ?? null,
+                $data['delivery_address'] ?? null,
+                $data['scheduled_date'] ?? null,
+                $data['price'] ?? null,
+                $data['notes'] ?? null
+            ]);
+            
+            if (!$result) {
+                error_log("Order creation failed: " . implode(', ', $stmt->errorInfo()));
+                return false;
+            }
+            
+            return true;
+        } catch (PDOException $e) {
+            error_log("Order creation error: " . $e->getMessage());
+            return false;
+        }
     }
 
     public function updateStatus($id, $statusData) {
-        $allowedFields = ['status', 'transport_status', 'cleaning_status', 'notes'];
-        $updates = [];
-        $params = [];
-        
-        foreach ($allowedFields as $field) {
-            if (isset($statusData[$field])) {
-                $updates[] = "$field = ?";
-                $params[] = $statusData[$field];
+        try {
+            $allowedFields = ['status', 'transport_status', 'cleaning_status', 'notes'];
+            $updates = [];
+            $params = [];
+            
+            foreach ($allowedFields as $field) {
+                if (isset($statusData[$field])) {
+                    $updates[] = "$field = ?";
+                    $params[] = $statusData[$field];
+                }
             }
+            
+            if (empty($updates)) return false;
+            
+            $params[] = $id;
+            $stmt = $this->db->prepare("UPDATE orders SET " . implode(', ', $updates) . " WHERE id = ?");
+            return $stmt->execute($params);
+        } catch (PDOException $e) {
+            error_log("Order status update error: " . $e->getMessage());
+            return false;
         }
-        
-        if (empty($updates)) return false;
-        
-        $params[] = $id;
-        $stmt = $this->db->prepare("UPDATE orders SET " . implode(', ', $updates) . " WHERE id = ?");
-        return $stmt->execute($params);
     }
     
     public function assignWorker($orderId, $workerId, $field) {
-        $stmt = $this->db->prepare("UPDATE orders SET $field = ? WHERE id = ?");
-        return $stmt->execute([$workerId, $orderId]);
+        try {
+            // Validează că field-ul este sigur pentru SQL
+            $allowedFields = ['assigned_transport', 'assigned_cleaner'];
+            if (!in_array($field, $allowedFields)) {
+                return false;
+            }
+            
+            $stmt = $this->db->prepare("UPDATE orders SET $field = ? WHERE id = ?");
+            return $stmt->execute([$workerId, $orderId]);
+        } catch (PDOException $e) {
+            error_log("Worker assignment error: " . $e->getMessage());
+            return false;
+        }
     }
 
     public function getStatistics() {
-        $stmt = $this->db->prepare("
-            SELECT 
-                COUNT(*) as total_orders,
-                COUNT(CASE WHEN status = 'pending' THEN 1 END) as pending_orders,
-                COUNT(CASE WHEN status = 'completed' THEN 1 END) as completed_orders,
-                AVG(price) as average_price,
-                SUM(price) as total_revenue
-            FROM orders
-        ");
-        $stmt->execute();
-        return $stmt->fetch(PDO::FETCH_ASSOC);
+        try {
+            $stmt = $this->db->prepare("
+                SELECT 
+                    COUNT(*) as total_orders,
+                    COUNT(CASE WHEN status = 'pending' THEN 1 END) as pending_orders,
+                    COUNT(CASE WHEN status = 'completed' THEN 1 END) as completed_orders,
+                    AVG(CAST(price AS REAL)) as average_price,
+                    SUM(CAST(price AS REAL)) as total_revenue
+                FROM orders
+                WHERE price IS NOT NULL AND price != ''
+            ");
+            $stmt->execute();
+            
+            $result = $stmt->fetch(PDO::FETCH_ASSOC);
+            
+            // Convertește NULL la 0 pentru valori numerice
+            return [
+                'total_orders' => (int)($result['total_orders'] ?? 0),
+                'pending_orders' => (int)($result['pending_orders'] ?? 0),
+                'completed_orders' => (int)($result['completed_orders'] ?? 0),
+                'average_price' => round((float)($result['average_price'] ?? 0), 2),
+                'total_revenue' => round((float)($result['total_revenue'] ?? 0), 2)
+            ];
+        } catch (PDOException $e) {
+            error_log("Statistics error: " . $e->getMessage());
+            return [
+                'total_orders' => 0,
+                'pending_orders' => 0,
+                'completed_orders' => 0,
+                'average_price' => 0,
+                'total_revenue' => 0
+            ];
+        }
     }
 }
 ?>
