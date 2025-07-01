@@ -173,6 +173,141 @@ form textarea {
     resize: vertical;
 }
 
+.alerts-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 1rem;
+    margin-top: 1rem;
+}
+
+.alert-card {
+    padding: 1.5rem;
+    border-radius: 8px;
+    text-align: center;
+}
+
+.alert-card.low-stock {
+    background: #fdf2f2;
+    border: 2px solid #e74c3c;
+}
+
+.alert-card.pending-orders {
+    background: #fff3cd;
+    border: 2px solid #ffc107;
+}
+
+.alert-card.all-good {
+    background: #d4edda;
+    border: 2px solid #28a745;
+}
+
+.export-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+    margin-top: 1rem;
+}
+
+.export-option {
+    background: #f8f9fa;
+    padding: 1.5rem;
+    border-radius: 8px;
+    text-align: center;
+    border: 1px solid #e9ecef;
+}
+
+.export-option h4 {
+    margin-bottom: 1rem;
+    color: #495057;
+}
+
+.export-option button {
+    background: #6c757d;
+    color: white;
+    border: none;
+    padding: 0.5rem 1rem;
+    border-radius: 4px;
+    cursor: pointer;
+    margin: 0.2rem;
+    font-size: 0.9rem;
+}
+
+.export-option button:hover {
+    background: #5a6268;
+}
+
+.activity-item {
+    display: flex;
+    align-items: flex-start;
+    padding: 1rem;
+    border-bottom: 1px solid #e9ecef;
+}
+
+.activity-icon {
+    font-size: 1.5rem;
+    margin-right: 1rem;
+    flex-shrink: 0;
+}
+
+.activity-content {
+    flex-grow: 1;
+}
+
+.activity-content h4 {
+    margin: 0 0 0.5rem 0;
+    color: #2c3e50;
+}
+
+.activity-content p {
+    margin: 0.2rem 0;
+    color: #6c757d;
+}
+
+.status-pending {
+    color: #ffc107;
+    font-weight: bold;
+}
+
+.status-completed {
+    color: #28a745;
+    font-weight: bold;
+}
+
+.status-in_progress {
+    color: #17a2b8;
+    font-weight: bold;
+}
+
+.status-cancelled {
+    color: #dc3545;
+    font-weight: bold;
+}
+
+.rss-links {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    margin-top: 1rem;
+}
+
+.rss-links a {
+    background: #ff8800;
+    color: white;
+    text-decoration: none;
+    padding: 0.7rem 1rem;
+    border-radius: 4px;
+    transition: background 0.3s;
+}
+
+.rss-links a:hover {
+    background: #e67e22;
+}
+
+.status-ok {
+    color: #28a745;
+    font-weight: bold;
+}
+
 @media (max-width: 768px) {
     nav a {
         display: block;
@@ -201,6 +336,25 @@ form textarea {
     
     .filter-section label {
         display: block;
+        margin-bottom: 0.5rem;
+    }
+
+    .alerts-grid,
+    .export-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .resource-actions {
+        flex-direction: column;
+    }
+    
+    .activity-item {
+        flex-direction: column;
+        text-align: center;
+    }
+    
+    .activity-icon {
+        margin-right: 0;
         margin-bottom: 0.5rem;
     }
 }
