@@ -310,30 +310,24 @@ form textarea {
 
 /* Auth Section */
 .auth-section {
-    margin-top: 1rem;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 1rem;
-    flex-wrap: wrap;
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
 }
 
 .btn-login {
-    background: #27ae60;
-    color: white;
-    padding: 0.7rem 1.5rem;
-    border: none;
-    border-radius: 6px;
-    text-decoration: none;
-    font-weight: bold;
-    transition: background 0.3s;
-    display: inline-flex;
-    align-items: center;
-    gap: 0.5rem;
+    background: #27ae60 !important;
+    color: white !important;
+    padding: 0.8rem 1.5rem !important;
+    text-decoration: none !important;
+    border-radius: 8px !important;
+    font-weight: bold !important;
+    box-shadow: 0 2px 10px rgba(39, 174, 96, 0.3) !important;
 }
 
 .btn-login:hover {
-    background: #219a52;
+    background: #219a52 !important;
+    transform: translateY(-2px) !important;
 }
 
 .btn-logout {
@@ -398,6 +392,85 @@ form textarea {
 .quick-btn:hover {
     background: #2980b9;
     transform: translateY(-2px);
+}
+
+/* Fix pentru textul din inputuri și selecturi în dashboard-uri */
+input, select, textarea {
+    color: #333 !important;
+    background-color: white !important;
+}
+
+/* Pentru modaluri */
+.modal input, .modal select, .modal textarea {
+    color: #333 !important;
+    background-color: white !important;
+}
+
+/* Pentru status selecturi în liste */
+.status-select {
+    color: #333 !important;
+    background-color: white !important;
+}
+
+/* Pentru form-uri în general */
+.form-group input, .form-group select, .form-group textarea {
+    color: #333 !important;
+    background-color: white !important;
+}
+
+/* Fix pentru textul negru pe fundal alb în toate paginile */
+.admin-card, .admin-card *,
+.manager-card, .manager-card *,
+.cleaner-card, .cleaner-card *,
+.client-header + *,
+.my-orders, .my-orders *,
+.order-card, .order-card *,
+.user-item, .user-item *,
+.user-info, .user-info *,
+.worker-item, .worker-item *,
+.cleaning-task, .cleaning-task *,
+.location-item, .location-item *,
+.order-item, .order-item *,
+.resource-item, .resource-item *,
+section, section p, section span, section small, section div:not(.stat-box):not(.admin-header):not(.manager-header):not(.cleaner-header):not(.client-header) {
+    color: #333 !important;
+}
+
+/* Asigură-te că inputurile și selecturile au text negru */
+input, select, textarea,
+.form-group input, .form-group select, .form-group textarea,
+.modal input, .modal select, .modal textarea {
+    color: #333 !important;
+    background-color: white !important;
+}
+
+/* Excepții pentru elementele care trebuie să rămână cu culori speciale */
+.admin-header, .admin-header *,
+.manager-header, .manager-header *,
+.cleaner-header, .cleaner-header *,
+.client-header, .client-header *,
+.stat-box, .stat-box *,
+.btn-primary, .btn-secondary, .btn-action,
+.logout-btn, button,
+header, header * {
+    color: white !important;
+}
+
+/* Pentru link-uri și status-uri */
+a { color: #3498db !important; }
+.status-ok { color: #27ae60 !important; }
+.status-pending { color: #ffc107 !important; }
+.status-completed { color: #28a745 !important; }
+.status-in_progress { color: #17a2b8 !important; }
+.status-cancelled { color: #dc3545 !important; }
+
+/* Pentru textul din dashboard-uri specifice */
+.system-stat-card, .system-stat-card * {
+    color: #333 !important;
+}
+
+.activity-content, .activity-content * {
+    color: #333 !important;
 }
 
 @media (max-width: 768px) {
