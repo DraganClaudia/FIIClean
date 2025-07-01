@@ -26,21 +26,32 @@ class Auth {
             return false;
         }
         
-        // Verifică dacă utilizatorul există și e activ
-        $stmt = $this->db->prepare("SELECT * FROM users WHERE id = ? AND is_active = 1");
-        $stmt->execute([$userData['user_id']]);
-        $user = $stmt->fetch(PDO::FETCH_ASSOC);
-        
-        if (!$user) {
-            $this->sendError(401, 'User not found');
+        try {
+            // Verifică dacă utilizatorul există și e activ
+            $stmt = $this->db->prepare("
+                SELECT u.*, l.name as location_name 
+                FROM users u 
+                LEFT JOIN locations l ON u.location_id = l.id 
+                WHERE u.id = ? AND u.is_active = 1
+            ");
+            $stmt->execute([$userData['user_id']]);
+            $user = $stmt->fetch(PDO::FETCH_ASSOC);
+            
+            if (!$user) {
+                $this->sendError(401, 'User not found or inactive');
+                return false;
+            }
+            
+            // Salvează datele utilizatorului pentru folosire în controllere
+            $GLOBALS['current_user'] = $user;
+            $GLOBALS['current_user']['token_data'] = $userData;
+            
+            return $user;
+        } catch (PDOException $e) {
+            error_log("Auth check database error: " . $e->getMessage());
+            $this->sendError(500, 'Database error');
             return false;
         }
-        
-        // Salvează datele utilizatorului pentru folosire în controllere
-        $GLOBALS['current_user'] = $user;
-        $GLOBALS['current_user']['token_data'] = $userData;
-        
-        return $user;
     }
     
     // Verifică rolul utilizatorului
@@ -84,17 +95,29 @@ class Auth {
         // Admin poate vedea totul
         if ($user['role'] === 'admin') return true;
         
-        $stmt = $this->db->prepare("SELECT $ownerField FROM $tableName WHERE id = ?");
-        $stmt->execute([$resourceId]);
-        $ownerId = $stmt->fetchColumn();
-        
-        return $ownerId == $user['id'];
+        try {
+            $stmt = $this->db->prepare("SELECT $ownerField FROM $tableName WHERE id = ?");
+            $stmt->execute([$resourceId]);
+            $ownerId = $stmt->fetchColumn();
+            
+            return $ownerId == $user['id'];
+        } catch (PDOException $e) {
+            error_log("Ownership check database error: " . $e->getMessage());
+            return false;
+        }
     }
     
     // Helper pentru token din header
     private function getTokenFromHeader() {
-        $headers = getallheaders();
-        $authHeader = $headers['Authorization'] ?? '';
+        // Verifică HTTP_AUTHORIZATION
+        if (isset($_SERVER['HTTP_AUTHORIZATION'])) {
+            $authHeader = $_SERVER['HTTP_AUTHORIZATION'];
+        } elseif (function_exists('getallheaders')) {
+            $headers = getallheaders();
+            $authHeader = $headers['Authorization'] ?? '';
+        } else {
+            $authHeader = '';
+        }
         
         if (preg_match('/Bearer\s+(.*)$/i', $authHeader, $matches)) {
             return $matches[1];
@@ -105,10 +128,47 @@ class Auth {
     
     // Helper pentru răspunsuri de eroare
     private function sendError($code, $message) {
-        header("HTTP/1.1 $code");
+        http_response_code($code);
         header('Content-Type: application/json');
         echo json_encode(['error' => $message]);
         exit();
+    }
+    
+    // Verifică autentificarea fără a ieși cu eroare (pentru cazuri opționale)
+    public function checkAuthOptional() {
+        $token = $this->getTokenFromHeader();
+        
+        if (!$token) {
+            return null;
+        }
+        
+        $userData = JWT::verify($token);
+        
+        if (!$userData) {
+            return null;
+        }
+        
+        try {
+            $stmt = $this->db->prepare("
+                SELECT u.*, l.name as location_name 
+                FROM users u 
+                LEFT JOIN locations l ON u.location_id = l.id 
+                WHERE u.id = ? AND u.is_active = 1
+            ");
+            $stmt->execute([$userData['user_id']]);
+            $user = $stmt->fetch(PDO::FETCH_ASSOC);
+            
+            if ($user) {
+                $GLOBALS['current_user'] = $user;
+                $GLOBALS['current_user']['token_data'] = $userData;
+                return $user;
+            }
+            
+            return null;
+        } catch (PDOException $e) {
+            error_log("Optional auth check database error: " . $e->getMessage());
+            return null;
+        }
     }
 }
 ?>
