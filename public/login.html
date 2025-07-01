@@ -1,0 +1,466 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FII-Clean - Login</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .login-container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+            width: 400px;
+            max-width: 90%;
+        }
+        
+        .login-header {
+            background: linear-gradient(135deg, #2c3e50, #3498db);
+            color: white;
+            text-align: center;
+            padding: 2rem;
+        }
+        
+        .login-header h1 {
+            font-size: 2rem;
+            margin-bottom: 0.5rem;
+        }
+        
+        .tabs {
+            display: flex;
+            background: #f8f9fa;
+        }
+        
+        .tab-btn {
+            flex: 1;
+            padding: 1rem;
+            border: none;
+            background: transparent;
+            cursor: pointer;
+            border-bottom: 3px solid transparent;
+            transition: all 0.3s;
+        }
+        
+        .tab-btn.active {
+            background: white;
+            border-bottom-color: #3498db;
+            color: #3498db;
+            font-weight: bold;
+        }
+        
+        .tab-content {
+            display: none;
+            padding: 2rem;
+        }
+        
+        .tab-content.active {
+            display: block;
+        }
+        
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            color: #555;
+            font-weight: 500;
+        }
+        
+        .form-group input {
+            width: 100%;
+            padding: 0.75rem;
+            border: 2px solid #e1e1e1;
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: border-color 0.3s;
+        }
+        
+        .form-group input:focus {
+            outline: none;
+            border-color: #3498db;
+        }
+        
+        .btn {
+            width: 100%;
+            padding: 1rem;
+            background: linear-gradient(135deg, #3498db, #2980b9);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: transform 0.2s;
+            margin-bottom: 1rem;
+        }
+        
+        .btn:hover {
+            transform: translateY(-2px);
+        }
+        
+        .demo-accounts {
+            border-top: 1px solid #e1e1e1;
+            padding-top: 1rem;
+            margin-top: 1rem;
+        }
+        
+        .demo-accounts h4 {
+            text-align: center;
+            color: #666;
+            margin-bottom: 1rem;
+            font-size: 0.9rem;
+        }
+        
+        .demo-btn {
+            display: block;
+            width: 100%;
+            padding: 0.5rem;
+            margin-bottom: 0.5rem;
+            background: #f8f9fa;
+            border: 1px solid #e1e1e1;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: background 0.2s;
+        }
+        
+        .demo-btn:hover {
+            background: #e9ecef;
+        }
+        
+        .message {
+            text-align: center;
+            padding: 1rem;
+            margin: 1rem 0;
+            border-radius: 8px;
+            display: none;
+        }
+        
+        .message.success {
+            background: #d4edda;
+            color: #155724;
+        }
+        
+        .message.error {
+            background: #f8d7da;
+            color: #721c24;
+        }
+        
+        .form-row {
+            display: flex;
+            gap: 1rem;
+        }
+        
+        @media (max-width: 480px) {
+            .form-row {
+                flex-direction: column;
+                gap: 0;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="login-container">
+        <div class="login-header">
+            <h1>🧽 FII-Clean</h1>
+            <p>Sistem Management Spălătorii</p>
+        </div>
+        
+        <div class="tabs">
+            <button class="tab-btn active" onclick="showTab('login')">Login</button>
+            <button class="tab-btn" onclick="showTab('register')">Register</button>
+        </div>
+        
+        <!-- Login Tab -->
+        <div id="login-tab" class="tab-content active">
+            <form id="login-form">
+                <div class="form-group">
+                    <label>Username sau Email</label>
+                    <input type="text" id="login-username" required>
+                </div>
+                
+                <div class="form-group">
+                    <label>Parolă</label>
+                    <input type="password" id="login-password" required>
+                </div>
+                
+                <button type="submit" class="btn">🔑 Conectare</button>
+            </form>
+            
+            <div class="demo-accounts">
+                <h4>Conturi Demo pentru Testare:</h4>
+                <button class="demo-btn" onclick="quickLogin('admin', 'admin123')">
+                    👑 Admin (Acces Complet)
+                </button>
+                <button class="demo-btn" onclick="quickLogin('manager1', 'manager123')">
+                    👨‍💼 Manager (O Locație)
+                </button>
+                <button class="demo-btn" onclick="quickLogin('client1', 'client123')">
+                    👤 Client (Comenzi Proprii)
+                </button>
+                <button class="demo-btn" onclick="quickLogin('transport1', 'worker123')">
+                    🚛 Worker Transport
+                </button>
+                <button class="demo-btn" onclick="quickLogin('cleaner1', 'worker123')">
+                    🧽 Worker Cleaner
+                </button>
+            </div>
+        </div>
+        
+        <!-- Register Tab -->
+        <div id="register-tab" class="tab-content">
+            <form id="register-form">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Prenume</label>
+                        <input type="text" id="register-first-name" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Nume</label>
+                        <input type="text" id="register-last-name" required>
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label>Username</label>
+                    <input type="text" id="register-username" required>
+                </div>
+                
+                <div class="form-group">
+                    <label>Email</label>
+                    <input type="email" id="register-email" required>
+                </div>
+                
+                <div class="form-group">
+                    <label>Telefon</label>
+                    <input type="tel" id="register-phone">
+                </div>
+                
+                <div class="form-group">
+                    <label>Parolă (min 6 caractere)</label>
+                    <input type="password" id="register-password" minlength="6" required>
+                </div>
+                
+                <div class="form-group">
+                    <label>Confirmă Parola</label>
+                    <input type="password" id="register-confirm" required>
+                </div>
+                
+                <button type="submit" class="btn">👤 Creează Cont Client</button>
+                
+                <p style="text-align: center; color: #666; font-size: 0.9rem; margin-top: 1rem;">
+                    <small>Înregistrarea creează cont de client. Pentru alte roluri, contactați admin.</small>
+                </p>
+            </form>
+        </div>
+        
+        <div id="message" class="message"></div>
+    </div>
+
+    <script>
+        // === BASIC AUTH MANAGER ===
+        class SimpleAuthManager {
+            constructor() {
+                this.token = localStorage.getItem('auth_token');
+                this.user = JSON.parse(localStorage.getItem('user_data') || 'null');
+            }
+            
+            isAuthenticated() {
+                return this.token && this.user;
+            }
+            
+            setAuth(token, user) {
+                this.token = token;
+                this.user = user;
+                localStorage.setItem('auth_token', token);
+                localStorage.setItem('user_data', JSON.stringify(user));
+            }
+            
+            clearAuth() {
+                this.token = null;
+                this.user = null;
+                localStorage.removeItem('auth_token');
+                localStorage.removeItem('user_data');
+            }
+            
+            async login(username, password) {
+                const response = await fetch('../api/auth.php?action=login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username, password })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    this.setAuth(data.token, data.user);
+                    return { success: true, user: data.user };
+                }
+                
+                return { success: false, error: data.error };
+            }
+            
+            async register(userData) {
+                const response = await fetch('../api/auth.php?action=register', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(userData)
+                });
+                
+                const data = await response.json();
+                
+                if (data.success && data.token) {
+                    this.setAuth(data.token, { id: data.user_id, role: 'client' });
+                }
+                
+                return data;
+            }
+            
+            redirectToDashboard() {
+                if (!this.isAuthenticated()) {
+                    return;
+                }
+                
+                const role = this.user.role;
+                const dashboards = {
+                    'admin': 'admin.html',
+                    'manager': 'manager.html',
+                    'client': 'client.html',
+                    'worker_transport': 'transport.html',
+                    'worker_cleaner': 'cleaner.html'
+                };
+                
+                window.location.href = dashboards[role] || 'dashboard.html';
+            }
+        }
+        
+        const auth = new SimpleAuthManager();
+        
+        // === EVENT HANDLERS ===
+        document.addEventListener('DOMContentLoaded', function() {
+            // Redirect dacă e deja autentificat
+            if (auth.isAuthenticated()) {
+                auth.redirectToDashboard();
+                return;
+            }
+            
+            // Setup forms
+            document.getElementById('login-form').addEventListener('submit', handleLogin);
+            document.getElementById('register-form').addEventListener('submit', handleRegister);
+        });
+        
+        // === FUNCTIONS ===
+        function showTab(tabName) {
+            // Actualizează butoanele
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+            event.target.classList.add('active');
+            
+            // Actualizează conținutul
+            document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+            document.getElementById(tabName + '-tab').classList.add('active');
+        }
+        
+        async function handleLogin(e) {
+            e.preventDefault();
+            
+            const username = document.getElementById('login-username').value;
+            const password = document.getElementById('login-password').value;
+            
+            if (!username || !password) {
+                showMessage('Completați toate câmpurile', 'error');
+                return;
+            }
+            
+            try {
+                const result = await auth.login(username, password);
+                
+                if (result.success) {
+                    showMessage(`Bun venit, ${result.user.first_name}!`, 'success');
+                    setTimeout(() => auth.redirectToDashboard(), 1000);
+                } else {
+                    showMessage(result.error, 'error');
+                }
+            } catch (error) {
+                showMessage('Eroare de conexiune', 'error');
+            }
+        }
+        
+        async function handleRegister(e) {
+            e.preventDefault();
+            
+            const formData = {
+                first_name: document.getElementById('register-first-name').value,
+                last_name: document.getElementById('register-last-name').value,
+                username: document.getElementById('register-username').value,
+                email: document.getElementById('register-email').value,
+                phone: document.getElementById('register-phone').value,
+                password: document.getElementById('register-password').value
+            };
+            
+            const confirmPassword = document.getElementById('register-confirm').value;
+            
+            // Validări
+            if (!formData.first_name || !formData.last_name || !formData.username || 
+                !formData.email || !formData.password) {
+                showMessage('Completați toate câmpurile obligatorii', 'error');
+                return;
+            }
+            
+            if (formData.password !== confirmPassword) {
+                showMessage('Parolele nu se potrivesc', 'error');
+                return;
+            }
+            
+            try {
+                const result = await auth.register(formData);
+                
+                if (result.success) {
+                    showMessage('Cont creat cu succes!', 'success');
+                    setTimeout(() => auth.redirectToDashboard(), 1000);
+                } else {
+                    showMessage(result.error, 'error');
+                }
+            } catch (error) {
+                showMessage('Eroare de conexiune', 'error');
+            }
+        }
+        
+        function quickLogin(username, password) {
+            document.getElementById('login-username').value = username;
+            document.getElementById('login-password').value = password;
+            handleLogin({ preventDefault: () => {} });
+        }
+        
+        function showMessage(text, type) {
+            const messageEl = document.getElementById('message');
+            messageEl.textContent = text;
+            messageEl.className = `message ${type}`;
+            messageEl.style.display = 'block';
+            
+            setTimeout(() => {
+                messageEl.style.display = 'none';
+            }, 5000);
+        }
+        
+        // Export global
+        window.auth = auth;
+    </script>
+</body>
+</html>
