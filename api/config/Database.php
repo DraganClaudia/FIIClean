@@ -61,6 +61,31 @@ class Database
                 created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
                 FOREIGN KEY (location_id) REFERENCES locations (id)
             );
+
+             CREATE TABLE IF NOT EXISTS resources (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                location_id INTEGER,
+                resource_type TEXT NOT NULL,
+                name TEXT NOT NULL,
+                quantity INTEGER DEFAULT 0,
+                unit TEXT DEFAULT 'bucati',
+                min_threshold INTEGER DEFAULT 10,
+                cost_per_unit DECIMAL(10,2),
+                supplier TEXT,
+                last_restocked DATETIME,
+                created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (location_id) REFERENCES locations (id)
+            );
+            CREATE TABLE IF NOT EXISTS users (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                username TEXT UNIQUE NOT NULL,
+                password TEXT NOT NULL,
+                email TEXT,
+                role TEXT DEFAULT 'operator',
+                location_id INTEGER,
+                created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (location_id) REFERENCES locations (id)
+            );
         ";
 
         $this->pdo->exec($sql);
