@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="ro">
 <head>
+    <script src="js/header.js"></script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>FII-Clean - Login</title>
@@ -188,7 +189,6 @@
             <button class="tab-btn" onclick="showTab('register')">Register</button>
         </div>
         
-        <!-- Login Tab -->
         <div id="login-tab" class="tab-content active">
             <form id="login-form">
                 <div class="form-group">
@@ -224,7 +224,6 @@
             </div>
         </div>
         
-        <!-- Register Tab -->
         <div id="register-tab" class="tab-content">
             <form id="register-form">
                 <div class="form-row">
@@ -275,7 +274,6 @@
     </div>
 
     <script>
-        // === BASIC AUTH MANAGER ===
         class SimpleAuthManager {
             constructor() {
                 this.token = localStorage.getItem('auth_token');
@@ -353,26 +351,20 @@
         
         const auth = new SimpleAuthManager();
         
-        // === EVENT HANDLERS ===
         document.addEventListener('DOMContentLoaded', function() {
-            // Redirect dacă e deja autentificat
             if (auth.isAuthenticated()) {
                 auth.redirectToDashboard();
                 return;
             }
             
-            // Setup forms
             document.getElementById('login-form').addEventListener('submit', handleLogin);
             document.getElementById('register-form').addEventListener('submit', handleRegister);
         });
         
-        // === FUNCTIONS ===
         function showTab(tabName) {
-            // Actualizează butoanele
             document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
             event.target.classList.add('active');
             
-            // Actualizează conținutul
             document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
             document.getElementById(tabName + '-tab').classList.add('active');
         }
@@ -416,7 +408,6 @@
             
             const confirmPassword = document.getElementById('register-confirm').value;
             
-            // Validări
             if (!formData.first_name || !formData.last_name || !formData.username || 
                 !formData.email || !formData.password) {
                 showMessage('Completați toate câmpurile obligatorii', 'error');
@@ -459,7 +450,6 @@
             }, 5000);
         }
         
-        // Export global
         window.auth = auth;
     </script>
 </body>
