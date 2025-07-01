@@ -46,7 +46,6 @@ class OrderController {
     }
     
     private function getAllOrders() {
-        // Pentru acces public la comenzi (fără autentificare strictă)
         header('Content-Type: application/json');
         
         try {
@@ -59,8 +58,12 @@ class OrderController {
     }
     
     private function getMyOrders() {
-        $user = $this->auth->checkAuth();
-        if (!$user) return;
+        $user = $this->auth->checkAuthForController();
+        if (!$user) {
+            http_response_code(401);
+            echo json_encode(['error' => 'Authentication required']);
+            return;
+        }
         
         header('Content-Type: application/json');
         
@@ -74,8 +77,12 @@ class OrderController {
     }
     
     private function getAssignedOrders() {
-        $user = $this->auth->checkAuth();
-        if (!$user) return;
+        $user = $this->auth->checkAuthForController();
+        if (!$user) {
+            http_response_code(401);
+            echo json_encode(['error' => 'Authentication required']);
+            return;
+        }
         
         if (!in_array($user['role'], ['worker_transport', 'worker_cleaner'])) {
             http_response_code(403);
@@ -106,7 +113,7 @@ class OrderController {
         error_log("REQUEST_METHOD: " . $_SERVER['REQUEST_METHOD']);
         error_log("RAW INPUT: " . file_get_contents('php://input'));
         error_log("AUTH HEADER: " . ($_SERVER['HTTP_AUTHORIZATION'] ?? 'MISSING'));
-        // Verifică dacă datele sunt trimise ca JSON
+
         $rawInput = file_get_contents('php://input');
         
         if (empty($rawInput)) {
@@ -123,29 +130,26 @@ class OrderController {
             return;
         }
 
-        // Verifică autentificarea pentru utilizatori logați
         $user = null;
         $authHeader = $_SERVER['HTTP_AUTHORIZATION'] ?? '';
         
         if ($authHeader) {
-            $user = $this->auth->checkAuth();
+            $user = $this->auth->checkAuthForController();
             
-            // Pentru client-i, setează automat datele lor
             if ($user && $user['role'] === 'client') {
                 $input['client_id'] = $user['id'];
                 $input['client_name'] = $user['first_name'] . ' ' . $user['last_name'];
                 $input['client_email'] = $user['email'];
                 $input['client_phone'] = $user['phone'];
             } elseif (empty($input['client_name'])) {
-                // Dacă nu e client autentificat și nu are client_name, returnează eroare
+
                 http_response_code(400);
                 echo json_encode(['error' => 'Client name is required']);
                 return;
             }
             
-            // Manager poate crea comenzi doar pentru locația sa
             if ($user && $user['role'] === 'manager') {
-                if (isset($input['location_id']) && !$this->auth->checkLocationAccess($input['location_id'])) {
+                if (isset($input['location_id']) && !$this->auth->canAccessLocation($input['location_id'])) {
                     http_response_code(403);
                     echo json_encode(['error' => 'Cannot create orders for this location']);
                     return;
@@ -153,7 +157,6 @@ class OrderController {
             }
         }
         
-        // Validare câmpuri obligatorii
         $required = ['service_type'];
         foreach ($required as $field) {
             if (empty($input[$field])) {
@@ -177,8 +180,12 @@ class OrderController {
     }
     
     private function updateOrderStatus($id) {
-        $user = $this->auth->checkAuth();
-        if (!$user) return;
+        $user = $this->auth->checkAuthForController();
+        if (!$user) {
+            http_response_code(401);
+            echo json_encode(['error' => 'Authentication required']);
+            return;
+        }
         
         header('Content-Type: application/json');
         
@@ -192,7 +199,6 @@ class OrderController {
         }
         
         try {
-            // Verifică cine poate actualiza această comandă
             $order = $this->orderModel->getById($id);
             if (!$order) {
                 http_response_code(404);
@@ -207,11 +213,9 @@ class OrderController {
             } elseif ($user['role'] === 'manager' && $order['location_id'] == $user['location_id']) {
                 $canUpdate = true;
             } elseif ($user['role'] === 'worker_transport' && $order['assigned_transport'] == $user['id']) {
-                // Worker transport poate actualiza doar transport_status
                 $input = ['transport_status' => $input['transport_status'] ?? $input['status']];
                 $canUpdate = true;
             } elseif ($user['role'] === 'worker_cleaner' && $order['assigned_cleaner'] == $user['id']) {
-                // Worker cleaner poate actualiza doar cleaning_status
                 $input = ['cleaning_status' => $input['cleaning_status'] ?? $input['status']];
                 $canUpdate = true;
             }
@@ -235,10 +239,13 @@ class OrderController {
     }
     
     private function assignWorker($id) {
-        $user = $this->auth->checkAuth();
-        if (!$user) return;
+        $user = $this->auth->checkAuthForController();
+        if (!$user) {
+            http_response_code(401);
+            echo json_encode(['error' => 'Authentication required']);
+            return;
+        }
         
-        // Doar admin și manager pot asigna worker-i
         if (!in_array($user['role'], ['admin', 'manager'])) {
             http_response_code(403);
             echo json_encode(['error' => 'Access denied']);
@@ -275,7 +282,6 @@ class OrderController {
     }
     
     private function getOrdersByLocation($locationId) {
-        // Permite acces public pentru locații
         header('Content-Type: application/json');
         
         try {
@@ -288,7 +294,6 @@ class OrderController {
     }
     
     private function getOrderStatistics() {
-        // Permite acces public pentru statistici
         header('Content-Type: application/json');
         
         try {
