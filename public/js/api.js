@@ -1,236 +1,936 @@
-const API_BASE = '../api/index.php';
-
-async function apiRequest(endpoint, options = {}) {
-    try {
-        const url = `${API_BASE}?${endpoint}`;
-        const response = await fetch(url, {
-            headers: {
-                'Content-Type': 'application/json',
-                ...options.headers
-            },  
-            ...options
-        });
-        
-        if (!response.ok) {
-            const errorText = await response.text();
-            throw new Error(`HTTP error! status: ${response.status}`);
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+    <script src="js/header.js"></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FII-Clean - Dashboard Admin</title>
+    <link rel="stylesheet" href="css/main.css">
+    <style>
+        .admin-header {
+            background: linear-gradient(135deg, #c0392b 0%, #8e44ad 100%);
+            color: white;
+            padding: 2rem;
+            border-radius: 12px;
+            margin-bottom: 2rem;
+            text-align: center;
         }
         
-        return await response.json();
-    } catch (error) {
-        console.error('API Request failed:', error);
-        throw error;
-    }
-}
+        .admin-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+            margin: 2rem 0;
+        }
+        
+        .admin-card {
+            background: white;
+            border-radius: 12px;
+            padding: 2rem;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+        
+        .admin-card h3 {
+            color: #2c3e50;
+            margin-bottom: 1rem;
+            border-bottom: 2px solid #3498db;
+            padding-bottom: 0.5rem;
+        }
+        
+        .user-list {
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        
+        .user-item {
+            padding: 1rem;
+            border-bottom: 1px solid #e1e1e1;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            color: #2c3e50 !important;
+        }
+        
+        .user-info {
+            flex-grow: 1;
+        }
+        
+        .user-actions {
+            margin-left: 1rem;
+        }
+        
+        .btn-small {
+            padding: 0.3rem 0.6rem;
+            font-size: 0.8rem;
+            margin-left: 0.3rem;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        
+        .btn-primary {
+            background: #3498db;
+            color: white;
+            border: none;
+            padding: 0.7rem 1.5rem;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 1rem;
+            margin-bottom: 1rem;
+        }
+        
+        .btn-secondary {
+            background: #6c757d;
+            color: white;
+            border: none;
+            padding: 0.7rem 1.5rem;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 1rem;
+        }
+        
+        .stats-overview {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+        
+        .stat-box {
+            background: linear-gradient(135deg, #3498db, #2980b9);
+            color: white;
+            padding: 1.5rem;
+            border-radius: 8px;
+            text-align: center;
+        }
+        
+        .stat-number {
+            font-size: 2rem;
+            font-weight: bold;
+            display: block;
+        }
+        
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+        }
+        
+        .modal-content {
+            background-color: white;
+            margin: 5% auto;
+            padding: 2rem;
+            border-radius: 12px;
+            width: 90%;
+            max-width: 500px;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+        
+        .close {
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+            line-height: 1;
+        }
+        
+        .close:hover {
+            color: black;
+        }
+        
+        .form-group {
+            margin-bottom: 1rem;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: bold;
+        }
+        
+        .form-group input, .form-group select {
+            width: 100%;
+            padding: 0.7rem;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 1rem;
+            box-sizing: border-box;
+        }
+        
+        .logout-btn {
+            background: #e74c3c;
+            color: white;
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 4px;
+            cursor: pointer;
+            float: right;
+        }
+        
+        .system-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+        
+        .system-stat-card {
+            background: #f8f9fa;
+            padding: 1rem;
+            border-radius: 8px;
+            border-left: 4px solid #3498db;
+        }
+        
+        .system-stat-card h4 {
+            margin: 0 0 0.5rem 0;
+            color: #2c3e50;
+        }
+        
+        .system-stat-card .number {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #3498db;
+        }
+        
+        .alert-item {
+            padding: 0.8rem;
+            margin-bottom: 0.5rem;
+            border-radius: 6px;
+            border-left: 4px solid;
+        }
+        
+        .alert-info {
+            background: #d1ecf1;
+            border-left-color: #17a2b8;
+            color: #0c5460;
+        }
+        
+        .alert-warning {
+            background: #fff3cd;
+            border-left-color: #ffc107;
+            color: #856404;
+        }
+        
+        .alert-success {
+            background: #d4edda;
+            border-left-color: #28a745;
+            color: #155724;
+        }
+    </style>
+</head>
+<body>
+    <main>
+        <div class="admin-header">
+            <h2>👑 Panou Administrator</h2>
+            <p id="admin-info">Acces complet la sistem</p>
+        </div>
+        
+        <div class="stats-overview">
+            <div class="stat-box">
+                <span class="stat-number" id="total-users">-</span>
+                <span>Utilizatori</span>
+            </div>
+            <div class="stat-box">
+                <span class="stat-number" id="total-locations">-</span>
+                <span>Locații</span>
+            </div>
+            <div class="stat-box">
+                <span class="stat-number" id="total-orders">-</span>
+                <span>Comenzi</span>
+            </div>
+            <div class="stat-box">
+                <span class="stat-number" id="pending-orders">-</span>
+                <span>În Așteptare</span>
+            </div>
+        </div>
+        
+        <div class="admin-grid">
+            <div class="admin-card">
+                <h3>👥 Gestionare Utilizatori</h3>
+                <button onclick="showCreateUserModal()" class="btn-primary">Adaugă Utilizator</button>
+                <div id="users-list" class="user-list">
+                    <p>Se încarcă utilizatorii...</p>
+                </div>
+            </div>
+            
+            <div class="admin-card">
+                <h3>📋 Comenzi Recente</h3>
+                <div id="recent-orders">
+                    <p>Se încarcă comenzile...</p>
+                </div>
+                <button onclick="window.location.href='orders.html'" class="btn-primary" style="margin-top: 1rem; width: 100%;">
+                    Vezi Toate Comenzile
+                </button>
+            </div>
+            
+            <div class="admin-card">
+                <h3>📍 Locații Active</h3>
+                <div id="locations-list">
+                    <p>Se încarcă locațiile...</p>
+                </div>
+                <button onclick="showCreateLocationModal()" class="btn-primary" style="margin-top: 1rem; width: 100%;">
+                    ➕ Adaugă Locație Nouă
+                </button>
+            </div>
+            
+            <div class="admin-card">
+                <h3>🚨 Alerte Sistem</h3>
+                <div id="system-alerts">
+                    <p>Se verifică alertele...</p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="admin-card" style="margin-top: 2rem;">
+            <h3>📊 Statistici Avansate</h3>
+            <div class="system-stats" id="advanced-stats">
+                <div class="system-stat-card">
+                    <h4>Venituri Luna Curentă</h4>
+                    <div class="number" id="monthly-revenue">0 RON</div>
+                </div>
+                <div class="system-stat-card">
+                    <h4>Comenzi Finalizate Azi</h4>
+                    <div class="number" id="completed-today">0</div>
+                </div>
+                <div class="system-stat-card">
+                    <h4>Utilizatori Activi</h4>
+                    <div class="number" id="active-users">0</div>
+                </div>
+                <div class="system-stat-card">
+                    <h4>Rata de Finalizare</h4>
+                    <div class="number" id="completion-rate">0%</div>
+                </div>
+            </div>
+        </div>
+    </main>
 
-const LocationsAPI = {
-    getAll: () => apiRequest('resource=locations&action=list'),
-    
-    create: (locationData) => apiRequest('resource=locations&action=create', {
-        method: 'POST',
-        body: JSON.stringify(locationData),
-        headers: { 'Authorization': `Bearer ${localStorage.getItem('auth_token')}` }
-    }),
-    
-    updateStatus: (locationId, status) => apiRequest(`resource=locations&action=update-status&id=${locationId}`, {
-        method: 'PUT',
-        body: JSON.stringify({ status }),
-        headers: { 'Authorization': `Bearer ${localStorage.getItem('auth_token')}` }
-    })
-};
+    <div id="location-modal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeLocationModal()">&times;</span>
+            <h2>Locație Nouă</h2>
+            <form id="location-form">
+                <div class="form-group">
+                    <label>Nume Locație</label>
+                    <input type="text" id="location-name" required>
+                </div>
+                
+                <div class="form-group">
+                    <label>Adresă</label>
+                    <input type="text" id="location-address" required>
+                </div>
+                
+                <div class="form-group">
+                    <label>Latitudine</label>
+                    <input type="number" id="location-latitude" step="any">
+                </div>
+                
+                <div class="form-group">
+                    <label>Longitudine</label>
+                    <input type="number" id="location-longitude" step="any">
+                </div>
+                
+                <div class="form-group">
+                    <label>Servicii (separate prin virgulă)</label>
+                    <input type="text" id="location-services" placeholder="covoare,auto,haine">
+                </div>
+                
+                <button type="submit" class="btn-primary">Creează Locația</button>
+                <button type="button" class="btn-secondary" onclick="closeLocationModal()">Anulează</button>
+            </form>
+        </div>
+    </div>
 
-const OrdersAPI = {
-    getAll: () => apiRequest('resource=orders&action=list'),
-    getByLocation: (locationId) => apiRequest(`resource=orders&action=by-location&id=${locationId}`),
-    getMyOrders: () => apiRequest('resource=orders&action=my-orders', {
-        headers: { 'Authorization': `Bearer ${localStorage.getItem('auth_token')}` }
-    }),
-    getAssigned: () => apiRequest('resource=orders&action=assigned', {
-        headers: { 'Authorization': `Bearer ${localStorage.getItem('auth_token')}` }
-    }),
-    
-    create: (orderData) => apiRequest('resource=orders&action=create', {
-        method: 'POST',
-        body: JSON.stringify(orderData),
-        headers: { 'Authorization': `Bearer ${localStorage.getItem('auth_token')}` }
-    }),
-    
-    updateStatus: (orderId, statusData) => apiRequest(`resource=orders&action=updateStatus&id=${orderId}`, {
-        method: 'PUT',
-        body: JSON.stringify(typeof statusData === 'string' ? { status: statusData } : statusData),
-        headers: { 'Authorization': `Bearer ${localStorage.getItem('auth_token')}` }
-    }),
-    
-    assignWorker: (orderId, workerId, workerType) => apiRequest(`resource=orders&action=assign-worker&id=${orderId}`, {
-        method: 'PUT',
-        body: JSON.stringify({ worker_id: workerId, worker_type: workerType }),
-        headers: { 'Authorization': `Bearer ${localStorage.getItem('auth_token')}` }
-    }),
-    
-    getStatistics: () => apiRequest('resource=orders&action=statistics')
-};
+    <div id="user-modal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeUserModal()">&times;</span>
+            <h2>Utilizator Nou</h2>
+            <form id="user-form">
+                <div class="form-group">
+                    <label>Username</label>
+                    <input type="text" id="username" required>
+                </div>
+                
+                <div class="form-group">
+                    <label>Email</label>
+                    <input type="email" id="email" required>
+                </div>
+                
+                <div class="form-group">
+                    <label>Parolă</label>
+                    <input type="password" id="password" required minlength="6">
+                </div>
+                
+                <div class="form-group">
+                    <label>Prenume</label>
+                    <input type="text" id="first_name" required>
+                </div>
+                
+                <div class="form-group">
+                    <label>Nume</label>
+                    <input type="text" id="last_name" required>
+                </div>
+                
+                <div class="form-group">
+                    <label>Telefon</label>
+                    <input type="tel" id="phone">
+                </div>
+                
+                <div class="form-group">
+                    <label>Rol</label>
+                    <select id="role" required>
+                        <option value="">Selectează rolul</option>
+                        <option value="admin">👑 Administrator</option>
+                        <option value="manager">👨‍💼 Manager</option>
+                        <option value="client">👤 Client</option>
+                        <option value="worker_transport">🚛 Worker Transport</option>
+                        <option value="worker_cleaner">🧽 Worker Cleaner</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label>Locația (pentru manager/worker)</label>
+                    <select id="location_id">
+                        <option value="">Fără locație specifică</option>
+                    </select>
+                </div>
+                
+                <button type="submit" class="btn-primary">Creează Utilizator</button>
+                <button type="button" class="btn-secondary" onclick="closeUserModal()">Anulează</button>
+            </form>
+        </div>
+    </div>
 
-const ResourcesAPI = {
-    getAll: () => apiRequest('resource=resources&action=list'),
-    getByLocation: (locationId) => apiRequest(`resource=resources&action=by-location&id=${locationId}`),
-    getLowStock: (threshold) => {
-        const params = threshold ? `&threshold=${threshold}` : '';
-        return apiRequest(`resource=resources&action=low-stock${params}`);
-    },
-    
-    create: (data) => apiRequest('resource=resources&action=create', {
-        method: 'POST',
-        body: JSON.stringify(data),
-        headers: { 'Authorization': `Bearer ${localStorage.getItem('auth_token')}` }
-    }),
-
-    addQuantity: (name, departmentName, amount) => apiRequest(`resource=resources&action=addQuantity`, {
-        method: 'PUT',
-        headers: {
-            'Content-Type': 'application/x-www-form-urlencoded',
-            'Authorization': `Bearer ${localStorage.getItem('auth_token')}`
-        },
-        body: `name=${encodeURIComponent(name)}&department_name=${encodeURIComponent(departmentName)}&amount=${encodeURIComponent(amount)}`
-    }),
-
-    subtractQuantity: (name, departmentName, amount) => apiRequest(`resource=resources&action=subtractQuantity`, {
-        method: 'PUT',
-        headers: {
-            'Content-Type': 'application/x-www-form-urlencoded',
-            'Authorization': `Bearer ${localStorage.getItem('auth_token')}`
-        },
-        body: `name=${encodeURIComponent(name)}&department_name=${encodeURIComponent(departmentName)}&amount=${encodeURIComponent(amount)}`
-    }),
-
-    delete: (name, locationId) => apiRequest(`resource=resources&action=delete`, {
-        method: 'DELETE',
-        headers: {
-            'Content-Type': 'application/x-www-form-urlencoded',
-            'Authorization': `Bearer ${localStorage.getItem('auth_token')}`
-        },
-        body: `name=${encodeURIComponent(name)}&location_id=${encodeURIComponent(locationId)}`
-    })
-};
-
-const UsersAPI = {
-    getList: (role = null) => {
-        const params = role ? `&role=${role}` : '';
-        return apiRequest(`../api/users.php?action=list${params}`, {
-            headers: { 'Authorization': `Bearer ${localStorage.getItem('auth_token')}` }
+    <script src="js/api.js"></script> 
+    <script>
+        if (!localStorage.getItem('auth_token')) {
+            window.location.href = 'login.html';
+        }
+        
+        const userData = JSON.parse(localStorage.getItem('user_data') || '{}');
+        if (userData.role !== 'admin') {
+            alert('Acces neautorizat!');
+            window.location.href = 'login.html';
+        }
+        
+        document.addEventListener('DOMContentLoaded', loadAdminDashboard);
+        
+        async function loadAdminDashboard() {
+            try {
+                await Promise.all([
+                    loadStatistics(),
+                    loadUsers(),
+                    loadRecentOrders(),
+                    loadLocations(),
+                    loadSystemAlerts(),
+                    loadLocationsForSelect(),
+                    loadAdvancedStats()
+                ]);
+                
+                updateAdminInfo();
+                
+            } catch (error) {
+                console.error('Eroare la încărcarea dashboard-ului admin:', error);
+            }
+        }
+        
+        async function updateAdminInfo() {
+            try {
+                const response = await fetch('../api/auth.php?action=me', {
+                    headers: { 'Authorization': `Bearer ${localStorage.getItem('auth_token')}` }
+                });
+                
+                if (response.ok) {
+                    const result = await response.json();
+                    if (result.success) {
+                        document.getElementById('admin-info').innerHTML = `
+                            Bun venit, <strong>${result.user.first_name} ${result.user.last_name}</strong><br>
+                            <small>Ultima conectare: ${result.user.last_login ? new Date(result.user.last_login).toLocaleString('ro-RO') : 'Prima conectare'}</small>
+                        `;
+                    }
+                }
+            } catch (error) {
+                console.error('Eroare la încărcarea informațiilor admin:', error);
+            }
+        }
+        
+        async function loadStatistics() {
+            try {
+                const [usersResponse, locationsResponse, ordersResponse] = await Promise.all([
+                    fetch('../api/users.php?action=list', {
+                        headers: { 'Authorization': `Bearer ${localStorage.getItem('auth_token')}` }
+                    }),
+                    fetch('../api/index.php?resource=locations&action=list'),
+                    fetch('../api/index.php?resource=orders&action=list', {
+                        headers: { 'Authorization': `Bearer ${localStorage.getItem('auth_token')}` }
+                    })
+                ]);
+                
+                const users = await usersResponse.json();
+                const locations = await locationsResponse.json();
+                const orders = await ordersResponse.json();
+                
+                document.getElementById('total-users').textContent = users.length;
+                document.getElementById('total-locations').textContent = locations.length;
+                document.getElementById('total-orders').textContent = orders.length;
+                document.getElementById('pending-orders').textContent = 
+                    orders.filter(order => order.status === 'pending').length;
+                
+            } catch (error) {
+                console.error('Eroare la încărcarea statisticilor:', error);
+            }
+        }
+        
+        async function loadAdvancedStats() {
+            try {
+                const response = await fetch('../api/index.php?resource=orders&action=statistics', {
+                    headers: { 'Authorization': `Bearer ${localStorage.getItem('auth_token')}` }
+                });
+                
+                if (response.ok) {
+                    const stats = await response.json();
+                    
+                    const today = new Date().toISOString().split('T')[0];
+                    const ordersResponse = await fetch('../api/index.php?resource=orders&action=list', {
+                        headers: { 'Authorization': `Bearer ${localStorage.getItem('auth_token')}` }
+                    });
+                    const orders = await ordersResponse.json();
+                    
+                    const completedToday = orders.filter(order => 
+                        order.status === 'completed' && 
+                        order.created_at && order.created_at.startsWith(today)
+                    ).length;
+                    
+                    const totalRevenue = orders.reduce((sum, order) => 
+                        sum + (parseFloat(order.price) || 0), 0
+                    );
+                    
+                    const completionRate = orders.length > 0 ? 
+                        ((orders.filter(order => order.status === 'completed').length / orders.length) * 100).toFixed(1) : 0;
+                    
+                    const usersResponse = await fetch('../api/users.php?action=list', {
+                        headers: { 'Authorization': `Bearer ${localStorage.getItem('auth_token')}` }
+                    });
+                    const users = await usersResponse.json();
+                    const activeUsers = users.filter(user => user.is_active).length;
+                    
+                    document.getElementById('monthly-revenue').textContent = totalRevenue.toFixed(2) + ' RON';
+                    document.getElementById('completed-today').textContent = completedToday;
+                    document.getElementById('active-users').textContent = activeUsers;
+                    document.getElementById('completion-rate').textContent = completionRate + '%';
+                }
+            } catch (error) {
+                console.error('Eroare la încărcarea alertelor:', error); // ADAUGĂ ACEST LOG
+                document.getElementById('system-alerts').innerHTML = '<p>Eroare la încărcarea alertelor.</p>';
+            }
+        }
+        
+        async function loadUsers() {
+            try {
+                const response = await fetch('../api/users.php?action=list', {
+                    headers: { 'Authorization': `Bearer ${localStorage.getItem('auth_token')}` }
+                });
+                
+                const users = await response.json();
+                displayUsers(users);
+            } catch (error) {
+                document.getElementById('users-list').innerHTML = '<p>Eroare la încărcarea utilizatorilor.</p>';
+            }
+        }
+        
+        function displayUsers(users) {
+            const container = document.getElementById('users-list');
+            
+            if (users.length === 0) {
+                container.innerHTML = '<p>Nu există utilizatori.</p>';
+                return;
+            }
+            
+            const html = users.map(user => `
+                <div class="user-item">
+                    <div class="user-info">
+                        <strong>${user.first_name} ${user.last_name}</strong><br>
+                        <small>${user.email} | ${getRoleLabel(user.role)}</small>
+                        ${user.last_login ? `<br><small style="color: #666;">Ultima conectare: ${new Date(user.last_login).toLocaleDateString('ro-RO')}</small>` : ''}
+                    </div>
+                    <div class="user-actions">
+                        <button class="btn-small" style="background: #e74c3c; color: white;" onclick="toggleUserStatus(${user.id}, ${user.is_active})">
+                            🗑️ Șterge
+                        </button>
+                    </div>
+                </div>
+            `).join('');
+            
+            container.innerHTML = html;
+        }
+        
+        function getRoleLabel(role) {
+            const labels = {
+                'admin': '👑 Admin',
+                'manager': '👨‍💼 Manager',
+                'client': '👤 Client',
+                'worker_transport': '🚛 Transport',
+                'worker_cleaner': '🧽 Cleaner'
+            };
+            return labels[role] || role;
+        }
+        
+        async function loadRecentOrders() {
+            try {
+                const response = await fetch('../api/index.php?resource=orders&action=list', {
+                    headers: { 'Authorization': `Bearer ${localStorage.getItem('auth_token')}` }
+                });
+                
+                const orders = await response.json();
+                const recentOrders = orders.slice(0, 5);
+                
+                const container = document.getElementById('recent-orders');
+                
+                if (recentOrders.length === 0) {
+                    container.innerHTML = '<p>Nu există comenzi recente.</p>';
+                    return;
+                }
+                
+                const html = recentOrders.map(order => `
+                    <div style="padding: 0.8rem; border-bottom: 1px solid #eee; border-left: 3px solid ${getStatusColor(order.status)};">
+                        <strong>Comanda #${order.id}</strong><br>
+                        <small>${order.client_name} | ${order.service_type}</small><br>
+                        <small style="color: ${getStatusColor(order.status)}; font-weight: bold;">${getStatusLabel(order.status)}</small>
+                        ${order.price ? `<br><small>💰 ${order.price} RON</small>` : ''}
+                    </div>
+                `).join('');
+                
+                container.innerHTML = html;
+                
+            } catch (error) {
+                document.getElementById('recent-orders').innerHTML = '<p>Eroare la încărcarea comenzilor.</p>';
+            }
+        }
+        
+        function getStatusColor(status) {
+            const colors = {
+                'pending': '#f39c12',
+                'in_progress': '#3498db',
+                'completed': '#27ae60',
+                'cancelled': '#e74c3c'
+            };
+            return colors[status] || '#95a5a6';
+        }
+        
+        function getStatusLabel(status) {
+            const labels = {
+                'pending': 'În așteptare',
+                'in_progress': 'În progres',
+                'completed': 'Completată',
+                'cancelled': 'Anulată'
+            };
+            return labels[status] || status;
+        }
+        
+        async function loadLocations() {
+            try {
+                const response = await fetch('../api/index.php?resource=locations&action=list');
+                const locations = await response.json();
+                
+                const container = document.getElementById('locations-list');
+                
+                if (locations.length === 0) {
+                    container.innerHTML = '<p>Nu există locații.</p>';
+                    return;
+                }
+                
+                const html = locations.map(location => `
+                    <div style="padding: 0.8rem; border-bottom: 1px solid #eee;">
+                        <strong>📍 ${location.name}</strong><br>
+                        <small>${location.address}</small><br>
+                        <small>
+                            Status: 
+                            <select onchange="updateLocationStatus(${location.id}, this.value)" style="color: #333; background: white; border: 1px solid #ddd; padding: 0.2rem;">
+                                <option value="active" ${location.status === 'active' ? 'selected' : ''}>🟢 Activ</option>
+                                <option value="inactive" ${location.status === 'inactive' ? 'selected' : ''}>🔴 Inactiv</option>
+                                <option value="maintenance" ${location.status === 'maintenance' ? 'selected' : ''}>🔧 Mentenanță</option>
+                            </select>
+                        </small>
+                        ${location.services ? `<br><small>Servicii: ${location.services}</small>` : ''}
+                        <br><small style="color: #666;">ID: ${location.id} | Creat: ${new Date(location.created_at).toLocaleDateString('ro-RO')}</small>
+                    </div>
+                `).join('');
+                
+                container.innerHTML = html;
+                
+            } catch (error) {
+                document.getElementById('locations-list').innerHTML = '<p>Eroare la încărcarea locațiilor.</p>';
+            }
+        }
+        
+        async function loadSystemAlerts() {
+            try {
+                const alerts = [];
+                
+                const usersResponse = await fetch('../api/users.php?action=list', {
+                    headers: { 'Authorization': `Bearer ${localStorage.getItem('auth_token')}` }
+                });
+                const users = await usersResponse.json();
+                const inactiveUsers = users.filter(user => !user.is_active).length;
+                
+                if (inactiveUsers > 0) {
+                    alerts.push({
+                        type: 'warning',
+                        message: `${inactiveUsers} utilizatori dezactivați în sistem`
+                    });
+                }
+                
+                const ordersResponse = await fetch('../api/index.php?resource=orders&action=list', {
+                    headers: { 'Authorization': `Bearer ${localStorage.getItem('auth_token')}` }
+                });
+                const orders = await ordersResponse.json();
+                const pendingOrders = orders.filter(order => order.status === 'pending').length;
+                
+                if (pendingOrders > 5) {
+                    alerts.push({
+                        type: 'warning',
+                        message: `${pendingOrders} comenzi în așteptare necesită atenție`
+                    });
+                }
+                
+                const completedOrders = orders.filter(order => order.status === 'completed').length;
+                if (orders.length > 0 && (completedOrders / orders.length) > 0.8) {
+                    alerts.push({
+                        type: 'success',
+                        message: 'Performanță excelentă: >80% comenzi finalizate'
+                    });
+                }
+                
+                if (alerts.length === 0) {
+                    alerts.push({
+                        type: 'info',
+                        message: 'Toate sistemele funcționează normal'
+                    });
+                }
+                
+                const container = document.getElementById('system-alerts');
+                
+                const html = alerts.map(alert => `
+                    <div class="alert-item alert-${alert.type}">
+                        <span style="font-weight: bold;">
+                            ${alert.type === 'warning' ? '⚠️' : alert.type === 'success' ? '✅' : 'ℹ️'}
+                        </span>
+                        ${alert.message}
+                    </div>
+                `).join('');
+                
+                container.innerHTML = html;
+                
+            } catch (error) {
+                document.getElementById('system-alerts').innerHTML = '<p>Eroare la încărcarea alertelor.</p>';
+            }
+        }
+        
+        async function loadLocationsForSelect() {
+            try {
+                const response = await fetch('../api/index.php?resource=locations&action=list');
+                const locations = await response.json();
+                
+                const select = document.getElementById('location_id');
+                
+                locations.forEach(location => {
+                    const option = document.createElement('option');
+                    option.value = location.id;
+                    option.textContent = location.name;
+                    select.appendChild(option);
+                });
+                
+            } catch (error) {
+                console.error('Eroare la încărcarea locațiilor pentru select:', error);
+            }
+        }
+        
+        
+        function showCreateUserModal() {
+            document.getElementById('user-modal').style.display = 'block';
+        }
+        
+        function closeUserModal() {
+            document.getElementById('user-modal').style.display = 'none';
+            document.getElementById('user-form').reset();
+        }
+        
+        async function toggleUserStatus(userId, currentStatus) {
+            if (!confirm('Sigur vrei să ștergi acest utilizator? Această acțiune nu poate fi anulată!')) {
+                return;
+            }
+            
+            try {
+                const response = await fetch(`../api/users.php?action=delete&id=${userId}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${localStorage.getItem('auth_token')}`
+                    }
+                });
+                const result = await response.json();
+                
+                if (result.success) {
+                    loadUsers(); 
+                    loadStatistics(); 
+                    loadSystemAlerts(); 
+                    alert('Utilizatorul a fost șters cu succes!');
+                } else {
+                    alert('Eroare la ștergerea utilizatorului: ' + (result.error || 'Eroare necunoscută'));
+                }
+            } catch (error) {
+                alert('Eroare de conexiune');
+                console.error('Eroare delete user:', error);
+            }
+        }
+                
+        document.getElementById('user-form').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const userData = {
+                username: document.getElementById('username').value,
+                email: document.getElementById('email').value,
+                password: document.getElementById('password').value,
+                first_name: document.getElementById('first_name').value,
+                last_name: document.getElementById('last_name').value,
+                phone: document.getElementById('phone').value,
+                role: document.getElementById('role').value,
+                location_id: document.getElementById('location_id').value || null
+            };
+            
+            if (userData.password.length < 6) {
+                alert('Parola trebuie să aibă cel puțin 6 caractere');
+                return;
+            }
+            
+            if ((userData.role === 'manager' || userData.role.startsWith('worker_')) && !userData.location_id) {
+                alert('Managerii și worker-ii trebuie să aibă o locație asignată');
+                return;
+            }
+            
+            try {
+                const response = await fetch('../api/users.php?action=create', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${localStorage.getItem('auth_token')}`
+                    },
+                    body: JSON.stringify(userData)
+                });
+                const result = await response.json();
+                
+                if (result.success) {
+                    alert('Utilizatorul a fost creat cu succes!');
+                    closeUserModal();
+                    loadUsers();
+                    loadStatistics();
+                    loadAdvancedStats();
+                } else {
+                    alert('Eroare la crearea utilizatorului: ' + (result.error || 'Eroare necunoscută'));
+                }
+            } catch (error) {
+                alert('Eroare de conexiune');
+                console.error('Eroare create user:', error);
+            }
         });
-    },
+        
+        function logout() {
+            if (confirm('Sigur vrei să te deconectezi?')) {
+                localStorage.removeItem('auth_token');
+                localStorage.removeItem('user_data');
+                window.location.href = 'login.html';
+            }
+        }
+        
+        window.onclick = function(event) {
+            const modal = document.getElementById('user-modal');
+            if (event.target === modal) {
+                closeUserModal();
+            }
+        }
+        
+        setInterval(() => {
+            loadStatistics();
+            loadAdvancedStats();
+            loadSystemAlerts();
+        }, 5 * 60 * 1000);
 
-    create: (userData) => apiRequest('../api/users.php?action=create', {
-        method: 'POST',
-        body: JSON.stringify(userData),
-        headers: { 'Authorization': `Bearer ${localStorage.getItem('auth_token')}` }
-    }),
 
-    update: (userId, userData) => apiRequest(`../api/users.php?action=update&id=${userId}`, {
-        method: 'PUT',
-        body: JSON.stringify(userData),
-        headers: { 'Authorization': `Bearer ${localStorage.getItem('auth_token')}` }
-    }),
+        function showCreateLocationModal() {
+            document.getElementById('location-modal').style.display = 'block';
+        }
 
-    delete: (userId) => apiRequest(`../api/users.php?action=delete&id=${userId}`, {
-        method: 'PUT',
-        headers: { 'Authorization': `Bearer ${localStorage.getItem('auth_token')}` }
-    }),
+        function closeLocationModal() {
+            document.getElementById('location-modal').style.display = 'none';
+            document.getElementById('location-form').reset();
+        }
 
-    getProfile: () => apiRequest('../api/users.php?action=profile', {
-        headers: { 'Authorization': `Bearer ${localStorage.getItem('auth_token')}` }
-    }),
-
-    updateProfile: (profileData) => apiRequest('../api/users.php?action=update-profile', {
-        method: 'POST',
-        body: JSON.stringify(profileData),
-        headers: { 'Authorization': `Bearer ${localStorage.getItem('auth_token')}` }
-    }),
-
-    getWorkers: (locationId = null) => {
-        const params = locationId ? `&location_id=${locationId}` : '';
-        return apiRequest(`../api/users.php?action=workers${params}`, {
-            headers: { 'Authorization': `Bearer ${localStorage.getItem('auth_token')}` }
+        document.getElementById('location-form').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const locationData = {
+                name: document.getElementById('location-name').value,
+                address: document.getElementById('location-address').value,
+                latitude: document.getElementById('location-latitude').value || null,
+                longitude: document.getElementById('location-longitude').value || null,
+                services: document.getElementById('location-services').value
+            };
+            
+            try {
+                const response = await fetch('../api/index.php?resource=locations&action=create', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${localStorage.getItem('auth_token')}`
+                    },
+                    body: JSON.stringify(locationData)
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    alert('Locația a fost creată cu succes!');
+                    closeLocationModal();
+                    loadLocations();
+                } else {
+                    alert('Eroare la crearea locației: ' + (result.message || 'Eroare necunoscută'));
+                }
+            } catch (error) {
+                alert('Eroare de conexiune');
+            }
         });
-    }
-};
 
-const AuthAPI = {
-    login: (username, password) => apiRequest('../api/auth.php?action=login', {
-        method: 'POST',
-        body: JSON.stringify({ username, password })
-    }),
-
-    register: (userData) => apiRequest('../api/auth.php?action=register', {
-        method: 'POST',
-        body: JSON.stringify(userData)
-    }),
-
-    getMe: () => apiRequest('../api/auth.php?action=me', {
-        headers: { 'Authorization': `Bearer ${localStorage.getItem('auth_token')}` }
-    }),
-
-    logout: () => apiRequest('../api/auth.php?action=logout', {
-        headers: { 'Authorization': `Bearer ${localStorage.getItem('auth_token')}` }
-    }),
-
-    changePassword: (currentPassword, newPassword) => apiRequest('../api/auth.php?action=change-password', {
-        method: 'POST',
-        body: JSON.stringify({
-            current_password: currentPassword,
-            new_password: newPassword
-        }),
-        headers: { 'Authorization': `Bearer ${localStorage.getItem('auth_token')}` }
-    })
-};
-
-const ExportAPI = {
-    exportData: (type, format) => {
-        const url = `../api/index.php?resource=export&type=${type}&format=${format}`;
-        window.open(url, '_blank');
-    }
-};
-
-const StatusHelpers = {
-    getStatusLabel: (status) => {
-        const labels = {
-            'pending': '⏳ În așteptare',
-            'in_progress': '🔄 În progres', 
-            'completed': '✅ Completată',
-            'cancelled': '❌ Anulată'
-        };
-        return labels[status] || status;
-    },
-    
-    getStatusColor: (status) => {
-        const colors = {
-            'pending': '#f39c12',
-            'in_progress': '#3498db',
-            'completed': '#27ae60',
-            'cancelled': '#e74c3c'
-        };
-        return colors[status] || '#95a5a6';
-    },
-    
-    getServiceName: (serviceType) => {
-        const services = {
-            'covoare': 'Spălare Covoare',
-            'auto': 'Spălare Auto', 
-            'haine': 'Curățare Haine',
-            'textile': 'Curățare Textile'
-        };
-        return services[serviceType] || serviceType;
-    }
-};
-
-if (typeof window !== 'undefined') {
-    Object.assign(window, {
-        OrdersAPI,
-        LocationsAPI,
-        ResourcesAPI,
-        UsersAPI,
-        AuthAPI,
-        ExportAPI,
-        StatusHelpers
-    });
-}
+        async function updateLocationStatus(locationId, newStatus) {
+            try {
+                const response = await fetch(`../api/index.php?resource=locations&action=update-status&id=${locationId}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${localStorage.getItem('auth_token')}`
+                    },
+                    body: JSON.stringify({ status: newStatus })
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    loadLocations(); 
+                    alert('Status-ul locației a fost actualizat cu succes!');
+                } else {
+                    alert('Eroare la actualizarea status-ului: ' + (result.error || 'Eroare necunoscută'));
+                    loadLocations();
+                }
+            } catch (error) {
+                alert('Eroare de conexiune');
+                loadLocations(); 
+            }
+        }
+    </script>
+</body>
+</html>
