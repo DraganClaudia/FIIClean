@@ -47,3 +47,33 @@ const OrdersAPI = {
 
     getStatistics: () => apiRequest('resource=orders&action=statistics')
 };
+
+const ResourcesAPI = {
+    getAll: () => apiRequest('resource=resources&action=list'),
+    
+    create: (data) => apiRequest('resource=resources&action=create', {
+        method: 'POST',
+        body: JSON.stringify(data)
+    }),
+
+    addQuantity: (name, amount) => apiRequest('resource=resources&action=addQuantity', {
+        method: 'PUT',
+        headers: {
+            'Content-Type': 'application/x-www-form-urlencoded'
+        },
+        body: `name=${encodeURIComponent(name)}&amount=${encodeURIComponent(amount)}`
+    }),
+
+    addQuantity: (name, departmentName, amount) => apiRequest(`resource=resources&action=addQuantity`, {
+    method: 'PUT',
+    headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+    body: `name=${encodeURIComponent(name)}&department_name=${encodeURIComponent(departmentName)}&amount=${encodeURIComponent(amount)}`
+}),
+
+    subtractQuantity: (name, departmentName, amount) => apiRequest(`resource=resources&action=subtractQuantity`, {
+    method: 'PUT',
+    headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+    body: `name=${encodeURIComponent(name)}&department_name=${encodeURIComponent(departmentName)}&amount=${encodeURIComponent(amount)}`
+})
+
+};
