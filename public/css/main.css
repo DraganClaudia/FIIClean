@@ -1,3 +1,4 @@
+/* === RESET ȘI BAZA === */
 * {
     margin: 0;
     padding: 0;
@@ -5,36 +6,13 @@
 }
 
 body {
-    font-family: Arial, sans-serif;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
     line-height: 1.6;
     color: #333;
     background-color: #f4f4f4;
 }
 
-header {
-    background: #2c3e50;
-    color: white;
-    padding: 1rem;
-    text-align: center;
-}
-
-nav {
-    margin-top: 1rem;
-}
-
-nav a {
-    color: white;
-    text-decoration: none;
-    margin: 0 1rem;
-    padding: 0.5rem 1rem;
-    border-radius: 4px;
-    transition: background 0.3s;
-}
-
-nav a:hover {
-    background: #34495e;
-}
-
+/* === LAYOUT PRINCIPAL === */
 main {
     max-width: 1200px;
     margin: 2rem auto;
@@ -45,312 +23,324 @@ section {
     background: white;
     padding: 2rem;
     margin-bottom: 2rem;
-    border-radius: 8px;
-    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    border-radius: 12px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
 }
 
-button {
-    background: #3498db;
-    color: white;
-    border: none;
-    padding: 0.7rem 1.5rem;
-    border-radius: 4px;
-    cursor: pointer;
-    font-size: 1rem;
-}
-
-button:hover {
-    background: #2980b9;
-}
-
-form {
-    margin-top: 1rem;
-}
-
-form input {
-    width: 100%;
-    padding: 0.7rem;
-    margin-bottom: 1rem;
-    border: 1px solid #ddd;
-    border-radius: 4px;
-}
-
-.location-item {
-    border: 1px solid #ddd;
-    padding: 1rem;
-    margin-bottom: 1rem;
-    border-radius: 4px;
-    background: #f9f9f9;
-}
-
-.order-item {
-    border: 1px solid #ddd;
-    padding: 1.5rem;
-    margin-bottom: 1rem;
-    border-radius: 8px;
-    background: #f9f9f9;
-    position: relative;
-}
-
-.order-item h3 {
+/* === TIPOGRAFIE === */
+h1, h2, h3, h4 {
     color: #2c3e50;
     margin-bottom: 1rem;
 }
 
-.status-select {
-    padding: 0.3rem 0.5rem;
-    border: 1px solid #ddd;
-    border-radius: 4px;
-    background: white;
+h2 {
+    border-bottom: 2px solid #3498db;
+    padding-bottom: 0.5rem;
 }
 
-.filter-section {
-    margin-bottom: 2rem;
-    padding: 1rem;
-    background: #f8f9fa;
+/* === BUTOANE === */
+button, .btn {
+    background: #3498db;
+    color: white;
+    border: none;
+    padding: 0.7rem 1.5rem;
     border-radius: 8px;
+    cursor: pointer;
+    font-size: 1rem;
+    font-weight: 500;
+    transition: all 0.3s ease;
+    text-decoration: none;
+    display: inline-block;
 }
 
-.filter-section label {
-    margin-right: 1rem;
-    font-weight: bold;
+button:hover, .btn:hover {
+    background: #2980b9;
+    transform: translateY(-2px);
 }
 
-.filter-section select {
-    padding: 0.5rem;
-    border: 1px solid #ddd;
-    border-radius: 4px;
+.btn-primary { background: #3498db; }
+.btn-success { background: #27ae60; }
+.btn-warning { background: #f39c12; }
+.btn-danger { background: #e74c3c; }
+.btn-info { background: #17a2b8; }
+.btn-secondary { background: #6c757d; }
+
+.btn-small {
+    padding: 0.3rem 0.6rem;
+    font-size: 0.8rem;
 }
 
-/* Statistics grid */
+/* === FORMULARE === */
+form {
+    margin-top: 1rem;
+}
+
+.form-group {
+    margin-bottom: 1rem;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 0.5rem;
+    font-weight: 600;
+    color: #555;
+}
+
+input, select, textarea {
+    width: 100%;
+    padding: 0.7rem;
+    border: 2px solid #e1e1e1;
+    border-radius: 8px;
+    font-size: 1rem;
+    color: #333 !important;
+    background-color: white !important;
+    transition: border-color 0.3s;
+}
+
+input:focus, select:focus, textarea:focus {
+    outline: none;
+    border-color: #3498db;
+}
+
+textarea {
+    min-height: 80px;
+    resize: vertical;
+}
+
+/* === GRID-URI === */
 .stats-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
     gap: 1rem;
-    margin-top: 1rem;
+    margin: 1rem 0;
 }
 
-.stat-item {
-    background: #f8f9fa;
+.dashboard-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 2rem;
+    margin: 2rem 0;
+}
+
+/* === CARDURI === */
+.card {
+    background: white;
+    border-radius: 12px;
+    padding: 2rem;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    transition: transform 0.3s ease;
+}
+
+.card:hover {
+    transform: translateY(-5px);
+}
+
+.card h3 {
+    border-bottom: 2px solid #3498db;
+    padding-bottom: 0.5rem;
+    margin-bottom: 1rem;
+}
+
+/* === STATISTICI === */
+.stat-box {
+    background: linear-gradient(135deg, #3498db, #2980b9);
+    color: white;
     padding: 1.5rem;
     border-radius: 8px;
     text-align: center;
-    border: 1px solid #e9ecef;
-}
-
-.stat-item h4 {
-    margin: 0 0 0.5rem 0;
-    color: #6c757d;
-    font-size: 0.9rem;
-    text-transform: uppercase;
 }
 
 .stat-number {
     font-size: 2rem;
     font-weight: bold;
-    color: #2c3e50;
-    margin: 0;
+    display: block;
+    margin-bottom: 0.5rem;
 }
 
-/* Form improvements */
-form select {
-    width: 100%;
-    padding: 0.7rem;
-    margin-bottom: 1rem;
-    border: 1px solid #ddd;
-    border-radius: 4px;
-    font-size: 1rem;
-}
-
-form textarea {
-    width: 100%;
-    padding: 0.7rem;
-    margin-bottom: 1rem;
-    border: 1px solid #ddd;
-    border-radius: 4px;
-    font-size: 1rem;
-    min-height: 80px;
-    resize: vertical;
-}
-
-.alerts-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-    gap: 1rem;
-    margin-top: 1rem;
-}
-
-.alert-card {
-    padding: 1.5rem;
+/* === ITEMI LISTĂ === */
+.list-item {
+    border: 1px solid #e1e1e1;
     border-radius: 8px;
-    text-align: center;
-}
-
-.alert-card.low-stock {
-    background: #fdf2f2;
-    border: 2px solid #e74c3c;
-}
-
-.alert-card.pending-orders {
-    background: #fff3cd;
-    border: 2px solid #ffc107;
-}
-
-.alert-card.all-good {
-    background: #d4edda;
-    border: 2px solid #28a745;
-}
-
-.export-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-    gap: 1rem;
-    margin-top: 1rem;
-}
-
-.export-option {
-    background: #f8f9fa;
     padding: 1.5rem;
-    border-radius: 8px;
-    text-align: center;
-    border: 1px solid #e9ecef;
-}
-
-.export-option h4 {
     margin-bottom: 1rem;
-    color: #495057;
+    background: #f9f9f9;
+    color: #333 !important;
 }
 
-.export-option button {
-    background: #6c757d;
+.order-item, .location-item, .resource-item, .user-item {
+    @extend .list-item;
+}
+
+.order-item {
+    border-left: 4px solid #3498db;
+}
+
+.order-item.pending { border-left-color: #f39c12; }
+.order-item.completed { border-left-color: #27ae60; }
+.order-item.cancelled { border-left-color: #e74c3c; }
+
+/* === DASHBOARD HEADERS === */
+.dashboard-header {
     color: white;
-    border: none;
-    padding: 0.5rem 1rem;
+    padding: 2rem;
+    border-radius: 12px;
+    margin-bottom: 2rem;
+    text-align: center;
+}
+
+.admin-header {
+    background: linear-gradient(135deg, #c0392b 0%, #8e44ad 100%);
+}
+
+.manager-header {
+    background: linear-gradient(135deg, #27ae60 0%, #2980b9 100%);
+}
+
+.client-header {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+.transport-header {
+    background: linear-gradient(135deg, #f39c12 0%, #e67e22 100%);
+}
+
+.cleaner-header {
+    background: linear-gradient(135deg, #9b59b6 0%, #8e44ad 100%);
+}
+
+/* === STATUS INDICATORS === */
+.status-pending { color: #f39c12; font-weight: bold; }
+.status-completed { color: #28a745; font-weight: bold; }
+.status-in_progress { color: #17a2b8; font-weight: bold; }
+.status-cancelled { color: #dc3545; font-weight: bold; }
+
+.status-active { 
+    background: #d4edda; 
+    color: #155724; 
+    padding: 0.2rem 0.5rem;
     border-radius: 4px;
-    cursor: pointer;
+    font-size: 0.8rem;
+    font-weight: bold;
+}
+
+.status-inactive { 
+    background: #f8d7da; 
+    color: #721c24; 
+    padding: 0.2rem 0.5rem;
+    border-radius: 4px;
+    font-size: 0.8rem;
+    font-weight: bold;
+}
+
+/* === SERVICII === */
+.service-type {
+    display: inline-block;
+    padding: 0.3rem 0.8rem;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    font-weight: bold;
     margin: 0.2rem;
-    font-size: 0.9rem;
 }
 
-.export-option button:hover {
-    background: #5a6268;
-}
+.service-covoare { background: #e3f2fd; color: #1565c0; }
+.service-auto { background: #f3e5f5; color: #7b1fa2; }
+.service-haine { background: #e8f5e8; color: #2e7d32; }
+.service-textile { background: #fff3e0; color: #ef6c00; }
 
-.activity-item {
-    display: flex;
-    align-items: flex-start;
+/* === ALERTE === */
+.alert {
     padding: 1rem;
-    border-bottom: 1px solid #e9ecef;
+    border-radius: 8px;
+    margin: 1rem 0;
+    border-left: 4px solid;
 }
 
-.activity-icon {
-    font-size: 1.5rem;
-    margin-right: 1rem;
-    flex-shrink: 0;
+.alert-info { 
+    background: #d1ecf1; 
+    border-left-color: #17a2b8; 
+    color: #0c5460; 
 }
 
-.activity-content {
-    flex-grow: 1;
+.alert-warning { 
+    background: #fff3cd; 
+    border-left-color: #ffc107; 
+    color: #856404; 
 }
 
-.activity-content h4 {
-    margin: 0 0 0.5rem 0;
-    color: #2c3e50;
+.alert-success { 
+    background: #d4edda; 
+    border-left-color: #28a745; 
+    color: #155724; 
 }
 
-.activity-content p {
-    margin: 0.2rem 0;
-    color: #6c757d;
+.alert-danger { 
+    background: #f8d7da; 
+    border-left-color: #dc3545; 
+    color: #721c24; 
 }
 
-.status-pending {
-    color: #ffc107;
-    font-weight: bold;
-}
-
-.status-completed {
-    color: #28a745;
-    font-weight: bold;
-}
-
-.status-in_progress {
-    color: #17a2b8;
-    font-weight: bold;
-}
-
-.status-cancelled {
-    color: #dc3545;
-    font-weight: bold;
-}
-
-.rss-links {
+/* === FILTRARE === */
+.filter-section {
+    background: #f8f9fa;
+    padding: 1rem;
+    border-radius: 8px;
+    margin-bottom: 2rem;
     display: flex;
-    flex-direction: column;
-    gap: 0.5rem;
-    margin-top: 1rem;
-}
-
-.rss-links a {
-    background: #ff8800;
-    color: white;
-    text-decoration: none;
-    padding: 0.7rem 1rem;
-    border-radius: 4px;
-    transition: background 0.3s;
-}
-
-.rss-links a:hover {
-    background: #e67e22;
-}
-
-.status-ok {
-    color: #28a745;
-    font-weight: bold;
-}
-
-/* Auth Section */
-.auth-section {
-    position: absolute;
-    top: 1rem;
-    right: 1rem;
-}
-
-.btn-login {
-    background: #27ae60 !important;
-    color: white !important;
-    padding: 0.8rem 1.5rem !important;
-    text-decoration: none !important;
-    border-radius: 8px !important;
-    font-weight: bold !important;
-    box-shadow: 0 2px 10px rgba(39, 174, 96, 0.3) !important;
-}
-
-.btn-login:hover {
-    background: #219a52 !important;
-    transform: translateY(-2px) !important;
-}
-
-.btn-logout {
-    background: #e74c3c;
-    color: white;
-    border: none;
-    padding: 0.4rem 0.8rem;
-    border-radius: 4px;
-    cursor: pointer;
-    margin-left: 0.5rem;
-    font-size: 0.9rem;
-}
-
-.user-info {
-    color: white;
+    gap: 1rem;
     align-items: center;
-    font-weight: bold;
+    flex-wrap: wrap;
 }
 
-/* Welcome Section */
+.filter-section label {
+    font-weight: 600;
+    color: #555;
+}
+
+.filter-section select {
+    width: auto;
+    min-width: 150px;
+}
+
+/* === MODALURI === */
+.modal {
+    display: none;
+    position: fixed;
+    z-index: 1000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0,0,0,0.5);
+}
+
+.modal-content {
+    background-color: white;
+    margin: 5% auto;
+    padding: 2rem;
+    border-radius: 12px;
+    width: 90%;
+    max-width: 600px;
+    max-height: 80vh;
+    overflow-y: auto;
+}
+
+.close {
+    color: #aaa;
+    float: right;
+    font-size: 28px;
+    font-weight: bold;
+    cursor: pointer;
+    line-height: 1;
+}
+
+.close:hover {
+    color: #333;
+}
+
+/* === WELCOME SECTION === */
 .welcome-section {
     background: linear-gradient(135deg, #f8f9fa, #e9ecef);
-    padding: 2rem;
+    padding: 3rem 2rem;
     border-radius: 12px;
     text-align: center;
     margin-bottom: 2rem;
@@ -358,14 +348,14 @@ form textarea {
 }
 
 .welcome-section h2 {
-    color: #2c3e50;
+    font-size: 2.5rem;
     margin-bottom: 1rem;
-    font-size: 2rem;
+    border: none;
 }
 
 .welcome-section p {
+    font-size: 1.2rem;
     color: #6c757d;
-    font-size: 1.1rem;
     margin-bottom: 2rem;
 }
 
@@ -379,7 +369,7 @@ form textarea {
 .quick-btn {
     background: #3498db;
     color: white;
-    padding: 1rem 1.5rem;
+    padding: 1rem 2rem;
     border-radius: 8px;
     text-decoration: none;
     font-weight: bold;
@@ -394,138 +384,36 @@ form textarea {
     transform: translateY(-2px);
 }
 
-/* Fix pentru textul din inputuri și selecturi în dashboard-uri */
-input, select, textarea {
-    color: #333 !important;
-    background-color: white !important;
-}
-
-/* Pentru modaluri */
-.modal input, .modal select, .modal textarea {
-    color: #333 !important;
-    background-color: white !important;
-}
-
-/* Pentru status selecturi în liste */
-.status-select {
-    color: #333 !important;
-    background-color: white !important;
-}
-
-/* Pentru form-uri în general */
-.form-group input, .form-group select, .form-group textarea {
-    color: #333 !important;
-    background-color: white !important;
-}
-
-/* Fix pentru textul negru pe fundal alb în toate paginile */
-.admin-card, .admin-card *,
-.manager-card, .manager-card *,
-.cleaner-card, .cleaner-card *,
-.client-header + *,
-.my-orders, .my-orders *,
-.order-card, .order-card *,
-.user-item, .user-item *,
-.user-info, .user-info *,
-.worker-item, .worker-item *,
-.cleaning-task, .cleaning-task *,
-.location-item, .location-item *,
-.order-item, .order-item *,
-.resource-item, .resource-item *,
-section, section p, section span, section small, section div:not(.stat-box):not(.admin-header):not(.manager-header):not(.cleaner-header):not(.client-header) {
-    color: #333 !important;
-}
-
-/* Asigură-te că inputurile și selecturile au text negru */
-input, select, textarea,
-.form-group input, .form-group select, .form-group textarea,
-.modal input, .modal select, .modal textarea {
-    color: #333 !important;
-    background-color: white !important;
-}
-
-/* Excepții pentru elementele care trebuie să rămână cu culori speciale */
-.admin-header, .admin-header *,
-.manager-header, .manager-header *,
-.cleaner-header, .cleaner-header *,
-.client-header, .client-header *,
-.stat-box, .stat-box *,
-.btn-primary, .btn-secondary, .btn-action,
-.logout-btn, button,
-header, header * {
-    color: white !important;
-}
-
-/* Pentru link-uri și status-uri */
-a { color: #3498db !important; }
-.status-ok { color: #27ae60 !important; }
-.status-pending { color: #ffc107 !important; }
-.status-completed { color: #28a745 !important; }
-.status-in_progress { color: #17a2b8 !important; }
-.status-cancelled { color: #dc3545 !important; }
-
-/* Pentru textul din dashboard-uri specifice */
-.system-stat-card, .system-stat-card * {
-    color: #333 !important;
-}
-
-.activity-content, .activity-content * {
-    color: #333 !important;
-}
-
+/* === RESPONSIVE === */
 @media (max-width: 768px) {
-    nav a {
-        display: block;
-        margin: 0.2rem 0;
-    }
-    
     main {
         padding: 0 0.5rem;
+        margin: 1rem auto;
     }
     
     section {
         padding: 1rem;
     }
-
+    
     .stats-grid {
         grid-template-columns: repeat(2, 1fr);
     }
     
-    .order-item {
+    .dashboard-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .list-item {
         padding: 1rem;
     }
     
     .filter-section {
-        padding: 0.5rem;
+        flex-direction: column;
+        align-items: stretch;
     }
     
     .filter-section label {
-        display: block;
         margin-bottom: 0.5rem;
-    }
-
-    .alerts-grid,
-    .export-grid {
-        grid-template-columns: 1fr;
-    }
-    
-    .resource-actions {
-        flex-direction: column;
-    }
-    
-    .activity-item {
-        flex-direction: column;
-        text-align: center;
-    }
-    
-    .activity-icon {
-        margin-right: 0;
-        margin-bottom: 0.5rem;
-    }
-
-    .auth-section {
-        flex-direction: column;
-        gap: 0.5rem;
     }
     
     .quick-access {
@@ -535,7 +423,21 @@ a { color: #3498db !important; }
     
     .quick-btn {
         width: 100%;
-        max-width: 250px;
+        max-width: 300px;
         justify-content: center;
+    }
+    
+    .modal-content {
+        margin: 10% auto;
+        width: 95%;
+        padding: 1rem;
+    }
+    
+    .welcome-section {
+        padding: 2rem 1rem;
+    }
+    
+    .welcome-section h2 {
+        font-size: 2rem;
     }
 }
