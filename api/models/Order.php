@@ -141,7 +141,6 @@ class Order {
     
     public function assignWorker($orderId, $workerId, $field) {
         try {
-            // Validează că field-ul este sigur pentru SQL
             $allowedFields = ['assigned_transport', 'assigned_cleaner'];
             if (!in_array($field, $allowedFields)) {
                 return false;
@@ -171,7 +170,6 @@ class Order {
             
             $result = $stmt->fetch(PDO::FETCH_ASSOC);
             
-            // Convertește NULL la 0 pentru valori numerice
             return [
                 'total_orders' => (int)($result['total_orders'] ?? 0),
                 'pending_orders' => (int)($result['pending_orders'] ?? 0),
