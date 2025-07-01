@@ -291,6 +291,8 @@
         // Inițializare
         document.addEventListener('DOMContentLoaded', loadClientDashboard);
 
+       // În client.html, adaugă această funcție în loadClientDashboard():
+
         async function loadClientDashboard() {
             try {
                 console.log('Loading client dashboard...');
@@ -312,18 +314,19 @@
                             ${userData.user.phone ? `<br>📞 ${userData.user.phone}` : ''}
                         `;
                         
-                        // Salvează datele pentru folosire ulterioară
                         window.currentUser = userData.user;
                     }
-                } else {
-                    console.error('Failed to load user data:', userResponse.status);
                 }
                 
-                // Încarcă comenzile
                 await loadMyOrders();
-                
-                // Încarcă locațiile pentru formular
                 await loadLocations();
+                
+                // Verifică dacă există o comandă rapidă din index
+                const quickService = localStorage.getItem('quick_order_service');
+                if (quickService) {
+                    localStorage.removeItem('quick_order_service');
+                    newOrder(quickService);
+                }
                 
             } catch (error) {
                 console.error('Eroare la încărcarea dashboard-ului:', error);
@@ -498,6 +501,10 @@
             }
             
             try {
+                console.log('=== ORDER DEBUG ===');
+                console.log('Order data:', JSON.stringify(orderData, null, 2));
+                console.log('Auth token:', localStorage.getItem('auth_token'));
+                
                 const response = await fetch('../api/index.php?resource=orders&action=create', {
                     method: 'POST',
                     headers: {
@@ -507,21 +514,36 @@
                     body: JSON.stringify(orderData)
                 });
                 
-                console.log('Create order response status:', response.status);
+                console.log('Response status:', response.status);
+                console.log('Response ok:', response.ok);
                 
-                const result = await response.json();
-                console.log('Create order result:', result);
+                const responseText = await response.text();
+                console.log('Raw response:', responseText);
+                
+                let result;
+                try {
+                    result = JSON.parse(responseText);
+                } catch (parseError) {
+                    console.error('Failed to parse JSON:', parseError);
+                    alert('Server returned invalid response: ' + responseText);
+                    return;
+                }
+                
+                console.log('Parsed result:', result);
                 
                 if (response.ok && result.success) {
                     alert('Comanda a fost plasată cu succes!');
                     closeOrderModal();
-                    loadMyOrders(); // Reîncarcă lista
+                    loadMyOrders();
                 } else {
                     alert('Eroare la plasarea comenzii: ' + (result.message || result.error || 'Eroare necunoscută'));
                 }
             } catch (error) {
-                console.error('Error creating order:', error);
-                alert('Eroare de conexiune la plasarea comenzii');
+                console.error('=== FETCH ERROR ===');
+                console.error('Error object:', error);
+                console.error('Error message:', error.message);
+                console.error('Error stack:', error.stack);
+                alert('Eroare de conexiune: ' + error.message);
             }
         });
 
@@ -590,6 +612,10 @@
 
         // Apelează debug la încărcare pentru a verifica starea
         setTimeout(debugStatus, 2000);
+        // Verifică dacă există currentUser global
+        if (!window.currentUser && localStorage.getItem('user_data')) {
+            window.currentUser = JSON.parse(localStorage.getItem('user_data'));
+        }
     </script>
 </body>
 </html>
