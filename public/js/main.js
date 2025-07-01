@@ -66,3 +66,28 @@ async function addLocation() {
         alert('Eroare la adăugarea locației.');
     }
 }
+
+// Verifică dacă utilizatorul este logat
+document.addEventListener('DOMContentLoaded', function() {
+    checkAuthStatus();
+    loadLocations();
+});
+
+function checkAuthStatus() {
+    const token = localStorage.getItem('auth_token');
+    const userData = JSON.parse(localStorage.getItem('user_data') || '{}');
+    
+    if (token && userData.username) {
+        document.getElementById('user-info').style.display = 'inline-flex';
+        document.getElementById('user-name').textContent = userData.first_name || userData.username;
+        document.querySelector('.btn-login').style.display = 'none';
+    }
+}
+
+function logout() {
+    if (confirm('Sigur vrei să te deconectezi?')) {
+        localStorage.removeItem('auth_token');
+        localStorage.removeItem('user_data');
+        window.location.reload();
+    }
+}
