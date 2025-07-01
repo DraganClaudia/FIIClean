@@ -189,9 +189,9 @@
             </div>
             
             <div class="manager-card">
-                <h3>📊 Activitate Locație</h3>
-                <div id="location-activity">
-                    <p>Se încarcă activitatea...</p>
+                <h3>✅ Status Finalizare Sarcini</h3>
+                <div id="worker-completion-status">
+                    <p>Se încarcă statusul sarcinilor...</p>
                 </div>
             </div>
             
@@ -256,7 +256,7 @@
                     loadLocationStatistics(),
                     loadLocationOrders(),
                     loadMyWorkers(),
-                    loadLocationActivity(),
+                    loadWorkerCompletionStatus(),
                     loadManagerAlerts()
                 ]);
                 
@@ -406,31 +406,6 @@
             return labels[role] || role;
         }
         
-        async function loadLocationActivity() {
-            try {
-                // Simulare de activitate - în implementarea reală ar veni de la API
-                const activities = [
-                    { time: '10:30', action: 'Comanda #123 asignată worker transport' },
-                    { time: '11:15', action: 'Comanda #124 finalizată' },
-                    { time: '12:00', action: 'Worker cleaner a început comanda #125' }
-                ];
-                
-                const container = document.getElementById('location-activity');
-                
-                const html = activities.map(activity => `
-                    <div style="padding: 0.5rem; border-bottom: 1px solid #eee;">
-                        <span style="color: #666; font-size: 0.8rem;">${activity.time}</span><br>
-                        ${activity.action}
-                    </div>
-                `).join('');
-                
-                container.innerHTML = html;
-                
-            } catch (error) {
-                document.getElementById('location-activity').innerHTML = '<p>Eroare la încărcarea activității.</p>';
-            }
-        }
-        
         async function loadManagerAlerts() {
             try {
                 const alerts = [
@@ -563,6 +538,65 @@
                 }
             } catch (error) {
                 alert('Eroare de conexiune');
+            }
+        }
+
+        async function loadWorkerCompletionStatus() {
+            try {
+                if (!currentLocationId) return;
+                
+                const response = await fetch(`../api/index.php?resource=orders&action=by-location&id=${currentLocationId}`, {
+                    headers: { 'Authorization': `Bearer ${localStorage.getItem('auth_token')}` }
+                });
+                
+                const orders = await response.json();
+                const today = new Date().toISOString().split('T')[0];
+                
+                // Grupează comenzile finalizate azi după worker
+                const completedToday = orders.filter(order => 
+                    (order.transport_status === 'completed' || order.cleaning_status === 'completed') && 
+                    order.created_at && order.created_at.startsWith(today)
+                );
+                
+                const workerStats = {};
+                
+                completedToday.forEach(order => {
+                    if (order.transport_worker_name && order.transport_status === 'completed') {
+                        if (!workerStats[order.transport_worker_name]) {
+                            workerStats[order.transport_worker_name] = { transport: 0, cleaning: 0, role: 'Transport' };
+                        }
+                        workerStats[order.transport_worker_name].transport++;
+                    }
+                    
+                    if (order.cleaner_worker_name && order.cleaning_status === 'completed') {
+                        if (!workerStats[order.cleaner_worker_name]) {
+                            workerStats[order.cleaner_worker_name] = { transport: 0, cleaning: 0, role: 'Cleaner' };
+                        }
+                        workerStats[order.cleaner_worker_name].cleaning++;
+                    }
+                });
+                
+                const container = document.getElementById('worker-completion-status');
+                
+                if (Object.keys(workerStats).length === 0) {
+                    container.innerHTML = '<p>Nicio sarcină finalizată astăzi.</p>';
+                    return;
+                }
+                
+                const html = Object.entries(workerStats).map(([workerName, stats]) => `
+                    <div style="padding: 0.8rem; border-bottom: 1px solid #eee; border-left: 3px solid #27ae60;">
+                        <strong>✅ ${workerName}</strong> (${stats.role})<br>
+                        <small>
+                            ${stats.transport > 0 ? `🚛 Transport: ${stats.transport} sarcini` : ''}
+                            ${stats.cleaning > 0 ? `🧽 Curățare: ${stats.cleaning} sarcini` : ''}
+                        </small>
+                    </div>
+                `).join('');
+                
+                container.innerHTML = html;
+                
+            } catch (error) {
+                document.getElementById('worker-completion-status').innerHTML = '<p>Eroare la încărcarea statusului.</p>';
             }
         }
         
