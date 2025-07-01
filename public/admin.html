@@ -288,7 +288,6 @@
             </div>
         </div>
         
-        <!-- Statistici Avansate -->
         <div class="admin-card" style="margin-top: 2rem;">
             <h3>📊 Statistici Avansate</h3>
             <div class="system-stats" id="advanced-stats">
@@ -312,7 +311,6 @@
         </div>
     </main>
 
-    <!-- Modal pentru crearea locațiilor -->
     <div id="location-modal" class="modal">
         <div class="modal-content">
             <span class="close" onclick="closeLocationModal()">&times;</span>
@@ -349,7 +347,6 @@
         </div>
     </div>
 
-    <!-- Modal pentru crearea utilizatorilor -->
     <div id="user-modal" class="modal">
         <div class="modal-content">
             <span class="close" onclick="closeUserModal()">&times;</span>
@@ -410,13 +407,12 @@
         </div>
     </div>
 
+    <script src="js/api.js"></script> 
     <script>
-        // Verifică autentificarea
         if (!localStorage.getItem('auth_token')) {
             window.location.href = 'login.html';
         }
         
-        // Verifică rolul de admin
         const userData = JSON.parse(localStorage.getItem('user_data') || '{}');
         if (userData.role !== 'admin') {
             alert('Acces neautorizat!');
@@ -437,7 +433,6 @@
                     loadAdvancedStats()
                 ]);
                 
-                // Actualizează informațiile admin
                 updateAdminInfo();
                 
             } catch (error) {
@@ -501,7 +496,6 @@
                 if (response.ok) {
                     const stats = await response.json();
                     
-                    // Calculează statistici avansate
                     const today = new Date().toISOString().split('T')[0];
                     const ordersResponse = await fetch('../api/index.php?resource=orders&action=list', {
                         headers: { 'Authorization': `Bearer ${localStorage.getItem('auth_token')}` }
@@ -520,21 +514,20 @@
                     const completionRate = orders.length > 0 ? 
                         ((orders.filter(order => order.status === 'completed').length / orders.length) * 100).toFixed(1) : 0;
                     
-                    // Încarcă utilizatori activi
                     const usersResponse = await fetch('../api/users.php?action=list', {
                         headers: { 'Authorization': `Bearer ${localStorage.getItem('auth_token')}` }
                     });
                     const users = await usersResponse.json();
                     const activeUsers = users.filter(user => user.is_active).length;
                     
-                    // Actualizează interfața
                     document.getElementById('monthly-revenue').textContent = totalRevenue.toFixed(2) + ' RON';
                     document.getElementById('completed-today').textContent = completedToday;
                     document.getElementById('active-users').textContent = activeUsers;
                     document.getElementById('completion-rate').textContent = completionRate + '%';
                 }
             } catch (error) {
-                console.error('Eroare la încărcarea statisticilor avansate:', error);
+                console.error('Eroare la încărcarea alertelor:', error); // ADAUGĂ ACEST LOG
+                document.getElementById('system-alerts').innerHTML = '<p>Eroare la încărcarea alertelor.</p>';
             }
         }
         
@@ -680,7 +673,6 @@
             try {
                 const alerts = [];
                 
-                // Verifică utilizatori inactivi
                 const usersResponse = await fetch('../api/users.php?action=list', {
                     headers: { 'Authorization': `Bearer ${localStorage.getItem('auth_token')}` }
                 });
@@ -694,7 +686,6 @@
                     });
                 }
                 
-                // Verifică comenzi în așteptare
                 const ordersResponse = await fetch('../api/index.php?resource=orders&action=list', {
                     headers: { 'Authorization': `Bearer ${localStorage.getItem('auth_token')}` }
                 });
@@ -708,7 +699,6 @@
                     });
                 }
                 
-                // Verifică performanța sistemului
                 const completedOrders = orders.filter(order => order.status === 'completed').length;
                 if (orders.length > 0 && (completedOrders / orders.length) > 0.8) {
                     alerts.push({
@@ -761,7 +751,6 @@
             }
         }
         
-        // === FUNCȚII PENTRU GESTIONAREA UTILIZATORILOR ===
         
         function showCreateUserModal() {
             document.getElementById('user-modal').style.display = 'block';
@@ -785,13 +774,12 @@
                         'Authorization': `Bearer ${localStorage.getItem('auth_token')}`
                     }
                 });
-                
                 const result = await response.json();
                 
                 if (result.success) {
-                    loadUsers(); // Reîncarcă lista
-                    loadStatistics(); // Actualizează statisticile
-                    loadSystemAlerts(); // Actualizează alertele
+                    loadUsers(); 
+                    loadStatistics(); 
+                    loadSystemAlerts(); 
                     alert('Utilizatorul a fost șters cu succes!');
                 } else {
                     alert('Eroare la ștergerea utilizatorului: ' + (result.error || 'Eroare necunoscută'));
@@ -801,9 +789,7 @@
                 console.error('Eroare delete user:', error);
             }
         }
-        
-        // === EVENT HANDLERS ===
-        
+                
         document.getElementById('user-form').addEventListener('submit', async function(e) {
             e.preventDefault();
             
@@ -818,7 +804,6 @@
                 location_id: document.getElementById('location_id').value || null
             };
             
-            // Validări client-side
             if (userData.password.length < 6) {
                 alert('Parola trebuie să aibă cel puțin 6 caractere');
                 return;
@@ -838,7 +823,6 @@
                     },
                     body: JSON.stringify(userData)
                 });
-                
                 const result = await response.json();
                 
                 if (result.success) {
@@ -864,7 +848,6 @@
             }
         }
         
-        // Închide modalul dacă se dă click în afara lui
         window.onclick = function(event) {
             const modal = document.getElementById('user-modal');
             if (event.target === modal) {
@@ -872,14 +855,12 @@
             }
         }
         
-        // Auto-refresh dashboard la fiecare 5 minute
         setInterval(() => {
             loadStatistics();
             loadAdvancedStats();
             loadSystemAlerts();
         }, 5 * 60 * 1000);
 
-        // Adaugă aceste funcții în script-ul din admin.html
 
         function showCreateLocationModal() {
             document.getElementById('location-modal').style.display = 'block';
@@ -890,7 +871,6 @@
             document.getElementById('location-form').reset();
         }
 
-        // Adaugă event listener pentru form
         document.getElementById('location-form').addEventListener('submit', async function(e) {
             e.preventDefault();
             
@@ -926,8 +906,6 @@
             }
         });
 
-        // Adaugă această funcție în script-ul din admin.html
-
         async function updateLocationStatus(locationId, newStatus) {
             try {
                 const response = await fetch(`../api/index.php?resource=locations&action=update-status&id=${locationId}`, {
@@ -942,15 +920,15 @@
                 const result = await response.json();
                 
                 if (result.success) {
-                    loadLocations(); // Reîncarcă lista
+                    loadLocations(); 
                     alert('Status-ul locației a fost actualizat cu succes!');
                 } else {
                     alert('Eroare la actualizarea status-ului: ' + (result.error || 'Eroare necunoscută'));
-                    loadLocations(); // Reîncarcă pentru a reveni la starea anterioară
+                    loadLocations();
                 }
             } catch (error) {
                 alert('Eroare de conexiune');
-                loadLocations(); // Reîncarcă pentru a reveni la starea anterioară
+                loadLocations(); 
             }
         }
     </script>
