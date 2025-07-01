@@ -1,35 +1,500 @@
 <!DOCTYPE html>
 <html lang="ro">
 <head>
+    <script src="js/header.js"></script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>FII-Clean - Locații</title>
     <link rel="stylesheet" href="css/main.css">
+    <style>
+        .admin-header {
+            background: linear-gradient(135deg, #c0392b, #8e44ad);
+            color: white;
+            padding: 1.5rem;
+            border-radius: 8px;
+            margin-bottom: 2rem;
+            text-align: center;
+        }
+        
+        .action-btn {
+            padding: 0.7rem 1.5rem;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: transform 0.2s;
+        }
+        
+        .action-btn:hover {
+            transform: translateY(-2px);
+        }
+        
+        .btn-primary { background: #3498db; color: white; }
+        .btn-success { background: #27ae60; color: white; }
+        .btn-warning { background: #f39c12; color: white; }
+        .btn-danger { background: #e74c3c; color: white; }
+        
+        .location-item {
+            border: 1px solid #e1e1e1;
+            border-radius: 8px;
+            padding: 1.5rem;
+            margin-bottom: 1rem;
+            background: white;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+        }
+        
+        .location-item.active {
+            border-left: 4px solid #27ae60;
+        }
+        
+        .location-item.inactive {
+            border-left: 4px solid #e74c3c;
+            background: #fdf2f2;
+        }
+        
+        .location-item.maintenance {
+            border-left: 4px solid #f39c12;
+            background: #fff8dc;
+        }
+        
+        .location-info {
+            flex-grow: 1;
+        }
+        
+        .location-actions {
+            margin-left: 1rem;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+        
+        .status-select {
+            padding: 0.4rem;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            background: white;
+            font-weight: bold;
+        }
+        
+        .status-active { color: #27ae60; }
+        .status-inactive { color: #e74c3c; }
+        .status-maintenance { color: #f39c12; }
+        
+        .access-denied {
+            text-align: center;
+            padding: 3rem;
+            background: #f8d7da;
+            border: 2px solid #dc3545;
+            border-radius: 8px;
+            margin: 2rem 0;
+        }
+        
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+        }
+        
+        .modal-content {
+            background-color: white;
+            margin: 5% auto;
+            padding: 2rem;
+            border-radius: 12px;
+            width: 90%;
+            max-width: 600px;
+        }
+        
+        .close {
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        
+        .close:hover {
+            color: black;
+        }
+        
+        .form-group {
+            margin-bottom: 1rem;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: bold;
+        }
+        
+        .form-group input, .form-group select, .form-group textarea {
+            width: 100%;
+            padding: 0.7rem;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 1rem;
+        }
+    </style>
 </head>
 <body>
-    <header>
-        <h1>FII-Clean - Locații Spălătorii</h1>
-        <nav id="main-nav">
-            <a href="index.html">Acasă</a>
-            <a href="locations.html">Locații</a>
-            <a href="orders.html">Comenzi</a>
-            <a href="resources.html">Resurse</a>
-            <a href="dashboard.html">Dashboard</a>
-            <a href="login.html">Autentificare</a>
-        </nav>
-    </header>
-    
     <main>
-        <section id="locations-section">
-            <h2>📍 Locații Disponibile</h2>
-            <button onclick="refreshLocations()" style="margin-bottom: 1rem;">🔄 Actualizează</button>
-            <div id="locations-list">
-                <p>Se încarcă locațiile...</p>
+        <div id="access-denied" class="access-denied" style="display: none;">
+            <h2 style="color: #721c24;">🔐 Acces Restricționat</h2>
+            <p style="color: #721c24; font-size: 1.1rem;">Gestionarea locațiilor este disponibilă doar pentru Administrator.</p>
+            <p style="color: #721c24;">Doar administratorul poate vedea, crea și modifica locațiile din sistem.</p>
+            <br>
+            <a href="login.html" style="background: #dc3545; color: white; padding: 1rem 2rem; text-decoration: none; border-radius: 8px; font-weight: bold;">🔑 Conectare ca Admin</a>
+            <a href="index.html" style="background: #6c757d; color: white; padding: 1rem 2rem; text-decoration: none; border-radius: 8px; font-weight: bold; margin-left: 1rem;">🏠 Înapoi Acasă</a>
+        </div>
+
+        <div id="main-content" style="display: none;">
+            <div class="admin-header">
+                <h2>👑 Administrator - Gestionare Locații</h2>
+                <p>Administrați toate locațiile din sistem - creați, modificați și monitorizați statusurile</p>
             </div>
-        </section>
+            <div class="filter-section">
+                <label for="status-filter">Filtrează după status:</label>
+                <select id="status-filter">
+                    <option value="all">Toate statusurile</option>
+                    <option value="active">🟢 Active</option>
+                    <option value="inactive">🔴 Inactive</option>
+                    <option value="maintenance">🔧 Mentenanță</option>
+                </select>
+                
+                <button onclick="refreshLocations()" style="margin-left: 1rem; padding: 0.5rem 1rem; background: #6c757d; color: white; border: none; border-radius: 4px; cursor: pointer;">🔄 Actualizează</button>
+            </div>
+
+            <section id="locations-section">
+                <h2>📍 Locații Disponibile</h2>
+                <div id="locations-list">
+                    <p>Se încarcă locațiile...</p>
+                </div>
+            </section>
+        </div>
     </main>
+
+    <div id="location-modal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeLocationModal()">&times;</span>
+            <h2>Locație Nouă</h2>
+            <form id="location-form">
+                <div class="form-group">
+                    <label>Nume Locație *</label>
+                    <input type="text" id="location-name" required>
+                </div>
+                
+                <div class="form-group">
+                    <label>Adresă *</label>
+                    <input type="text" id="location-address" required>
+                </div>
+                
+                <div class="form-group">
+                    <label>Latitudine</label>
+                    <input type="number" id="location-latitude" step="any" placeholder="Ex: 44.4268">
+                </div>
+                
+                <div class="form-group">
+                    <label>Longitudine</label>
+                    <input type="number" id="location-longitude" step="any" placeholder="Ex: 26.1025">
+                </div>
+                
+                <div class="form-group">
+                    <label>Servicii (separate prin virgulă)</label>
+                    <input type="text" id="location-services" placeholder="Ex: covoare,auto,haine,textile">
+                </div>
+                
+                <button type="submit" class="action-btn btn-success">Creează Locația</button>
+                <button type="button" class="action-btn btn-danger" onclick="closeLocationModal()">Anulează</button>
+            </form>
+        </div>
+    </div>
     
     <script src="js/api.js"></script>
-    <script src="js/locations.js"></script>
+    <script>
+        let currentUser = null;
+        let allLocations = [];
+
+        document.addEventListener('DOMContentLoaded', function() {
+            initializePage();
+        });
+
+        async function initializePage() {
+            const token = localStorage.getItem('auth_token');
+            const userData = JSON.parse(localStorage.getItem('user_data') || '{}');
+            
+            if (!token) {
+                showAccessDenied();
+                return;
+            }
+
+            currentUser = userData;
+            
+            setupNavigation();
+            
+            await loadLocations();
+            setupEventListeners();
+            
+            document.getElementById('main-content').style.display = 'block';
+        }
+
+        function showAccessDenied() {
+            document.getElementById('access-denied').style.display = 'block';
+        }
+
+        function setupNavigation() {
+            document.getElementById('dashboard-nav').href = 'admin.html';
+        }
+
+        function setupEventListeners() {
+            document.getElementById('status-filter').addEventListener('change', function() {
+                filterByStatus(this.value);
+            });
+            
+            document.getElementById('location-form').addEventListener('submit', function(e) {
+                e.preventDefault();
+                createLocation();
+            });
+        }
+
+        async function loadLocations() {
+            try {
+                allLocations = await LocationsAPI.getAll();
+                displayLocations(allLocations);
+            } catch (error) {
+                console.error('Eroare la încărcarea locațiilor:', error);
+                document.getElementById('locations-list').innerHTML = `<p>Eroare la încărcarea locațiilor: ${error.message}</p>`;
+            }
+        }
+
+        function displayLocations(locations) {
+            const container = document.getElementById('locations-list');
+            
+            if (!Array.isArray(locations) || locations.length === 0) {
+                container.innerHTML = '<p>Nu există locații înregistrate.</p>';
+                return;
+            }
+            
+            const html = locations.map(location => createLocationHTML(location)).join('');
+            container.innerHTML = html;
+            
+            setupLocationEventListeners();
+        }
+
+        function createLocationHTML(location) {
+            const statusClass = location.status || 'active';
+            const statusIcon = getStatusIcon(location.status);
+            const statusLabel = getStatusLabel(location.status);
+            
+            return `
+                <div class="location-item ${statusClass}" data-status="${location.status}" data-id="${location.id}">
+                    <div class="location-info">
+                        <h3>${statusIcon} ${location.name}</h3>
+                        <p><strong>📍 Adresă:</strong> ${location.address}</p>
+                        
+                        ${location.latitude && location.longitude ? `
+                            <p><strong>🌍 Coordonate:</strong> ${location.latitude}, ${location.longitude}</p>
+                        ` : ''}
+                        
+                        <p><strong>🛠️ Servicii:</strong> ${formatServices(location.services)}</p>
+                        
+                        <p><strong>📅 Creat:</strong> ${new Date(location.created_at).toLocaleDateString('ro-RO')}</p>
+                        ${location.updated_at && location.updated_at !== location.created_at ? `
+                            <p><strong>🔄 Actualizat:</strong> ${new Date(location.updated_at).toLocaleDateString('ro-RO')}</p>
+                        ` : ''}
+                        
+                        <p><strong>🆔 ID:</strong> ${location.id}</p>
+                    </div>
+                    
+                    <div class="location-actions">
+                        ${this.userRole === 'admin' ? `
+                            <select class="status-select status-${statusClass}" data-location-id="${location.id}" onchange="updateLocationStatus(${location.id}, this.value)">
+                                <!-- opțiuni status -->
+                            </select>
+                            <button class="action-btn btn-primary" onclick="viewLocationDetails(${location.id})">📊 Detalii</button>
+                            <button class="action-btn btn-warning" onclick="editLocation(${location.id})">✏️ Editează</button>
+                        ` : `
+                            <span class="location-status">Status: ${getStatusLabel(location.status)}</span>
+                        `}
+                    </div>
+                </div>
+            `;
+        }   
+        function getStatusIcon(status) {
+            const icons = {
+                'active': '🟢',
+                'inactive': '🔴',
+                'maintenance': '🔧'
+            };
+            return icons[status] || '🟢';
+        }
+
+        function getStatusLabel(status) {
+            const labels = {
+                'active': 'Activ',
+                'inactive': 'Inactiv', 
+                'maintenance': 'Mentenanță'
+            };
+            return labels[status] || 'Activ';
+        }
+
+        function formatServices(services) {
+            if (!services) return 'Nu sunt specificate';
+            
+            const serviceIcons = {
+                'covoare': '🧽 Covoare',
+                'auto': '🚗 Auto',
+                'haine': '👔 Haine',
+                'textile': '🏠 Textile'
+            };
+            
+            return services.split(',').map(service => {
+                const trimmed = service.trim();
+                return serviceIcons[trimmed] || trimmed;
+            }).join(', ');
+        }
+
+
+        function filterByStatus(status) {
+            const locations = document.querySelectorAll('.location-item');
+            
+            locations.forEach(location => {
+                if (status === 'all' || location.dataset.status === status) {
+                    location.style.display = 'flex';
+                } else {
+                    location.style.display = 'none';
+                }
+            });
+            
+            document.getElementById('status-filter').value = status;
+        }
+
+        async function updateLocationStatus(locationId, newStatus) {
+            try {
+                const response = await fetch(`../api/index.php?resource=locations&action=update-status&id=${locationId}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${localStorage.getItem('auth_token')}`
+                    },
+                    body: JSON.stringify({ status: newStatus })
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    alert(`Status-ul locației a fost actualizat la: ${getStatusLabel(newStatus)}`);
+                    await loadLocations(); 
+                } else {
+                    alert('Eroare la actualizarea status-ului: ' + (result.error || 'Eroare necunoscută'));
+                    await loadLocations(); 
+                }
+            } catch (error) {
+                alert('Eroare de conexiune: ' + error.message);
+                await loadLocations();
+            }
+        }
+
+        function showCreateLocationModal() {
+            document.getElementById('location-modal').style.display = 'block';
+        }
+
+        function closeLocationModal() {
+            document.getElementById('location-modal').style.display = 'none';
+            document.getElementById('location-form').reset();
+        }
+
+        async function createLocation() {
+            const locationData = {
+                name: document.getElementById('location-name').value,
+                address: document.getElementById('location-address').value,
+                latitude: document.getElementById('location-latitude').value || null,
+                longitude: document.getElementById('location-longitude').value || null,
+                services: document.getElementById('location-services').value || null
+            };
+            
+            if (!locationData.name || !locationData.address) {
+                alert('Numele și adresa locației sunt obligatorii!');
+                return;
+            }
+            
+            try {
+                const result = await LocationsAPI.create(locationData);
+                
+                if (result.success) {
+                    alert('Locația a fost creată cu succes!');
+                    closeLocationModal();
+                    await loadLocations();
+                } else {
+                    alert('Eroare la crearea locației: ' + (result.message || 'Eroare necunoscută'));
+                }
+            } catch (error) {
+                alert('Eroare la crearea locației: ' + error.message);
+            }
+        }
+
+        function refreshLocations() {
+            loadLocations();
+            document.getElementById('status-filter').value = 'all';
+        }
+
+        async function viewLocationDetails(locationId) {
+            try {
+                const orders = await OrdersAPI.getByLocation(locationId);
+                const location = allLocations.find(loc => loc.id == locationId);
+                
+                if (!location) {
+                    alert('Locația nu a fost găsită!');
+                    return;
+                }
+                
+                const activeOrders = orders.filter(order => order.status !== 'completed' && order.status !== 'cancelled').length;
+                const completedOrders = orders.filter(order => order.status === 'completed').length;
+                
+                alert(`📊 Detalii pentru ${location.name}:\n\n` +
+                      `📍 Adresă: ${location.address}\n` +
+                      `📋 Comenzi active: ${activeOrders}\n` +
+                      `✅ Comenzi completate: ${completedOrders}\n` +
+                      `📅 Creat: ${new Date(location.created_at).toLocaleDateString('ro-RO')}\n` +
+                      `🛠️ Servicii: ${location.services || 'Nu sunt specificate'}`);
+                      
+            } catch (error) {
+                alert('Eroare la încărcarea detaliilor: ' + error.message);
+            }
+        }
+
+        function editLocation(locationId) {
+            const location = allLocations.find(loc => loc.id == locationId);
+            
+            if (!location) {
+                alert('Locația nu a fost găsită!');
+                return;
+            }
+            
+            document.getElementById('location-name').value = location.name;
+            document.getElementById('location-address').value = location.address;
+            document.getElementById('location-latitude').value = location.latitude || '';
+            document.getElementById('location-longitude').value = location.longitude || '';
+            document.getElementById('location-services').value = location.services || '';
+            
+            document.querySelector('#location-modal h2').textContent = 'Editează Locația';
+            
+            alert('Funcția de editare va fi implementată în curând.\nPentru moment, puteți crea o locație nouă cu datele actualizate.');
+            
+            showCreateLocationModal();
+        }
+
+        window.onclick = function(event) {
+            const modal = document.getElementById('location-modal');
+            if (event.target === modal) {
+                closeLocationModal();
+            }
+        }
+    </script>
 </body>
 </html>
