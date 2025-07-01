@@ -51,6 +51,7 @@ const OrdersAPI = {
             method: 'POST',
             body: JSON.stringify(orderData),
             headers: {
+                'Content-Type': 'application/json',
                 'Authorization': localStorage.getItem('auth_token') ? 
                     `Bearer ${localStorage.getItem('auth_token')}` : undefined
             }
