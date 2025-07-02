@@ -1,5 +1,6 @@
 <?php
 require_once __DIR__ . '/../config/Database.php';
+require_once __DIR__ . '/../helpers/Security.php';
 
 class Order {
     private $db;
@@ -81,6 +82,8 @@ class Order {
     }
 
     public function create($data) {
+        $data = Security::sanitizeInput($data);
+
         try {
             $stmt = $this->db->prepare("
                 INSERT INTO orders (location_id, client_id, client_name, client_phone, client_email, 
