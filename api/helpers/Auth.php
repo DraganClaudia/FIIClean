@@ -9,6 +9,37 @@ class Auth {
         $database = new Database();
         $this->db = $database->connect();
     }
+
+    public function validateInput($input, $rules) {
+        $errors = [];
+        
+        foreach ($rules as $field => $rule) {
+            if (isset($rule['required']) && $rule['required'] && empty($input[$field])) {
+                $errors[$field] = "Câmpul $field este obligatoriu";
+                continue;
+            }
+            
+            if (!empty($input[$field])) {
+                // Sanitizare XSS
+                $input[$field] = htmlspecialchars($input[$field], ENT_QUOTES, 'UTF-8');
+                
+                // Validări specifice
+                if (isset($rule['email']) && $rule['email'] && !filter_var($input[$field], FILTER_VALIDATE_EMAIL)) {
+                    $errors[$field] = "Email invalid";
+                }
+                
+                if (isset($rule['min_length']) && strlen($input[$field]) < $rule['min_length']) {
+                    $errors[$field] = "Câmpul $field trebuie să aibă cel puțin {$rule['min_length']} caractere";
+                }
+                
+                if (isset($rule['max_length']) && strlen($input[$field]) > $rule['max_length']) {
+                    $errors[$field] = "Câmpul $field nu poate avea mai mult de {$rule['max_length']} caractere";
+                }
+            }
+        }
+        
+        return $errors;
+    }
     
     public function checkAuth() {
         $token = $this->getTokenFromHeader();
