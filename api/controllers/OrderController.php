@@ -1,6 +1,7 @@
 <?php
 require_once __DIR__ . '/../models/Order.php';
 require_once __DIR__ . '/../helpers/Auth.php';
+require_once __DIR__ . '/../helpers/Security.php';
 
 class OrderController {
     private $orderModel;
@@ -122,7 +123,7 @@ class OrderController {
             return;
         }
         
-        $input = json_decode($rawInput, true);
+        $input = Security::sanitizeInput(json_decode($rawInput, true));
         
         if (json_last_error() !== JSON_ERROR_NONE) {
             http_response_code(400);
@@ -189,8 +190,8 @@ class OrderController {
         
         header('Content-Type: application/json');
         
-        $rawInput = file_get_contents('php://input');
-        $input = json_decode($rawInput, true);
+        $rawInput = json_decode(file_get_contents('php://input'), true);
+        $input = Security::sanitizeInput($rawInput);
         
         if (!$input) {
             http_response_code(400);
@@ -254,8 +255,8 @@ class OrderController {
         
         header('Content-Type: application/json');
         
-        $rawInput = file_get_contents('php://input');
-        $input = json_decode($rawInput, true);
+        $rawInput = json_decode(file_get_contents('php://input'), true);
+        $input = Security::sanitizeInput($rawInput);
         
         if (!$input || !isset($input['worker_id']) || !isset($input['worker_type'])) {
             http_response_code(400);
