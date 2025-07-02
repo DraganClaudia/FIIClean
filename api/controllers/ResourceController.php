@@ -1,6 +1,6 @@
 <?php
 require_once __DIR__ . '/../models/Resource.php';
-
+require_once __DIR__ . '/../helpers/Security.php';
 class ResourceController {
     private $resourceModel;
 
@@ -68,8 +68,8 @@ class ResourceController {
 
     private function createResource() {
         header('Content-Type: application/json');
-        $input = json_decode(file_get_contents('php://input'), true);
-
+        $rawInput = json_decode(file_get_contents('php://input'), true);
+        $input = Security::sanitizeInput($rawInput);
         if ($this->resourceModel->create($input)) {
             echo json_encode(['success' => true, 'message' => 'Resource created']);
         } else {
