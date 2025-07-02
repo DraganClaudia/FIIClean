@@ -2,6 +2,7 @@
 require_once __DIR__ . '/../models/Location.php';
 require_once __DIR__ . '/../models/Order.php';
 require_once __DIR__ . '/../models/Resource.php';
+require_once __DIR__ . '/../helpers/Security.php';
 
 class ExportController {
     private $locationModel;
