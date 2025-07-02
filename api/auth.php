@@ -129,7 +129,7 @@ function handleRegister($db) {
         $userId = $db->lastInsertId();
         
         $token = JWT::create($userId, $input['username'], 'client', null);
-        
+
         echo json_encode([
             'success' => true,
             'message' => 'Account created successfully',
