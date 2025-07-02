@@ -1,5 +1,6 @@
 <?php
 require_once __DIR__ . '/../config/Database.php';
+require_once __DIR__ . '/../helpers/Security.php';
 
 class Location {
     private $db;
@@ -25,6 +26,8 @@ class Location {
     }
     
     public function create($data) {
+        $data = Security::sanitizeInput($data);
+        
         try {
             $stmt = $this->db->prepare("
                 INSERT INTO locations (name, address, latitude, longitude, services, status) 
