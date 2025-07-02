@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="ro">
 <head>
+    <script src="js/config.js"></script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>FII-Clean - Gestionare Comenzi</title>
@@ -113,289 +114,45 @@
     </main>
     
     <script src="js/api.js"></script>
-    <script>
-        let currentUser = null;
-        let userRole = null;
 
-        document.addEventListener('DOMContentLoaded', async function() {
-            await loadUserRole();
-            setupUI();
-            await Promise.all([
-                loadOrders(),
-                loadLocationsForSelect(),
-                loadOrderStatistics()
-            ]);
-            setupEventListeners();
-        });
-
-        async function loadUserRole() {
-            try {
-                if (checkAuthStatus()) {
-                    const userData = await AuthAPI.getMe();
-                    if (userData.success) {
-                        currentUser = userData.user;
-                        userRole = userData.user.role;
-                    }
-                }
-            } catch (error) {
-                console.error('Eroare la încărcarea utilizatorului:', error);
-            }
-        }
-
-        function setupUI() {
-            if (['admin', 'manager'].includes(userRole)) {
-                document.getElementById('add-order-btn').style.display = 'inline-block';
-            }
-        }
-
-        async function loadOrders() {
-            try {
-                let orders;
-                
-                if (userRole === 'client') {
-                    orders = await OrdersAPI.getMyOrders();
-                } else if (userRole === 'worker_transport' || userRole === 'worker_cleaner') {
-                    orders = await OrdersAPI.getAssigned();
-                } else {
-                    orders = await OrdersAPI.getAll();
-                }
-                
-                displayOrders(orders);
-            } catch (error) {
-                document.getElementById('orders-list').innerHTML = '<p>Eroare la încărcarea comenzilor: ' + error.message + '</p>';
-            }
-        }
-
-        function displayOrders(orders) {
-            const container = document.getElementById('orders-list');
-            const canModifyStatus = ['admin', 'manager'].includes(userRole);
+    <template id="order-item-template">
+        <div class="order-item" data-status="">
+            <div class="order-header">
+                <h3 class="order-title"></h3>
+                <span class="service-type"></span>
+            </div>
             
-            if (!Array.isArray(orders) || orders.length === 0) {
-                container.innerHTML = '<p>Nu există comenzi înregistrate.</p>';
-                return;
-            }
-            
-            const html = orders.map(order => `
-                <div class="order-item ${order.status || 'pending'}" data-status="${order.status || 'pending'}">
-                    <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1rem;">
-                        <h3>Comanda #${order.id}</h3>
-                        <span class="service-type service-${order.service_type}">${getServiceName(order.service_type)}</span>
-                    </div>
-                    
-                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem;">
-                        <div>
-                            <p><strong>Client:</strong> ${order.client_name || 'Necunoscut'}</p>
-                            ${order.client_phone ? `<p><strong>Telefon:</strong> ${order.client_phone}</p>` : ''}
-                            ${order.client_email ? `<p><strong>Email:</strong> ${order.client_email}</p>` : ''}
-                        </div>
-                        
-                        <div>
-                            <p><strong>Locație:</strong> ${order.location_name || 'Nu este specificată'}</p>
-                            ${order.pickup_address ? `<p><strong>Ridicare:</strong> ${order.pickup_address}</p>` : ''}
-                            ${order.delivery_address ? `<p><strong>Livrare:</strong> ${order.delivery_address}</p>` : ''}
-                        </div>
-                        
-                        <div>
-                            <p><strong>Status:</strong> 
-                                ${canModifyStatus ? `
-                                    <select class="status-select" data-order-id="${order.id}" style="margin-left: 0.5rem;">
-                                        <option value="pending" ${(order.status === 'pending' || !order.status) ? 'selected' : ''}>În așteptare</option>
-                                        <option value="in_progress" ${order.status === 'in_progress' ? 'selected' : ''}>În progres</option>
-                                        <option value="completed" ${order.status === 'completed' ? 'selected' : ''}>Completată</option>
-                                        <option value="cancelled" ${order.status === 'cancelled' ? 'selected' : ''}>Anulată</option>
-                                    </select>
-                                ` : `<span class="status-${order.status || 'pending'}">${getStatusLabel(order.status)}</span>`}
-                            </p>
-                            ${order.price ? `<p><strong>Preț:</strong> ${order.price} RON</p>` : ''}
-                            <p><strong>Creat:</strong> ${order.created_at ? new Date(order.created_at).toLocaleDateString('ro-RO') : 'Necunoscută'}</p>
-                        </div>
-                    </div>
-                    
-                    ${order.scheduled_date ? `<p><strong>⏰ Programat pentru:</strong> ${new Date(order.scheduled_date).toLocaleString('ro-RO')}</p>` : ''}
-                    ${order.notes ? `<p><strong>📝 Observații:</strong> ${order.notes}</p>` : ''}
-                    
-                    ${(['worker_transport', 'worker_cleaner'].includes(userRole)) ? `
-                        <div style="margin-top: 1rem; padding-top: 1rem; border-top: 1px solid #eee;">
-                            ${userRole === 'worker_transport' && order.transport_status ? `
-                                <p><strong>Status Transport:</strong> <span class="status-${order.transport_status}">${getTransportStatusLabel(order.transport_status)}</span></p>
-                            ` : ''}
-                            ${userRole === 'worker_cleaner' && order.cleaning_status ? `
-                                <p><strong>Status Curățare:</strong> <span class="status-${order.cleaning_status}">${getCleaningStatusLabel(order.cleaning_status)}</span></p>
-                            ` : ''}
-                        </div>
-                    ` : ''}
+            <div class="order-grid">
+                <div class="order-client">
+                    <p><strong>Client:</strong> <span class="client-name"></span></p>
+                    <p class="client-phone"><strong>Telefon:</strong> <span></span></p>
+                    <p class="client-email"><strong>Email:</strong> <span></span></p>
                 </div>
-            `).join('');
-            
-            container.innerHTML = html;
-            
-            if (canModifyStatus) {
-                document.querySelectorAll('.status-select').forEach(select => {
-                    select.addEventListener('change', function() {
-                        updateOrderStatus(this.dataset.orderId, this.value);
-                    });
-                });
-            }
-        }
-
-        function getTransportStatusLabel(status) {
-            const labels = {
-                'pending': '⏳ În așteptare',
-                'in_progress': '🚛 În transport',
-                'completed': '✅ Finalizat'
-            };
-            return labels[status] || status;
-        }
-
-        function getCleaningStatusLabel(status) {
-            const labels = {
-                'pending': '⏳ În așteptare',
-                'in_progress': '🧹 În curățare',
-                'completed': '✅ Finalizat'
-            };
-            return labels[status] || status;
-        }
-
-        async function loadLocationsForSelect() {
-            try {
-                const locations = await LocationsAPI.getAll();
-                const select = document.getElementById('location-select');
                 
-                locations.forEach(location => {
-                    const option = document.createElement('option');
-                    option.value = location.id;
-                    option.textContent = location.name;
-                    select.appendChild(option);
-                });
-            } catch (error) {
-                console.error('Eroare la încărcarea locațiilor:', error);
-            }
-        }
-
-        async function loadOrderStatistics() {
-            try {
-                const stats = await OrdersAPI.getStatistics();
-                displayStatistics(stats);
-            } catch (error) {
-                document.getElementById('stats-content').innerHTML = '<p>Eroare la încărcarea statisticilor.</p>';
-            }
-        }
-
-        function displayStatistics(stats) {
-            const container = document.getElementById('stats-content');
-            
-            const html = `
-                <div class="stat-box">
-                    <span class="stat-number">${stats.total_orders || 0}</span>
-                    <span>Total Comenzi</span>
+                <div class="order-location">
+                    <p><strong>Locație:</strong> <span class="location-name"></span></p>
+                    <p class="pickup-address"><strong>Ridicare:</strong> <span></span></p>
+                    <p class="delivery-address"><strong>Livrare:</strong> <span></span></p>
                 </div>
-                <div class="stat-box">
-                    <span class="stat-number">${stats.pending_orders || 0}</span>
-                    <span>În Așteptare</span>
-                </div>
-                <div class="stat-box">
-                    <span class="stat-number">${stats.completed_orders || 0}</span>
-                    <span>Completate</span>
-                </div>
-                <div class="stat-box">
-                    <span class="stat-number">${stats.total_revenue ? parseFloat(stats.total_revenue).toFixed(2) + ' RON' : '0 RON'}</span>
-                    <span>Venit Total</span>
-                </div>
-            `;
-            
-            container.innerHTML = html;
-        }
-
-        function setupEventListeners() {
-            document.getElementById('add-order-btn')?.addEventListener('click', function() {
-                document.getElementById('add-order-form').style.display = 'block';
-            });
-            
-            document.getElementById('cancel-order-btn')?.addEventListener('click', function() {
-                hideOrderForm();
-            });
-            
-            document.getElementById('order-form')?.addEventListener('submit', function(e) {
-                e.preventDefault();
-                addOrder();
-            });
-            
-            document.getElementById('status-filter').addEventListener('change', function() {
-                filterOrdersByStatus(this.value);
-            });
-        }
-
-        function filterOrdersByStatus(status) {
-            const orders = document.querySelectorAll('.order-item');
-            
-            orders.forEach(order => {
-                if (status === 'all' || order.dataset.status === status) {
-                    order.style.display = 'block';
-                } else {
-                    order.style.display = 'none';
-                }
-            });
-        }
-
-        async function addOrder() {
-            const formData = {
-                location_id: document.getElementById('location-select').value,
-                client_name: document.getElementById('client-name').value,
-                client_phone: document.getElementById('client-phone').value,
-                client_email: document.getElementById('client-email').value,
-                service_type: document.getElementById('service-type').value,
-                pickup_address: document.getElementById('pickup-address').value,
-                delivery_address: document.getElementById('delivery-address').value,
-                scheduled_date: document.getElementById('scheduled-date').value || null,
-                price: document.getElementById('price').value || null,
-                notes: document.getElementById('notes').value
-            };
-            
-            // Validare
-            if (!formData.client_name || !formData.service_type) {
-                alert('Numele clientului și tipul serviciului sunt obligatorii!');
-                return;
-            }
-            
-            try {
-                const result = await OrdersAPI.create(formData);
                 
-                if (result.success) {
-                    alert('Comanda a fost adăugată cu succes!');
-                    hideOrderForm();
-                    loadOrders();
-                    loadOrderStatistics();
-                } else {
-                    alert('Eroare la adăugarea comenzii: ' + (result.message || 'Eroare necunoscută'));
-                }
-            } catch (error) {
-                alert('Eroare la adăugarea comenzii: ' + error.message);
-            }
-        }
-
-        async function updateOrderStatus(orderId, newStatus) {
-            if (!newStatus) return;
+                <div class="order-status-section">
+                    <p><strong>Status:</strong> <span class="status-container"></span></p>
+                    <p class="order-price"><strong>Preț:</strong> <span></span></p>
+                    <p><strong>Creat:</strong> <span class="created-date"></span></p>
+                </div>
+            </div>
             
-            try {
-                const result = await OrdersAPI.updateStatus(orderId, newStatus);
-                
-                if (result.success) {
-                    loadOrderStatistics();
-                    alert('Statusul a fost actualizat!');
-                } else {
-                    alert('Eroare la actualizarea statusului: ' + (result.message || 'Eroare necunoscută'));
-                    loadOrders(); 
-                }
-            } catch (error) {
-                alert('Eroare la actualizarea statusului: ' + error.message);
-                loadOrders(); 
-            }
-        }
-
-        function hideOrderForm() {
-            document.getElementById('add-order-form').style.display = 'none';
-            document.getElementById('order-form').reset();
-        }
-    </script>
+            <div class="order-details">
+                <p class="scheduled-date"><strong>⏰ Programat pentru:</strong> <span></span></p>
+                <p class="order-notes"><strong>📝 Observații:</strong> <span></span></p>
+            </div>
+            
+            <div class="worker-status">
+                <p class="transport-status"><strong>Status Transport:</strong> <span></span></p>
+                <p class="cleaning-status"><strong>Status Curățare:</strong> <span></span></p>
+            </div>
+        </div>
+    </template>
+    <script src="js/orders.js"></script>
 </body>
 </html>
