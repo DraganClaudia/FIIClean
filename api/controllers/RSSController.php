@@ -2,7 +2,7 @@
 require_once __DIR__ . '/../models/Location.php';
 require_once __DIR__ . '/../models/Order.php';
 require_once __DIR__ . '/../models/Resource.php';
-
+require_once __DIR__ . '/../helpers/Security.php';
 class RSSController {
     private $locationModel;
     private $orderModel;
@@ -15,7 +15,7 @@ class RSSController {
     }
     
     public function handleRequest() {
-        $type = $_GET['type'] ?? 'status'; // status, orders, alerts
+        $type = $_GET['type'] ?? 'status';
         
         switch($type) {
             case 'status':
@@ -67,7 +67,7 @@ class RSSController {
     
     private function generateOrdersFeed() {
         $orders = $this->orderModel->getAll();
-        $recentOrders = array_slice($orders, 0, 20); // Ultimele 20 comenzi
+        $recentOrders = array_slice($orders, 0, 20);
         
         header('Content-Type: application/rss+xml; charset=utf-8');
         
