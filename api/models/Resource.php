@@ -1,5 +1,6 @@
 <?php
 require_once __DIR__ . '/../config/Database.php';
+require_once __DIR__ . '/../helpers/Security.php';
 
 class Resource {
     private $db;
@@ -15,6 +16,8 @@ class Resource {
     }
 
     public function create($data) {
+        $data = Security::sanitizeInput($data);
+
         $stmt = $this->db->prepare("
             INSERT INTO resources 
             (location_id, resource_type, name, quantity, unit, min_threshold, cost_per_unit, supplier, last_restocked)
