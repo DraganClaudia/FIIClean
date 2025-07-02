@@ -1,0 +1,133 @@
+.admin-header {
+            background: linear-gradient(135deg, #c0392b, #8e44ad);
+            color: white;
+            padding: 1.5rem;
+            border-radius: 8px;
+            margin-bottom: 2rem;
+            text-align: center;
+        }
+        
+        .action-btn {
+            padding: 0.7rem 1.5rem;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: transform 0.2s;
+        }
+        
+        .action-btn:hover {
+            transform: translateY(-2px);
+        }
+        
+        .btn-primary { background: #3498db; color: white; }
+        .btn-success { background: #27ae60; color: white; }
+        .btn-warning { background: #f39c12; color: white; }
+        .btn-danger { background: #e74c3c; color: white; }
+        
+        .location-item {
+            border: 1px solid #e1e1e1;
+            border-radius: 8px;
+            padding: 1.5rem;
+            margin-bottom: 1rem;
+            background: white;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+        }
+        
+        .location-item.active {
+            border-left: 4px solid #27ae60;
+        }
+        
+        .location-item.inactive {
+            border-left: 4px solid #e74c3c;
+            background: #fdf2f2;
+        }
+        
+        .location-item.maintenance {
+            border-left: 4px solid #f39c12;
+            background: #fff8dc;
+        }
+        
+        .location-info {
+            flex-grow: 1;
+        }
+        
+        .location-actions {
+            margin-left: 1rem;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+        
+        .status-select {
+            padding: 0.4rem;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            background: white;
+            font-weight: bold;
+        }
+        
+        .status-active { color: #27ae60; }
+        .status-inactive { color: #e74c3c; }
+        .status-maintenance { color: #f39c12; }
+        
+        .access-denied {
+            text-align: center;
+            padding: 3rem;
+            background: #f8d7da;
+            border: 2px solid #dc3545;
+            border-radius: 8px;
+            margin: 2rem 0;
+        }
+        
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+        }
+        
+        .modal-content {
+            background-color: white;
+            margin: 5% auto;
+            padding: 2rem;
+            border-radius: 12px;
+            width: 90%;
+            max-width: 600px;
+        }
+        
+        .close {
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        
+        .close:hover {
+            color: black;
+        }
+        
+        .form-group {
+            margin-bottom: 1rem;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: bold;
+        }
+        
+        .form-group input, .form-group select, .form-group textarea {
+            width: 100%;
+            padding: 0.7rem;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 1rem;
+        }

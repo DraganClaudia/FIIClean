@@ -1,0 +1,148 @@
+.cleaner-header {
+            background: linear-gradient(135deg, #9b59b6 0%, #8e44ad 100%);
+            color: white;
+            padding: 2rem;
+            border-radius: 12px;
+            margin-bottom: 2rem;
+            text-align: center;
+        }
+        
+        .cleaner-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+            margin: 2rem 0;
+        }
+        
+        .cleaner-card {
+            background: white;
+            border-radius: 12px;
+            padding: 2rem;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+        
+        .cleaner-card h3 {
+            color: #2c3e50;
+            margin-bottom: 1rem;
+            border-bottom: 2px solid #9b59b6;
+            padding-bottom: 0.5rem;
+        }
+        
+        .stats-row {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+        
+        .stat-box {
+            background: linear-gradient(135deg, #9b59b6, #8e44ad);
+            color: white;
+            padding: 1.5rem;
+            border-radius: 8px;
+            text-align: center;
+        }
+        
+        .stat-number {
+            font-size: 2rem;
+            font-weight: bold;
+            display: block;
+        }
+        
+        .cleaning-task {
+            border: 1px solid #e1e1e1;
+            border-radius: 8px;
+            padding: 1.5rem;
+            margin-bottom: 1rem;
+            border-left: 4px solid #9b59b6;
+        }
+        
+        .cleaning-task.urgent {
+            border-left-color: #e74c3c;
+            background: #fdf2f2;
+        }
+        
+        .cleaning-task.completed {
+            border-left-color: #27ae60;
+            background: #f0f9f0;
+        }
+        
+        .service-type {
+            display: inline-block;
+            padding: 0.3rem 0.8rem;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: bold;
+            margin: 0.2rem;
+        }
+        
+        .service-covoare {
+            background: #e3f2fd;
+            color: #1565c0;
+        }
+        
+        .service-auto {
+            background: #f3e5f5;
+            color: #7b1fa2;
+        }
+        
+        .service-haine {
+            background: #e8f5e8;
+            color: #2e7d32;
+        }
+        
+        .task-actions {
+            margin-top: 1rem;
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+        }
+        
+        .btn-action {
+            padding: 0.5rem 1rem;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.9rem;
+        }
+        
+        .btn-start {
+            background: #3498db;
+            color: white;
+        }
+        
+        .btn-complete {
+            background: #27ae60;
+            color: white;
+        }
+        
+        .btn-pause {
+            background: #f39c12;
+            color: white;
+        }
+        
+        .btn-problem {
+            background: #e74c3c;
+            color: white;
+        }
+        
+        .cleaning-details {
+            background: #f8f9fa;
+            padding: 1rem;
+            border-radius: 6px;
+            margin: 1rem 0;
+        }
+        
+        .quality-checklist {
+            list-style: none;
+            padding: 0;
+        }
+        
+        .quality-checklist li {
+            padding: 0.3rem 0;
+            border-bottom: 1px solid #eee;
+        }
+        
+        .quality-checklist li:last-child {
+            border-bottom: none;
+        }
